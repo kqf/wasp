@@ -2,7 +2,9 @@ import numpy as np
 
 
 def distance2bbox(
-    points: np.ndarray, distance: np.ndarray, max_shape: tuple = None,
+    points: np.ndarray,
+    distance: np.ndarray,
+    max_shape: tuple = None,
 ) -> np.ndarray:
     """Decode distance predictions to bounding boxes.
 
@@ -44,7 +46,7 @@ def distance2kps(
     Returns:
         np.ndarray: Decoded keypoints.
     """
-    preds = []
+    preds = []  # type: ignore
     for i in range(0, distance.shape[1], 2):
         px = points[:, i % 2] + distance[:, i]
         py = points[:, i % 2 + 1] + distance[:, i + 1]

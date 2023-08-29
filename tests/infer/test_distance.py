@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from wasp.infer.distance import distance2bbox, distance2kps
 
 
