@@ -46,7 +46,7 @@ def distance2kps(
     Returns:
         np.ndarray: Decoded keypoints.
     """
-    preds = []  # type: ignore
+    preds: list[np.ndarray] = []
     for i in range(0, distance.shape[1], 2):
         px = points[:, i % 2] + distance[:, i]
         py = points[:, i % 2 + 1] + distance[:, i + 1]
@@ -56,5 +56,4 @@ def distance2kps(
             py = np.clip(py, a_min=0, a_max=max_shape[0])
 
         preds.extend((px, py))
-
     return np.stack(preds, axis=-1)
