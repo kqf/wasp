@@ -19,10 +19,7 @@ def sample(max_shape):
     return points, distance, max_shape
 
 
-@pytest.mark.parametrize("max_shape", [
-    None,
-    (200, 200)
-])
+@pytest.mark.parametrize("max_shape", [None, (200, 200)])
 def test_distance2bbox(sample):
     decoded = distance2bbox(*sample)
     expected = np.array(
@@ -35,6 +32,7 @@ def test_distance2bbox(sample):
     assert np.allclose(decoded, expected, atol=1e-6)
 
 
+@pytest.mark.parametrize("max_shape", [None, (200, 200)])
 def test_distance2kps(sample):
     decoded = distance2kps(*sample)
     expected = np.array(
