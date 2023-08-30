@@ -14,8 +14,6 @@ def sample(max_shape):
             [-5, -15, 25, 10],
         ]
     )
-    max_shape = (200, 200)
-
     return points, distance, max_shape
 
 
