@@ -5,7 +5,7 @@ from wasp.infer.distance import distance2bbox, distance2kps
 
 
 @pytest.fixture
-def sample():
+def sample(max_shape):
     points = np.array([[50, 50], [100, 100], [200, 150]])
     distance = np.array(
         [
@@ -19,6 +19,10 @@ def sample():
     return points, distance, max_shape
 
 
+@pytest.mark.parametrize("max_shape", [
+    None,
+    (200, 200)
+])
 def test_distance2bbox(sample):
     decoded = distance2bbox(*sample)
     expected = np.array(
