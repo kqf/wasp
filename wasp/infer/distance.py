@@ -56,4 +56,5 @@ def distance2kps(
             py = np.clip(py, a_min=0, a_max=max_shape[0])
 
         preds.extend((px, py))
+
     return np.stack(preds, axis=-1)
