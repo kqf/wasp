@@ -4,6 +4,7 @@ import pytest
 from wasp.infer.distance import distance2bbox, distance2kps
 
 
+@pytest.mark.skip
 @pytest.fixture
 def sample(max_shape):
     points = np.array([[50, 50], [100, 100], [200, 150]])
@@ -43,15 +44,27 @@ def test_distance2bbox(sample, expected):
     assert np.allclose(decoded, np.array(expected), atol=1e-6)
 
 
-@pytest.mark.skip
-@pytest.mark.parametrize("max_shape", [None, (200, 200)])
-def test_distance2kps(sample):
+@pytest.mark.parametrize(
+    "max_shape, expected",
+    [
+        (
+            None,
+            [
+                [40, 40, 70, 70],
+                [100, 100, 130, 130],
+                [195, 135, 225, 160],
+            ],
+        ),
+        (
+            (200, 200),
+            [
+                [40, 40, 70, 70],
+                [100, 100, 130, 130],
+                [195, 135, 200, 160],
+            ],
+        ),
+    ],
+)
+def test_distance2kps(sample, expected):
     decoded = distance2kps(*sample)
-    expected = np.array(
-        [
-            [40, 40, 70, 70],
-            [100, 100, 130, 130],
-            [195, 135, 200, 160],
-        ]
-    )
-    assert np.allclose(decoded, expected, atol=1e-6)
+    assert np.allclose(decoded, np.array(expected), atol=1e-6)
