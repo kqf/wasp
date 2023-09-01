@@ -196,7 +196,6 @@ class SCRFD:
             kpss = np.vstack(kpss_list) / det_scale
         pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
         pre_det = pre_det[order, :]
-
         keep = nms(pre_det, threshold=self.nms_thresh)
         det = pre_det[keep, :]
         if self.use_kps:
