@@ -33,7 +33,10 @@ def model_exists():
 
 @pytest.fixture
 def image() -> np.ndarray:
-    return cv2.imread("tests/assets/lenna.png")
+    return cv2.cvtColor(
+        cv2.imread("tests/assets/lenna.png"),
+        cv2.COLOR_BGR2RGB,
+    )
 
 
 @pytest.fixture
@@ -49,9 +52,7 @@ def model() -> SCRFD:
 )
 def test_srfd_inferencd(model: SCRFD, image: np.ndarray):
     boxes, keypoints = model.detect(image, max_num=0)
-    print(boxes)
-    print(keypoints)
-    # visualize(image, boxes, keypoints)
+    visualize(image, boxes, keypoints)
 
     assert len(boxes) == 1
     assert len(keypoints) == 1
