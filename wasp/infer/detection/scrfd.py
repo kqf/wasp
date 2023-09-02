@@ -99,13 +99,13 @@ class SCRFD:
             else:
                 self.input_size = input_size
 
-    def forward(self, img, threshold):  # sourcery skip: low-code-quality
+    def forward(self, image, threshold):  # sourcery skip: low-code-quality
         scores_list = []
         bboxes_list = []
         kpss_list = []
-        input_size = tuple(img.shape[:2][::-1])
+        input_size = tuple(image.shape[:2][::-1])
         blob = cv2.dnn.blobFromImage(
-            img,
+            image,
             1.0 / self.input_std,
             input_size,
             (self.input_mean, self.input_mean, self.input_mean),
@@ -166,60 +166,95 @@ class SCRFD:
                 kpss_list.append(pos_kpss)
         return scores_list, bboxes_list, kpss_list
 
-    def detect(self, img, input_size=None, max_num=0, metric="default"):
-        assert input_size is not None or self.input_size is not None
-        input_size = self.input_size if input_size is None else input_size
-
-        im_ratio = float(img.shape[0]) / img.shape[1]
-        model_ratio = float(input_size[1]) / input_size[0]
-        if im_ratio > model_ratio:
-            new_height = input_size[1]
-            new_width = int(new_height / im_ratio)
-        else:
-            new_width = input_size[0]
-            new_height = int(new_width * im_ratio)
-        det_scale = float(new_height) / img.shape[0]
-        resized_img = cv2.resize(img, (new_width, new_height))
-        det_img = np.zeros((input_size[1], input_size[0], 3), dtype=np.uint8)
-        det_img[:new_height, :new_width, :] = resized_img
-
-        scores_list, bboxes_list, kpss_list = self.forward(
+    def detect(
+        self,
+        image: np.ndarray,
+        input_size=None,
+        max_num=0,
+        metric="default",
+        det_thresh=0.5,
+    ) -> tuple[list[np.ndarray], list[np.ndarray]]:
+        input_size = input_size or self.input_size
+        det_img, det_scale = resize_image(image, input_size)
+        pre_det, kpss = detect_objects(
+            self.forward,
             det_img,
-            self.det_thresh,
+            det_thresh,
+            det_scale,
+            self.nms_thresh,
         )
-
-        scores = np.vstack(scores_list)
-        scores_ravel = scores.ravel()
-        order = scores_ravel.argsort()[::-1]
-        bboxes = np.vstack(bboxes_list) / det_scale
-        if self.use_kps:
-            kpss = np.vstack(kpss_list) / det_scale
-        pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
-        pre_det = pre_det[order, :]
-
-        keep = nms(pre_det, threshold=self.nms_thresh)
-        det = pre_det[keep, :]
-        if self.use_kps:
-            kpss = kpss[order, :, :]
-            kpss = kpss[keep, :, :]
-        else:
-            kpss = None
-        if max_num > 0 and det.shape[0] > max_num:
-            area = (det[:, 2] - det[:, 0]) * (det[:, 3] - det[:, 1])
-            img_center = img.shape[0] // 2, img.shape[1] // 2
-            offsets = np.vstack(
-                [
-                    (det[:, 0] + det[:, 2]) / 2 - img_center[1],
-                    (det[:, 1] + det[:, 3]) / 2 - img_center[0],
-                ]
-            )
-            offset_dist_squared = np.sum(np.power(offsets, 2.0), 0) * 2.0
-            values = area if metric == "max" else (area - offset_dist_squared)
-
-            # Some extra weight on the centering
-            bindex = np.argsort(values)[::-1]
-            bindex = bindex[:max_num]
-            det = det[bindex, :]
-            if kpss is not None:
-                kpss = kpss[bindex, :]
+        det, kpss = filter_objects(
+            pre_det,
+            kpss,
+            max_num,
+            image.shape,
+            metric,
+        )
         return det, kpss
+
+
+def resize_image(img, input_size):
+    im_ratio = img.shape[0] / img.shape[1]
+    model_ratio = input_size[1] / input_size[0]
+    if im_ratio > model_ratio:
+        new_height = input_size[1]
+        new_width = int(new_height / im_ratio)
+    else:
+        new_width = input_size[0]
+        new_height = int(new_width * im_ratio)
+    det_scale = new_height / img.shape[0]
+    resized_img = cv2.resize(img, (new_width, new_height))
+    det_img = np.zeros((input_size[1], input_size[0], 3), dtype=np.uint8)
+    det_img[:new_height, :new_width, :] = resized_img
+    return det_img, det_scale
+
+
+def detect_objects(
+    forward,
+    det_img,
+    det_thresh,
+    det_scale,
+    nms_thresh,
+):
+    scores_list, bboxes_list, kpss_list = forward(det_img, det_thresh)
+    scores = np.vstack(scores_list)
+    scores_ravel = scores.ravel()
+    order = scores_ravel.argsort()[::-1]
+    bboxes = np.vstack(bboxes_list) / det_scale
+    kpss = np.vstack(kpss_list) / det_scale
+    pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
+    pre_det = pre_det[order, :]
+    keep = nms(pre_det, threshold=nms_thresh)
+    pre_det = pre_det[keep, :]
+    kpss = kpss[order, :, :]
+    kpss = kpss[keep, :, :]
+    return pre_det, kpss
+
+
+def filter_objects(
+    pre_det,
+    kpss,
+    max_num,
+    img_shape,
+    metric="default",
+):
+    if max_num <= 0 or pre_det.shape[0] <= max_num:
+        return pre_det, kpss
+
+    area = (pre_det[:, 2] - pre_det[:, 0]) * (pre_det[:, 3] - pre_det[:, 1])
+    img_center = (img_shape[0] // 2, img_shape[1] // 2)
+    offsets = np.vstack(
+        [
+            (pre_det[:, 0] + pre_det[:, 2]) / 2 - img_center[1],
+            (pre_det[:, 1] + pre_det[:, 3]) / 2 - img_center[0],
+        ]
+    )
+    offset_dist_squared = np.sum(np.power(offsets, 2.0), 0) * 2.0
+    values = area if metric == "max" else (area - offset_dist_squared)
+    bindex = np.argsort(values)[::-1]
+    bindex = bindex[:max_num]
+    pre_det = pre_det[bindex, :]
+    if kpss is not None:
+        kpss = kpss[bindex, :]
+
+    return pre_det, kpss
