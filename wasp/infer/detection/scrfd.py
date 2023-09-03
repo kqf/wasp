@@ -51,42 +51,19 @@ class SCRFD:
         self.nms_thresh = nms_thresh
         self.det_thresh = det_thresh
         self._init_vars()
-        self.input_size = input_size
 
     def _init_vars(self):
         input_cfg = self.session.get_inputs()[0]
-        input_shape = input_cfg.shape
-        # print(input_shape)
-        if isinstance(input_shape[2], str):
-            self.input_size = None
-        else:
-            self.input_size = tuple(input_shape[2:4][::-1])
-        # print('image_size:', self.image_size)
-        input_name = input_cfg.name
-        self.input_shape = input_shape
         outputs = self.session.get_outputs()
-        if len(outputs[0].shape) == 3:
-            self.batched = True
         output_names = [o.name for o in outputs]
-        self.input_name = input_name
+        self.input_name = input_cfg.name
         self.output_names = output_names
         self.input_mean = 127.5
         self.input_std = 128.0
-        # print(self.output_names)
-        # assert len(outputs)==10 or len(outputs)==15
-        self.use_kps = False
-        self._anchor_ratio = 1.0
-        self._num_anchors = 1
-        if len(outputs) == 6 or len(outputs) != 9 and len(outputs) == 10:
-            self._extracted_from__init_vars_()
-        elif len(outputs) in {9, 15}:
-            self._extracted_from__init_vars_()
-            self.use_kps = True
-
-    # TODO Rename this here and in `_init_vars`
-    def _extracted_from__init_vars_(self):  # noqa <<<<<<<<<<<<
+        self.use_kps = True
         self.fmc = 3
         self._feat_stride_fpn = [8, 16, 32]
+        self._anchor_ratio = 1.0
         self._num_anchors = 2
 
     def forward(self, image, threshold):  # sourcery skip: low-code-quality
