@@ -50,8 +50,8 @@ class SCRFD:
         self.center_cache = {}
         self.nms_thresh = nms_thresh
         self.det_thresh = det_thresh
-        self.input_size = input_size
         self._init_vars()
+        self.input_size = input_size
 
     def _init_vars(self):
         input_cfg = self.session.get_inputs()[0]

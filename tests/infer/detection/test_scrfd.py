@@ -41,9 +41,7 @@ def image() -> np.ndarray:
 
 @pytest.fixture
 def model() -> SCRFD:
-    model = SCRFD(MODEL)
-    model.prepare(0, det_rhesh=0.5, input_size=(640, 640))
-    return model
+    return SCRFD(MODEL)
 
 
 @pytest.mark.skipif(
