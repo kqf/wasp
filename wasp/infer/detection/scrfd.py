@@ -86,19 +86,10 @@ class SCRFD:
         fmc = self.fmc
         for idx, stride in enumerate(self._feat_stride_fpn):
             # If model support batch dim, take first output
-            if self.batched:
-                scores = net_outs[idx][0]
-                bbox_preds = net_outs[idx + fmc][0]
-                bbox_preds = bbox_preds * stride
-                if self.use_kps:
-                    kps_preds = net_outs[idx + fmc * 2][0] * stride
-            # If model doesn't support batching take output as is
-            else:
-                scores = net_outs[idx]
-                bbox_preds = net_outs[idx + fmc]
-                bbox_preds = bbox_preds * stride
-                if self.use_kps:
-                    kps_preds = net_outs[idx + fmc * 2] * stride
+            scores = net_outs[idx]
+            bbox_preds = net_outs[idx + fmc]
+            bbox_preds = bbox_preds * stride
+            kps_preds = net_outs[idx + fmc * 2] * stride
 
             height = input_height // stride
             width = input_width // stride
@@ -126,12 +117,13 @@ class SCRFD:
             pos_bboxes = bboxes[pos_inds]
             scores_list.append(pos_scores)
             bboxes_list.append(pos_bboxes)
-            if self.use_kps:
-                kpss = distance2kps(anchor_centers, kps_preds)
-                # kpss = kps_preds
-                kpss = kpss.reshape((kpss.shape[0], -1, 2))
-                pos_kpss = kpss[pos_inds]
-                kpss_list.append(pos_kpss)
+
+            # Now for keypoints
+            kpss = distance2kps(anchor_centers, kps_preds)
+            kpss = kpss.reshape((kpss.shape[0], -1, 2))
+            pos_kpss = kpss[pos_inds]
+            kpss_list.append(pos_kpss)
+
         return scores_list, bboxes_list, kpss_list
 
     def detect(
