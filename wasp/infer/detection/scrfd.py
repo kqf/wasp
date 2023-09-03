@@ -36,15 +36,21 @@ def nms(dets, threshold):
 
 
 class SCRFD:
-    def __init__(self, model_file=None, session=None):
+    def __init__(
+        self,
+        model_file=None,
+        nms_thresh=0.4,
+        det_thresh=0.5,
+        input_size=(640, 640),
+        batched=False,
+    ):
         self.model_file = model_file
-        self.session = session
-        self.taskname = "detection"
-        self.batched = False
         self.session = onnxruntime.InferenceSession(self.model_file, None)
+        self.batched = batched
         self.center_cache = {}
-        self.nms_thresh = 0.4
-        self.det_thresh = 0.5
+        self.nms_thresh = nms_thresh
+        self.det_thresh = det_thresh
+        self.input_size = input_size
         self._init_vars()
 
     def _init_vars(self):
