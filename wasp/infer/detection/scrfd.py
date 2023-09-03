@@ -89,22 +89,6 @@ class SCRFD:
         self._feat_stride_fpn = [8, 16, 32]
         self._num_anchors = 2
 
-    def prepare(self, ctx_id, **kwargs):
-        if ctx_id < 0:
-            self.session.set_providers(["CPUExecutionProvider"])
-        nms_thresh = kwargs.get("nms_thresh", None)
-        if nms_thresh is not None:
-            self.nms_thresh = nms_thresh
-        det_thresh = kwargs.get("det_thresh", None)
-        if det_thresh is not None:
-            self.det_thresh = det_thresh
-        input_size = kwargs.get("input_size", None)
-        if input_size is not None:
-            if self.input_size is not None:
-                print("Det_size is already set in scrfd model, ignore")
-            else:
-                self.input_size = input_size
-
     def forward(self, image, threshold):  # sourcery skip: low-code-quality
         scores_list = []
         bboxes_list = []
