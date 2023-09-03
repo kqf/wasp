@@ -42,11 +42,9 @@ class SCRFD:
         nms_thresh=0.4,
         det_thresh=0.5,
         input_size=(640, 640),
-        batched=False,
     ):
         self.model_file = model_file
         self.session = onnxruntime.InferenceSession(self.model_file, None)
-        self.batched = batched
         self.center_cache = {}
         self.nms_thresh = nms_thresh
         self.det_thresh = det_thresh
