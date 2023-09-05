@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from wasp.infer.detection.scrfd import SCRFD
+from wasp.infer.detection.scrfd import SCRFD, resize_image
 
 MODEL = "models/det_10g.onnx"
 
@@ -73,3 +73,27 @@ def test_srfd_inferencd(model: SCRFD, image: np.ndarray):
             ]
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "inshape",
+    [
+        (200, 200),
+        (512, 512),
+        (1024, 1024),
+    ],
+)
+def test_resize_image_correct_output(image, inshape):
+    # Call the resize_image function
+    result, scale = resize_image(image, inshape)
+
+    _, axs = plt.subplots(1, 2)
+    axs[0].imshow(image)
+    axs[1].imshow(result)
+    plt.show()
+
+    # Check if the result has the correct shape
+    assert result.shape == (inshape[1], inshape[0], 3)
+
+    # Check if the scale is calculated correctly
+    assert scale == inshape[1] / image.shape[0]
