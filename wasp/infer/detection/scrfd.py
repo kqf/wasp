@@ -169,7 +169,6 @@ def resize_image(
     new_width = int(img_width * scale)
     new_height = int(img_height * scale)
 
-    # Resize the image
     resized_img = cv2.resize(image, (new_width, new_height))
 
     # Create a black canvas of the target size
