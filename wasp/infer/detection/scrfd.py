@@ -151,7 +151,10 @@ class SCRFD:
         return det, kpss
 
 
-def resize_image(image, isize):
+def resize_image(
+    image: np.ndarray,
+    isize: tuple[int, int],
+) -> tuple[np.ndarray, float]:
     img_height, img_width, _ = image.shape
     target_width, target_height = isize
 
