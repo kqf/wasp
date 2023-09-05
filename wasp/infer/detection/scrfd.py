@@ -152,19 +152,28 @@ class SCRFD:
 
 
 def resize_image(img, input_size):
-    im_ratio = img.shape[0] / img.shape[1]
-    model_ratio = input_size[1] / input_size[0]
-    if im_ratio > model_ratio:
-        new_height = input_size[1]
-        new_width = int(new_height / im_ratio)
-    else:
-        new_width = input_size[0]
-        new_height = int(new_width * im_ratio)
-    det_scale = new_height / img.shape[0]
+    img_height, img_width, _ = img.shape
+    target_width, target_height = input_size
+
+    # Calculate the scaling factors
+    width_scale = target_width / img_width
+    height_scale = target_height / img_height
+
+    # Choose the scaling factor that preserves the aspect ratio
+    scale = min(width_scale, height_scale)
+
+    # Calculate the new dimensions
+    new_width = int(img_width * scale)
+    new_height = int(img_height * scale)
+
+    # Resize the image
     resized_img = cv2.resize(img, (new_width, new_height))
-    det_img = np.zeros((input_size[1], input_size[0], 3), dtype=np.uint8)
+
+    # Create a black canvas of the target size
+    det_img = np.zeros((target_height, target_width, 3), dtype=np.uint8)
+    # Copy the resized image to the canvas
     det_img[:new_height, :new_width, :] = resized_img
-    return det_img, det_scale
+    return det_img, scale
 
 
 def detect_objects(
