@@ -151,9 +151,12 @@ class SCRFD:
         return det, kpss
 
 
-def resize_image(img, input_size):
-    img_height, img_width, _ = img.shape
-    target_width, target_height = input_size
+def resize_image(
+    image: np.ndarray,
+    isize: tuple[int, int],
+) -> tuple[np.ndarray, float]:
+    img_height, img_width, _ = image.shape
+    target_width, target_height = isize
 
     # Calculate the scaling factors
     width_scale = target_width / img_width
@@ -166,15 +169,13 @@ def resize_image(img, input_size):
     new_width = int(img_width * scale)
     new_height = int(img_height * scale)
 
-    # Resize the image
-    resized_img = cv2.resize(img, (new_width, new_height))
+    resized_img = cv2.resize(image, (new_width, new_height))
 
     # Create a black canvas of the target size
     det_img = np.zeros((target_height, target_width, 3), dtype=np.uint8)
     # Copy the resized image to the canvas
     det_img[:new_height, :new_width, :] = resized_img
     return det_img, scale
-
 
 def detect_objects(
     forward,
