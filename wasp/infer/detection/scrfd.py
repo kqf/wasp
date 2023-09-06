@@ -1,3 +1,5 @@
+import functools
+
 import cv2
 import numpy as np
 import onnxruntime
@@ -33,6 +35,21 @@ def nms(dets, threshold):
         order = order[inds + 1]
 
     return keep
+
+
+@functools.lru_cache
+def get_anchor_centers(height, width, stride, num_anchors):
+    anchor_centers = np.stack(
+        np.mgrid[:height, :width][::-1],
+        axis=-1,
+    ).astype(np.float32)
+    anchor_centers = (anchor_centers * stride).reshape((-1, 2))
+    if num_anchors > 1:
+        anchor_centers = np.stack(
+            [anchor_centers] * num_anchors,
+            axis=1,
+        ).reshape((-1, 2))
+    return anchor_centers
 
 
 class SCRFD:
@@ -74,22 +91,18 @@ class SCRFD:
             swapRB=True,
         )
 
-    def get_anchor_centers(self, height, width, stride):
-        key = (height, width, stride)
-        if key in self.center_cache:
-            anchor_centers = self.center_cache[key]
-        else:
+    @functools.lru_cache
+    def get_anchor_centers(height, width, stride, num_anchors):
+        anchor_centers = np.stack(
+            np.mgrid[:height, :width][::-1],
+            axis=-1,
+        ).astype(np.float32)
+        anchor_centers = (anchor_centers * stride).reshape((-1, 2))
+        if num_anchors > 1:
             anchor_centers = np.stack(
-                np.mgrid[:height, :width][::-1],
-                axis=-1,
-            ).astype(np.float32)
-            anchor_centers = (anchor_centers * stride).reshape((-1, 2))
-            if self._num_anchors > 1:
-                anchor_centers = np.stack(
-                    [anchor_centers] * self._num_anchors, axis=1
-                ).reshape((-1, 2))
-            if len(self.center_cache) < 100:
-                self.center_cache[key] = anchor_centers
+                [anchor_centers] * num_anchors,
+                axis=1,
+            ).reshape((-1, 2))
         return anchor_centers
 
     def forward(self, image, threshold):
@@ -110,7 +123,9 @@ class SCRFD:
 
             height = input_height // stride
             width = input_width // stride
-            anchor_centers = self.get_anchor_centers(height, width, stride)
+            anchor_centers = get_anchor_centers(
+                height, width, stride, self._num_anchors
+            )
 
             pos_inds = np.where(scores >= threshold)[0]
             bboxes = distance2bbox(anchor_centers, bbox_preds)
