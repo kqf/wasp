@@ -45,6 +45,7 @@ class SCRFD:
     ):
         self.model_file = model_file
         self.session = onnxruntime.InferenceSession(self.model_file, None)
+        self.center_cache = {}
         self.nms_thresh = nms_thresh
         self.det_thresh = det_thresh
         self.input_size = input_size
