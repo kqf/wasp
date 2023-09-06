@@ -38,17 +38,24 @@ def nms(dets, threshold):
 
 
 @functools.lru_cache
-def get_anchor_centers(height, width, stride, num_anchors):
+def anchors_centers(
+    height: int,
+    width: int,
+    stride: int,
+    num_anchors: int,
+) -> np.ndarray:
     anchor_centers = np.stack(
         np.mgrid[:height, :width][::-1],
         axis=-1,
     ).astype(np.float32)
     anchor_centers = (anchor_centers * stride).reshape((-1, 2))
-    if num_anchors > 1:
-        anchor_centers = np.stack(
-            [anchor_centers] * num_anchors,
-            axis=1,
-        ).reshape((-1, 2))
+    if num_anchors <= 1:
+        return anchor_centers
+
+    anchor_centers = np.stack(
+        [anchor_centers] * num_anchors,
+        axis=1,
+    ).reshape((-1, 2))
     return anchor_centers
 
 
@@ -91,20 +98,6 @@ class SCRFD:
             swapRB=True,
         )
 
-    @functools.lru_cache
-    def get_anchor_centers(height, width, stride, num_anchors):
-        anchor_centers = np.stack(
-            np.mgrid[:height, :width][::-1],
-            axis=-1,
-        ).astype(np.float32)
-        anchor_centers = (anchor_centers * stride).reshape((-1, 2))
-        if num_anchors > 1:
-            anchor_centers = np.stack(
-                [anchor_centers] * num_anchors,
-                axis=1,
-            ).reshape((-1, 2))
-        return anchor_centers
-
     def forward(self, image, threshold):
         scores_list = []
         bboxes_list = []
@@ -123,8 +116,11 @@ class SCRFD:
 
             height = input_height // stride
             width = input_width // stride
-            anchor_centers = get_anchor_centers(
-                height, width, stride, self._num_anchors
+            anchor_centers = anchors_centers(
+                height,
+                width,
+                stride,
+                self._num_anchors,
             )
 
             pos_inds = np.where(scores >= threshold)[0]
