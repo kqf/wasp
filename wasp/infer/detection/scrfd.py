@@ -98,6 +98,7 @@ class SCRFD:
             swapRB=True,
         )
 
+      
     def forward(self, image, threshold):
         scores_list = []
         bboxes_list = []
