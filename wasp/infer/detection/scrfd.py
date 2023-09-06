@@ -177,6 +177,7 @@ def resize_image(
     det_img[:new_height, :new_width, :] = resized_img
     return det_img, scale
 
+
 def detect_objects(
     forward,
     det_img,
