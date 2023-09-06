@@ -59,31 +59,50 @@ class SCRFD:
         self.output_names = output_names
         self.input_mean = 127.5
         self.input_std = 128.0
-        self.use_kps = True
         self.fmc = 3
         self._feat_stride_fpn = [8, 16, 32]
         self._anchor_ratio = 1.0
         self._num_anchors = 2
 
-    def forward(self, image, threshold):  # sourcery skip: low-code-quality
-        scores_list = []
-        bboxes_list = []
-        kpss_list = []
+    def preprocess_image(self, image):
         input_size = tuple(image.shape[:2][::-1])
-        blob = cv2.dnn.blobFromImage(
+        return cv2.dnn.blobFromImage(
             image,
             1.0 / self.input_std,
             input_size,
             (self.input_mean, self.input_mean, self.input_mean),
             swapRB=True,
         )
+
+    def get_anchor_centers(self, height, width, stride):
+        key = (height, width, stride)
+        if key in self.center_cache:
+            anchor_centers = self.center_cache[key]
+        else:
+            anchor_centers = np.stack(
+                np.mgrid[:height, :width][::-1],
+                axis=-1,
+            ).astype(np.float32)
+            anchor_centers = (anchor_centers * stride).reshape((-1, 2))
+            if self._num_anchors > 1:
+                anchor_centers = np.stack(
+                    [anchor_centers] * self._num_anchors, axis=1
+                ).reshape((-1, 2))
+            if len(self.center_cache) < 100:
+                self.center_cache[key] = anchor_centers
+        return anchor_centers
+
+    def forward(self, image, threshold):
+        scores_list = []
+        bboxes_list = []
+        kpss_list = []
+        blob = self.preprocess_image(image)
         net_outs = self.session.run(self.output_names, {self.input_name: blob})
 
         input_height = blob.shape[2]
         input_width = blob.shape[3]
         fmc = self.fmc
         for idx, stride in enumerate(self._feat_stride_fpn):
-            # If model support batch dim, take first output
             scores = net_outs[idx]
             bbox_preds = net_outs[idx + fmc]
             bbox_preds = bbox_preds * stride
@@ -91,23 +110,7 @@ class SCRFD:
 
             height = input_height // stride
             width = input_width // stride
-            key = (height, width, stride)
-            if key in self.center_cache:
-                anchor_centers = self.center_cache[key]
-            else:
-                # solution-3:
-                anchor_centers = np.stack(
-                    np.mgrid[:height, :width][::-1], axis=-1
-                ).astype(np.float32)
-                # print(anchor_centers.shape)
-
-                anchor_centers = (anchor_centers * stride).reshape((-1, 2))
-                if self._num_anchors > 1:
-                    anchor_centers = np.stack(
-                        [anchor_centers] * self._num_anchors, axis=1
-                    ).reshape((-1, 2))
-                if len(self.center_cache) < 100:
-                    self.center_cache[key] = anchor_centers
+            anchor_centers = self.get_anchor_centers(height, width, stride)
 
             pos_inds = np.where(scores >= threshold)[0]
             bboxes = distance2bbox(anchor_centers, bbox_preds)
@@ -116,7 +119,6 @@ class SCRFD:
             scores_list.append(pos_scores)
             bboxes_list.append(pos_bboxes)
 
-            # Now for keypoints
             kpss = distance2kps(anchor_centers, kps_preds)
             kpss = kpss.reshape((kpss.shape[0], -1, 2))
             pos_kpss = kpss[pos_inds]
