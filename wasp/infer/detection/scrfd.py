@@ -96,8 +96,6 @@ class SCRFD:
         output_names = [o.name for o in outputs]
         self.input_name = input_cfg.name
         self.output_names = output_names
-        self.input_mean = 127.5
-        self.input_std = 128.0
         self.fmc = 3
         self._feat_stride_fpn = [8, 16, 32]
         self._anchor_ratio = 1.0
