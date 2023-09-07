@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from wasp.infer.detection.scrfd import SCRFD, resize_image
+from wasp.infer.detection.scrfd import SCRFD, blobify, resize_image
 
 MODEL = "models/det_10g.onnx"
 
@@ -87,13 +87,23 @@ def test_resize_image_correct_output(image, inshape):
     # Call the resize_image function
     result, scale = resize_image(image, inshape)
 
-    _, axs = plt.subplots(1, 2)
-    axs[0].imshow(image)
-    axs[1].imshow(result)
-    plt.show()
+    # _, axs = plt.subplots(1, 2)
+    # axs[0].imshow(image)
+    # axs[1].imshow(result)
+    # plt.show()
 
     # Check if the result has the correct shape
     assert result.shape == (inshape[1], inshape[0], 3)
 
     # Check if the scale is calculated correctly
     assert scale == inshape[1] / image.shape[0]
+
+
+def test_blibifies(image: np.ndarray) -> None:
+    blob = blobify(image)
+    h, w, c = image.shape
+    assert blob.shape == (1, c, h, w)
+    _, axs = plt.subplots(1, 2)
+    axs[0].imshow(image)
+    axs[1].imshow(blob[0].transpose(1, 2, 0))
+    plt.show()
