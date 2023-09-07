@@ -59,6 +59,21 @@ def anchors_centers(
     return anchor_centers
 
 
+def blobify(
+    image,
+    mean,
+    std,
+):
+    input_size = tuple(image.shape[:2][::-1])
+    return cv2.dnn.blobFromImage(
+        image,
+        1.0 / std,
+        input_size,
+        (mean, mean, mean),
+        swapRB=True,
+    )
+
+
 class SCRFD:
     def __init__(
         self,
@@ -88,22 +103,11 @@ class SCRFD:
         self._anchor_ratio = 1.0
         self._num_anchors = 2
 
-    def preprocess_image(self, image):
-        input_size = tuple(image.shape[:2][::-1])
-        return cv2.dnn.blobFromImage(
-            image,
-            1.0 / self.input_std,
-            input_size,
-            (self.input_mean, self.input_mean, self.input_mean),
-            swapRB=True,
-        )
-
-      
     def forward(self, image, threshold):
         scores_list = []
         bboxes_list = []
         kpss_list = []
-        blob = self.preprocess_image(image)
+        blob = blobify(image, mean=self.input_mean, std=self.input_std)
         net_outs = self.session.run(self.output_names, {self.input_name: blob})
 
         input_height = blob.shape[2]
