@@ -106,6 +106,7 @@ class SCRFD:
         bboxes_list = []
         kpss_list = []
         blob = nninput(image)
+
         net_outs = self.session.run(self.output_names, {self.input_name: blob})
 
         input_height = blob.shape[2]

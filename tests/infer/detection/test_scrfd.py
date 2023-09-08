@@ -103,7 +103,6 @@ def test_resize_image_correct_output(image, inshape):
 
 
 def test_blibifies(image: np.ndarray) -> None:
-    blob = nninput(image)
     h, w, c = image.shape
     assert blob.shape == (1, c, h, w)
     _, axs = plt.subplots(1, 2)
