@@ -7,6 +7,8 @@ import pytest
 
 from wasp.infer.detection.scrfd import SCRFD, blobify, resize_image
 
+from wasp.infer.detection.scrfd import anchors_centers  # isort:skip
+
 MODEL = "models/det_10g.onnx"
 
 
@@ -107,3 +109,15 @@ def test_blibifies(image: np.ndarray) -> None:
     axs[0].imshow(image)
     axs[1].imshow(blob[0].transpose(1, 2, 0))
     plt.show()
+
+@pytest.mark.parametrize(
+    "height, width, stride, num_anchors, expected_shape",
+    [
+        (5, 4, 2, 1, (20, 2)),  # Test case 1: num_anchors = 1
+        (6, 6, 3, 3, (108, 2)),  # Test case 2: num_anchors > 1
+        (3, 3, 1, 2, (18, 2)),  # Test case 3: Specific values
+    ],
+)
+def test_anchors_centers(height, width, stride, num_anchors, expected_shape):
+    result = anchors_centers(height, width, stride, num_anchors)
+    assert result.shape == expected_shape
