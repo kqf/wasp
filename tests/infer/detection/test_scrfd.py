@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from wasp.infer.detection.scrfd import SCRFD, blobify, resize_image
+from wasp.infer.detection.scrfd import SCRFD, nninput, resize_image
 
 from wasp.infer.detection.scrfd import anchors_centers  # isort:skip
 
@@ -103,7 +103,6 @@ def test_resize_image_correct_output(image, inshape):
 
 
 def test_blibifies(image: np.ndarray) -> None:
-    blob = blobify(image)
     h, w, c = image.shape
     assert blob.shape == (1, c, h, w)
     _, axs = plt.subplots(1, 2)

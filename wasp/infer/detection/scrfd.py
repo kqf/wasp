@@ -59,11 +59,11 @@ def anchors_centers(
     return anchor_centers
 
 
-def blobify(
+def nninput(
     image,
     mean: float = 127.5,
     std: float = 128.0,
-):
+) -> np.ndarray:
     *shape, _ = image.shape
     return cv2.dnn.blobFromImage(
         image,
@@ -105,7 +105,8 @@ class SCRFD:
         scores_list = []
         bboxes_list = []
         kpss_list = []
-        blob = blobify(image)
+        blob = nninput(image)
+
         net_outs = self.session.run(self.output_names, {self.input_name: blob})
 
         input_height = blob.shape[2]
