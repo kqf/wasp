@@ -118,23 +118,21 @@ class SCRFD:
             bbox_preds = bbox_preds * stride
             kps_preds = net_outs[idx + fmc * 2] * stride
 
-            height = input_height // stride
-            width = input_width // stride
-            anchor_centers = anchors_centers(
-                height,
-                width,
+            anchors = anchors_centers(
+                input_height // stride,
+                input_width // stride,
                 stride,
                 self._num_anchors,
             )
 
             pos_inds = np.where(scores >= threshold)[0]
-            bboxes = distance2bbox(anchor_centers, bbox_preds)
+            bboxes = distance2bbox(anchors, bbox_preds)
             pos_scores = scores[pos_inds]
             pos_bboxes = bboxes[pos_inds]
             scores_list.append(pos_scores)
             bboxes_list.append(pos_bboxes)
 
-            kpss = distance2kps(anchor_centers, kps_preds)
+            kpss = distance2kps(anchors, kps_preds)
             kpss = kpss.reshape((kpss.shape[0], -1, 2))
             pos_kpss = kpss[pos_inds]
             kpss_list.append(pos_kpss)
