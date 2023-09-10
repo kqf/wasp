@@ -88,9 +88,6 @@ class SCRFD:
         self.nms_thresh = nms_thresh
         self.det_thresh = det_thresh
         self.input_size = input_size
-        self._init_vars()
-
-    def _init_vars(self):
         input_cfg = self.session.get_inputs()[0]
         outputs = self.session.get_outputs()
         output_names = [o.name for o in outputs]
