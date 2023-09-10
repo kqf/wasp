@@ -93,7 +93,6 @@ class SCRFD:
         output_names = [o.name for o in outputs]
         self.input_name = input_cfg.name
         self.output_names = output_names
-        self.fmc = 3
         self._feat_stride_fpn = [8, 16, 32]
         self._anchor_ratio = 1.0
         self._num_anchors = 2
