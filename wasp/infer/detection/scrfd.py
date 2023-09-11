@@ -101,14 +101,12 @@ class SCRFD:
         scores_list = []
         bboxes_list = []
         kpss_list = []
+        # blob is of shape [b=1, c, h, w]
         blob = nninput(image)
 
         net_outs: list[np.ndarray] = self.session.run(
             self.output_names, {self.input_name: blob}
         )
-
-        input_height = blob.shape[2]
-        input_width = blob.shape[3]
         n = len(net_outs) // len(self._feat_stride_fpn)
         for idx, stride in enumerate(self._feat_stride_fpn):
             scores = net_outs[idx]
@@ -116,8 +114,8 @@ class SCRFD:
             kps_preds = net_outs[idx + n * 2] * stride
 
             anchors = anchors_centers(
-                input_height // stride,
-                input_width // stride,
+                blob.shape[2] // stride,
+                blob.shape[3] // stride,
                 stride,
                 self._num_anchors,
             )
