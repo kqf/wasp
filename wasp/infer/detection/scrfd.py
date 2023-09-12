@@ -88,15 +88,11 @@ class SCRFD:
         self.nms_thresh = nms_thresh
         self.det_thresh = det_thresh
         self.input_size = input_size
-        self._init_vars()
-
-    def _init_vars(self):
         input_cfg = self.session.get_inputs()[0]
         outputs = self.session.get_outputs()
         output_names = [o.name for o in outputs]
         self.input_name = input_cfg.name
         self.output_names = output_names
-        self.fmc = 3
         self._feat_stride_fpn = [8, 16, 32]
         self._anchor_ratio = 1.0
         self._num_anchors = 2
