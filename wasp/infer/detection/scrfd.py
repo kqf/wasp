@@ -141,24 +141,25 @@ class SCRFD:
         max_num=0,
         metric="default",
         det_thresh=0.5,
-    ) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    ) -> tuple[list[np.ndarray], list[np.ndarray], list[np.ndarray]]:
         input_size = input_size or self.input_size
         det_img, backscale = resize_image(image, input_size)
         scores, boxes, keypts = self.forward(det_img, det_thresh)
-        pre_det, kpss = filter_objects(
+        scores, pre_det, kpss = filter_objects(
             scores,
             boxes / backscale,
             keypts / backscale,
             self.nms_thresh,
         )
-        det, kpss = remove_small_objects(
+        scores, det, kpss = remove_small_objects(
+            scores,
             pre_det,
             kpss,
             max_num,
             image.shape,
             metric,
         )
-        return det, kpss
+        return scores, det, kpss
 
 
 def resize_image(
@@ -208,6 +209,7 @@ def filter_objects(
 
 
 def remove_small_objects(
+    scores,
     pre_det,
     kpss,
     max_num,
@@ -215,7 +217,7 @@ def remove_small_objects(
     metric="default",
 ):
     if max_num <= 0 or pre_det.shape[0] <= max_num:
-        return pre_det, kpss
+        return scores, pre_det, kpss
 
     area = (pre_det[:, 2] - pre_det[:, 0]) * (pre_det[:, 3] - pre_det[:, 1])
     img_center = (img_shape[0] // 2, img_shape[1] // 2)
@@ -230,7 +232,7 @@ def remove_small_objects(
     bindex = np.argsort(values)[::-1]
     bindex = bindex[:max_num]
     pre_det = pre_det[bindex, :]
-    if kpss is not None:
-        kpss = kpss[bindex, :]
+    kpss = kpss[bindex, :]
+    scores = scores[bindex]
 
-    return pre_det, kpss
+    return scores, pre_det, kpss
