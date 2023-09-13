@@ -146,7 +146,7 @@ class SCRFD:
         input_size = input_size or self.input_size
         det_img, backscale = resize_image(image, input_size)
         scores, boxes, keypts = self.forward(det_img, det_thresh)
-        pre_det, kpss = detect_objects(
+        pre_det, kpss = filter_objects(
             scores,
             boxes / backscale,
             keypts / backscale,
@@ -189,7 +189,7 @@ def resize_image(
     return det_img, scale
 
 
-def detect_objects(
+def filter_objects(
     scores: np.ndarray,
     bboxes: np.ndarray,
     keypts: np.ndarray,
