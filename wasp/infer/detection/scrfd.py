@@ -98,9 +98,8 @@ class SCRFD:
         self._num_anchors = 2
 
     def forward(self, image, threshold):
-        scores_list = []
-        bboxes_list = []
-        kpss_list = []
+        scores, boxes, keypoints = [], [], []
+
         # blob is of shape [b=1, c, h, w]
         blob = nninput(image)
 
@@ -109,9 +108,9 @@ class SCRFD:
         )
         n = len(net_outs) // len(self._feat_stride_fpn)
         for idx, stride in enumerate(self._feat_stride_fpn):
-            scores = net_outs[idx]
-            bbox_preds = net_outs[idx + n] * stride
-            kps_preds = net_outs[idx + n * 2] * stride
+            score = net_outs[idx]
+            bbox = net_outs[idx + n] * stride
+            keypoint = net_outs[idx + n * 2] * stride
 
             anchors = anchors_centers(
                 blob.shape[2] // stride,
@@ -120,19 +119,19 @@ class SCRFD:
                 self._num_anchors,
             )
 
-            pos_inds = np.where(scores >= threshold)[0]
-            bboxes = distance2bbox(anchors, bbox_preds)
-            pos_scores = scores[pos_inds]
+            pos_inds = np.where(score >= threshold)[0]
+            bboxes = distance2bbox(anchors, bbox)
+            pos_scores = score[pos_inds]
             pos_bboxes = bboxes[pos_inds]
-            scores_list.append(pos_scores)
-            bboxes_list.append(pos_bboxes)
+            scores.append(pos_scores)
+            boxes.append(pos_bboxes)
 
-            kpss = distance2kps(anchors, kps_preds)
+            kpss = distance2kps(anchors, keypoint)
             kpss = kpss.reshape((kpss.shape[0], -1, 2))
             pos_kpss = kpss[pos_inds]
-            kpss_list.append(pos_kpss)
+            keypoints.append(pos_kpss)
 
-        return scores_list, bboxes_list, kpss_list
+        return scores, boxes, keypoints
 
     def detect(
         self,
