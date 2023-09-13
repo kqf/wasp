@@ -144,13 +144,15 @@ class SCRFD:
         det_thresh=0.5,
     ) -> tuple[list[np.ndarray], list[np.ndarray]]:
         input_size = input_size or self.input_size
-        det_img, det_scale = resize_image(image, input_size)
-        pre_det, kpss = detect_objects(
-            *self.forward(det_img, det_thresh),
-            det_scale,
+        det_img, backscale = resize_image(image, input_size)
+        scores, boxes, keypts = self.forward(det_img, det_thresh)
+        pre_det, kpss = filter_objects(
+            scores,
+            boxes / backscale,
+            keypts / backscale,
             self.nms_thresh,
         )
-        det, kpss = filter_objects(
+        det, kpss = remove_small_objects(
             pre_det,
             kpss,
             max_num,
@@ -187,26 +189,23 @@ def resize_image(
     return det_img, scale
 
 
-def detect_objects(
+def filter_objects(
     scores: np.ndarray,
     bboxes: np.ndarray,
     keypts: np.ndarray,
-    det_scale: float,
     nms_thresh: float,
 ):
     order = scores.ravel().argsort()[::-1]
-    bboxes = bboxes / det_scale
-    kpss = keypts / det_scale
     pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
     pre_det = pre_det[order, :]
     keep = nms(pre_det, threshold=nms_thresh)
     pre_det = pre_det[keep, :]
-    kpss = kpss[order, :, :]
-    kpss = kpss[keep, :, :]
-    return pre_det, kpss
+    keypts = keypts[order, :, :]
+    keypts = keypts[keep, :, :]
+    return pre_det, keypts
 
 
-def filter_objects(
+def remove_small_objects(
     pre_det,
     kpss,
     max_num,
