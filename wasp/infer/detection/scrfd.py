@@ -97,10 +97,11 @@ class SCRFD:
         self._anchor_ratio = 1.0
         self._num_anchors = 2
 
-    def forward(self, image, threshold):
-        scores_list = []
-        bboxes_list = []
-        kpss_list = []
+    def forward(
+        self,
+        image: np.ndarray,
+        threshold: float,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         # blob is of shape [b=1, c, h, w]
         blob = nninput(image)
 
@@ -108,11 +109,11 @@ class SCRFD:
             self.output_names, {self.input_name: blob}
         )
         n = len(net_outs) // len(self._feat_stride_fpn)
+        scores, boxes, keypoints = [], [], []
         for idx, stride in enumerate(self._feat_stride_fpn):
-            scores = net_outs[idx]
-            bbox_preds = net_outs[idx + n] * stride
-            kps_preds = net_outs[idx + n * 2] * stride
-
+            score = net_outs[idx]
+            bbox = net_outs[idx + n] * stride
+            keypoint = net_outs[idx + n * 2] * stride
             anchors = anchors_centers(
                 blob.shape[2] // stride,
                 blob.shape[3] // stride,
@@ -120,19 +121,19 @@ class SCRFD:
                 self._num_anchors,
             )
 
-            pos_inds = np.where(scores >= threshold)[0]
-            bboxes = distance2bbox(anchors, bbox_preds)
-            pos_scores = scores[pos_inds]
+            pos_inds = np.where(score >= threshold)[0]
+            bboxes = distance2bbox(anchors, bbox)
+            pos_scores = score[pos_inds]
             pos_bboxes = bboxes[pos_inds]
-            scores_list.append(pos_scores)
-            bboxes_list.append(pos_bboxes)
+            scores.append(pos_scores)
+            boxes.append(pos_bboxes)
 
-            kpss = distance2kps(anchors, kps_preds)
+            kpss = distance2kps(anchors, keypoint)
             kpss = kpss.reshape((kpss.shape[0], -1, 2))
             pos_kpss = kpss[pos_inds]
-            kpss_list.append(pos_kpss)
+            keypoints.append(pos_kpss)
 
-        return scores_list, bboxes_list, kpss_list
+        return np.vstack(scores), np.vstack(boxes), np.vstack(keypoints)
 
     def detect(
         self,
@@ -145,9 +146,7 @@ class SCRFD:
         input_size = input_size or self.input_size
         det_img, det_scale = resize_image(image, input_size)
         pre_det, kpss = detect_objects(
-            self.forward,
-            det_img,
-            det_thresh,
+            *self.forward(det_img, det_thresh),
             det_scale,
             self.nms_thresh,
         )
@@ -189,18 +188,15 @@ def resize_image(
 
 
 def detect_objects(
-    forward,
-    det_img,
-    det_thresh,
-    det_scale,
-    nms_thresh,
+    scores: np.ndarray,
+    bboxes: np.ndarray,
+    keypts: np.ndarray,
+    det_scale: float,
+    nms_thresh: float,
 ):
-    scores_list, bboxes_list, kpss_list = forward(det_img, det_thresh)
-    scores = np.vstack(scores_list)
-    scores_ravel = scores.ravel()
-    order = scores_ravel.argsort()[::-1]
-    bboxes = np.vstack(bboxes_list) / det_scale
-    kpss = np.vstack(kpss_list) / det_scale
+    order = scores.ravel().argsort()[::-1]
+    bboxes = bboxes / det_scale
+    kpss = keypts / det_scale
     pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
     pre_det = pre_det[order, :]
     keep = nms(pre_det, threshold=nms_thresh)
