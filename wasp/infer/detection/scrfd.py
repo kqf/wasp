@@ -97,9 +97,11 @@ class SCRFD:
         self._anchor_ratio = 1.0
         self._num_anchors = 2
 
-    def forward(self, image, threshold):
-        scores, boxes, keypoints = [], [], []
-
+    def forward(
+        self,
+        image: np.ndarray,
+        threshold: float,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         # blob is of shape [b=1, c, h, w]
         blob = nninput(image)
 
@@ -107,6 +109,7 @@ class SCRFD:
             self.output_names, {self.input_name: blob}
         )
         n = len(net_outs) // len(self._feat_stride_fpn)
+        scores, boxes, keypoints = [], [], []
         for idx, stride in enumerate(self._feat_stride_fpn):
             score = net_outs[idx]
             bbox = net_outs[idx + n] * stride
@@ -131,7 +134,7 @@ class SCRFD:
             pos_kpss = kpss[pos_inds]
             keypoints.append(pos_kpss)
 
-        return scores, boxes, keypoints
+        return np.vstack(scores), np.vstack(boxes), np.vstack(keypoints)
 
     def detect(
         self,
@@ -144,9 +147,7 @@ class SCRFD:
         input_size = input_size or self.input_size
         det_img, det_scale = resize_image(image, input_size)
         pre_det, kpss = detect_objects(
-            self.forward,
-            det_img,
-            det_thresh,
+            *self.forward(det_img, det_thresh),
             det_scale,
             self.nms_thresh,
         )
@@ -188,18 +189,15 @@ def resize_image(
 
 
 def detect_objects(
-    forward,
-    det_img,
-    det_thresh,
-    det_scale,
-    nms_thresh,
+    scores: np.ndarray,
+    bboxes: np.ndarray,
+    keypts: np.ndarray,
+    det_scale: float,
+    nms_thresh: float,
 ):
-    scores_list, bboxes_list, kpss_list = forward(det_img, det_thresh)
-    scores = np.vstack(scores_list)
-    scores_ravel = scores.ravel()
-    order = scores_ravel.argsort()[::-1]
-    bboxes = np.vstack(bboxes_list) / det_scale
-    kpss = np.vstack(kpss_list) / det_scale
+    order = scores.ravel().argsort()[::-1]
+    bboxes = bboxes / det_scale
+    kpss = keypts / det_scale
     pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
     pre_det = pre_det[order, :]
     keep = nms(pre_det, threshold=nms_thresh)
