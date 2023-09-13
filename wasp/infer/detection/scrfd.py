@@ -7,12 +7,11 @@ import onnxruntime
 from wasp.infer.distance import distance2bbox, distance2kps
 
 
-def nms(dets, threshold):
+def nms(scores, dets, threshold):
     x1 = dets[:, 0]
     y1 = dets[:, 1]
     x2 = dets[:, 2]
     y2 = dets[:, 3]
-    scores = dets[:, 4]
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
     order = scores.argsort()[::-1]
@@ -194,15 +193,18 @@ def filter_objects(
     bboxes: np.ndarray,
     keypts: np.ndarray,
     nms_thresh: float,
-):
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     order = scores.ravel().argsort()[::-1]
-    pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
-    pre_det = pre_det[order, :]
-    keep = nms(pre_det, threshold=nms_thresh)
-    pre_det = pre_det[keep, :]
+
+    scores = scores[order]
+    bboxes = bboxes[order, :]
     keypts = keypts[order, :, :]
+    keep = nms(scores, bboxes, threshold=nms_thresh)
+
+    scores = scores[keep]
+    bboxes = bboxes[keep, :]
     keypts = keypts[keep, :, :]
-    return pre_det, keypts
+    return scores, bboxes, keypts
 
 
 def remove_small_objects(
