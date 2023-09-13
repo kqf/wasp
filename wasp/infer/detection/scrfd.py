@@ -114,7 +114,6 @@ class SCRFD:
             score = net_outs[idx]
             bbox = net_outs[idx + n] * stride
             keypoint = net_outs[idx + n * 2] * stride
-
             anchors = anchors_centers(
                 blob.shape[2] // stride,
                 blob.shape[3] // stride,
