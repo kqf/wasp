@@ -150,7 +150,7 @@ class SCRFD:
             det_scale,
             self.nms_thresh,
         )
-        det, kpss = filter_objects(
+        det, kpss = remove_small_objects(
             pre_det,
             kpss,
             max_num,
@@ -206,7 +206,7 @@ def detect_objects(
     return pre_det, kpss
 
 
-def filter_objects(
+def remove_small_objects(
     pre_det,
     kpss,
     max_num,
