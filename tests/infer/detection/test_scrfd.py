@@ -52,16 +52,17 @@ def model() -> SCRFD:
     reason="File doesn't exists, skipping the test",
 )
 def test_srfd_inferencd(model: SCRFD, image: np.ndarray):
-    boxes, keypoints = model.detect(image, max_num=0)
+    scores, boxes, keypoints = model.detect(image, max_num=0)
     # visualize(image, boxes, keypoints)
 
     assert len(boxes) == 1
     assert len(keypoints) == 1
 
+    np.allclose(scores[0], 0.6662737)
     np.allclose(
         boxes[0],
         np.array(
-            [211.89163, 181.62668, 352.67505, 390.07153, 0.6662737],
+            [211.89163, 181.62668, 352.67505, 390.07153],
         ),
     )
     np.allclose(
