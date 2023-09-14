@@ -53,20 +53,20 @@ def model() -> SCRFD:
 )
 def test_srfd_inferencd(model: SCRFD, image: np.ndarray):
     scores, boxes, keypoints = model.detect(image, max_num=0)
-    visualize(image, boxes[0], keypoints[0])
+    # visualize(image, boxes[0], keypoints[0])
 
-    assert len(boxes) == 1
-    assert len(keypoints) == 1
+    assert boxes.shape == (1, 1, 4)
+    assert keypoints.shape == (1, 1, 5, 2)
 
-    np.allclose(scores[0], 0.6662737)
-    np.allclose(
-        boxes[0],
+    # np.testing.assert_allclose(scores[0], 0.6662737)
+    np.testing.assert_allclose(
+        boxes,
         np.array(
-            [211.89163, 181.62668, 352.67505, 390.07153],
+            [[[211.89163, 181.62668, 352.67505, 390.07153]]],
         ),
     )
-    np.allclose(
-        keypoints[0],
+    np.testing.assert_allclose(
+        keypoints[0][0],
         np.array(
             [
                 [270.33743, 267.0965],
@@ -110,7 +110,7 @@ def test_blibifies(image: np.ndarray) -> None:
     _, axs = plt.subplots(1, 2)
     axs[0].imshow(image)
     axs[1].imshow(blob[0].transpose(1, 2, 0))
-    plt.show()
+    # plt.show()
 
 
 @pytest.mark.parametrize(
