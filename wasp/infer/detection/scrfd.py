@@ -141,7 +141,7 @@ class SCRFD:
         max_num=0,
         metric="default",
         det_thresh=0.5,
-    ) -> tuple[list[np.ndarray], list[np.ndarray], list[np.ndarray]]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         input_size = input_size or self.input_size
         det_img, backscale = resize_image(image, input_size)
         scores, boxes, keypts = self.forward(det_img, det_thresh)
