@@ -141,7 +141,7 @@ class SCRFD:
         max_num=0,
         metric="default",
         det_thresh=0.5,
-    ) -> tuple[list[np.ndarray], list[np.ndarray], list[np.ndarray]]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         input_size = input_size or self.input_size
         det_img, backscale = resize_image(image, input_size)
         scores, boxes, keypts = self.forward(det_img, det_thresh)
@@ -209,13 +209,13 @@ def filter_objects(
 
 
 def remove_small_objects(
-    scores,
-    pre_det,
-    kpss,
-    max_num,
-    img_shape,
-    metric="default",
-):
+    scores: np.ndarray,
+    pre_det: np.ndarray,
+    kpss: np.ndarray,
+    max_num: int,
+    img_shape: tuple[int, int],
+    metric: str = "default",
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if max_num <= 0 or pre_det.shape[0] <= max_num:
         return scores, pre_det, kpss
 
