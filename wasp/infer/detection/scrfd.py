@@ -209,13 +209,13 @@ def filter_objects(
 
 
 def remove_small_objects(
-    scores,
-    pre_det,
-    kpss,
-    max_num,
-    img_shape,
-    metric="default",
-):
+    scores: np.ndarray,
+    pre_det: np.ndarray,
+    kpss: np.ndarray,
+    max_num: int,
+    img_shape: tuple[int, int],
+    metric: str = "default",
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if max_num <= 0 or pre_det.shape[0] <= max_num:
         return scores, pre_det, kpss
 
