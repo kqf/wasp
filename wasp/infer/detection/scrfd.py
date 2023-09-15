@@ -163,13 +163,11 @@ class SCRFD:
     def detect(
         self,
         image: np.ndarray,
-        input_size=None,
         max_num=0,
         metric="default",
         det_thresh=0.5,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        input_size = input_size or self.input_size
-        rescaled, backscale = resize_image(image, input_size)
+        rescaled, backscale = resize_image(image, self.input_size)
         scores, bboxes, keypts = self.forward(rescaled, det_thresh)
 
         scores_nms, bboxes_nms, keypts_nms = nms(
