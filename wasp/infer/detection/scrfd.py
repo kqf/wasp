@@ -59,7 +59,7 @@ def anchors_centers(
 
 
 def nninput(
-    image,
+    image: np.ndarray,
     mean: float = 127.5,
     std: float = 128.0,
 ) -> np.ndarray:
