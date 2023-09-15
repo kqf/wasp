@@ -7,11 +7,11 @@ import onnxruntime
 from wasp.infer.distance import distance2bbox, distance2kps
 
 
-def nms(scores, dets, threshold):
-    x1 = dets[:, 0]
-    y1 = dets[:, 1]
-    x2 = dets[:, 2]
-    y2 = dets[:, 3]
+def nms(scores: np.ndarray, boxes: np.ndarray, threshold: float) -> np.ndarray:
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 2]
+    y2 = boxes[:, 3]
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
     order = scores.argsort()[::-1]
