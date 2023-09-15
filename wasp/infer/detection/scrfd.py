@@ -7,7 +7,11 @@ import onnxruntime
 from wasp.infer.distance import distance2bbox, distance2kps
 
 
-def nms(scores: np.ndarray, boxes: np.ndarray, threshold: float) -> np.ndarray:
+def nms_scores(
+    scores: np.ndarray,
+    boxes: np.ndarray,
+    threshold: float,
+) -> np.ndarray:
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]
@@ -36,6 +40,19 @@ def nms(scores: np.ndarray, boxes: np.ndarray, threshold: float) -> np.ndarray:
     return keep
 
 
+def nms(
+    scores: np.ndarray,
+    bboxes: np.ndarray,
+    keypts: np.ndarray,
+    threshold: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    keep = nms_scores(scores, bboxes, threshold=threshold)
+    scores = scores[keep]
+    bboxes = bboxes[keep, :]
+    keypts = keypts[keep, :, :]
+    return scores, bboxes, keypts
+
+
 @functools.lru_cache
 def anchors_centers(
     height: int,
@@ -59,7 +76,7 @@ def anchors_centers(
 
 
 def nninput(
-    image,
+    image: np.ndarray,
     mean: float = 127.5,
     std: float = 128.0,
 ) -> np.ndarray:
@@ -132,7 +149,16 @@ class SCRFD:
             pos_kpss = kpss[pos_inds]
             keypoints.append(pos_kpss)
 
-        return np.vstack(scores), np.vstack(boxes), np.vstack(keypoints)
+        # Convert back to numpy arrays
+        sc, bb, kp = np.vstack(scores), np.vstack(boxes), np.vstack(keypoints)
+
+        # Sort by the largest score
+        order = sc.ravel().argsort()[::-1]
+        scores_ = sc[order]
+        bboxes_ = bb[order, :]
+        keypts_ = kp[order, :, :]
+
+        return scores_, bboxes_, keypts_
 
     def detect(
         self,
@@ -143,23 +169,24 @@ class SCRFD:
         det_thresh=0.5,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         input_size = input_size or self.input_size
-        det_img, backscale = resize_image(image, input_size)
-        scores, boxes, keypts = self.forward(det_img, det_thresh)
-        scores, pre_det, kpss = filter_objects(
+        rescaled, backscale = resize_image(image, input_size)
+        scores, bboxes, keypts = self.forward(rescaled, det_thresh)
+
+        scores_nms, bboxes_nms, keypts_nms = nms(
             scores,
-            boxes / backscale,
+            bboxes / backscale,
             keypts / backscale,
             self.nms_thresh,
         )
-        scores, det, kpss = remove_small_objects(
-            scores,
-            pre_det,
-            kpss,
+        scores_final, bboxes_final, keypts_final = remove_small_objects(
+            scores_nms,
+            bboxes_nms,
+            keypts_nms,
             max_num,
             image.shape,
             metric,
         )
-        return scores, det, kpss
+        return scores_final, bboxes_final, keypts_final
 
 
 def resize_image(
@@ -187,25 +214,6 @@ def resize_image(
     # Copy the resized image to the canvas
     det_img[:new_height, :new_width, :] = resized_img
     return det_img, scale
-
-
-def filter_objects(
-    scores: np.ndarray,
-    bboxes: np.ndarray,
-    keypts: np.ndarray,
-    nms_thresh: float,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    order = scores.ravel().argsort()[::-1]
-
-    scores = scores[order]
-    bboxes = bboxes[order, :]
-    keypts = keypts[order, :, :]
-    keep = nms(scores, bboxes, threshold=nms_thresh)
-
-    scores = scores[keep]
-    bboxes = bboxes[keep, :]
-    keypts = keypts[keep, :, :]
-    return scores, bboxes, keypts
 
 
 def remove_small_objects(
