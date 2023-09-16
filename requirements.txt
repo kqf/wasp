@@ -1,4 +1,6 @@
 numpy
+onnx
 onnxruntime
 opencv-python
 matplotlib
+scikit-image
