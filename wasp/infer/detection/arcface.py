@@ -1,8 +1,18 @@
+from dataclasses import dataclass
+from typing import Optional
+
 import cv2
 import numpy as np
 import onnx
 import onnxruntime
 from skimage import transform as trans
+
+
+@dataclass
+class Face:
+    kps: np.ndarray
+    embedding: Optional[np.ndarray] = None
+
 
 arcface_dst = np.array(
     [
