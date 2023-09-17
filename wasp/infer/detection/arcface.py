@@ -71,10 +71,6 @@ class ArcFaceONNX:
         assert len(self.output_names) == 1
         self.output_shape = outputs[0].shape
 
-    def prepare(self, ctx_id, **kwargs):
-        if ctx_id < 0:
-            self.session.set_providers(["CPUExecutionProvider"])
-
     def get(self, img, face):
         aimg = norm_crop(img, landmark=face.kps, image_size=self.input_size[0])
         face.embedding = self.get_feat(aimg).flatten()
