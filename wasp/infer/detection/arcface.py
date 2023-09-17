@@ -71,7 +71,7 @@ class ArcFaceONNX:
         assert len(self.output_names) == 1
         self.output_shape = outputs[0].shape
 
-    def get(self, image, keypoints):
+    def get(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
         aimg = norm_crop(
             image,
             landmark=keypoints,
