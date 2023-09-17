@@ -43,4 +43,4 @@ def test_srfd_inferencd(model: ArcFaceONNX, image: np.ndarray):
         )
     )
     representation = model.get(image, face)
-    assert representation.shape == 1
+    assert representation.shape == (512,)

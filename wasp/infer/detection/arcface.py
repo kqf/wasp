@@ -11,7 +11,7 @@ from skimage import transform as trans
 @dataclass
 class Face:
     kps: np.ndarray
-    embedding: Optional[np.ndarray]
+    embedding: Optional[np.ndarray] = None
 
 
 arcface_dst = np.array(
