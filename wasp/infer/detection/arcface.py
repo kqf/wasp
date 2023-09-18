@@ -79,13 +79,6 @@ class ArcFaceONNX:
         )
         return self.features(aimg).flatten()
 
-    def compute_sim(self, feat1, feat2):
-        from numpy.linalg import norm
-
-        feat1 = feat1.ravel()
-        feat2 = feat2.ravel()
-        return np.dot(feat1, feat2) / (norm(feat1) * norm(feat2))
-
     def features(self, imgs):
         if not isinstance(imgs, list):
             imgs = [imgs]
