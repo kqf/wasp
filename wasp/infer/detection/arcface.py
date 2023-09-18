@@ -99,7 +99,3 @@ class ArcFaceONNX:
             swapRB=True,
         )
         return self.session.run(self.output_names, {self.input_name: blob})[0]
-
-    def forward(self, batch_data):
-        blob = (batch_data - self.input_mean) / self.input_std
-        return self.session.run(self.output_names, {self.input_name: blob})[0]
