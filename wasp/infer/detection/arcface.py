@@ -71,10 +71,13 @@ class ArcFaceONNX:
         assert len(self.output_names) == 1
         self.output_shape = outputs[0].shape
 
-    def get(self, img, face):
-        aimg = norm_crop(img, landmark=face.kps, image_size=self.input_size[0])
-        face.embedding = self.get_feat(aimg).flatten()
-        return face.embedding
+    def get(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
+        aimg = norm_crop(
+            image,
+            landmark=keypoints,
+            image_size=self.input_size[0],
+        )
+        return self.features(aimg).flatten()
 
     def compute_sim(self, feat1, feat2):
         from numpy.linalg import norm
@@ -83,7 +86,7 @@ class ArcFaceONNX:
         feat2 = feat2.ravel()
         return np.dot(feat1, feat2) / (norm(feat1) * norm(feat2))
 
-    def get_feat(self, imgs):
+    def features(self, imgs):
         if not isinstance(imgs, list):
             imgs = [imgs]
         input_size = self.input_size
