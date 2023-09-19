@@ -6,6 +6,8 @@ import numpy as np
 import onnxruntime
 from skimage import transform as trans
 
+from wasp.infer.detection.nn import nninput
+
 
 @dataclass
 class Face:
@@ -73,15 +75,5 @@ class ArcFace:
         return self.features(aimg).flatten()
 
     def features(self, imgs):
-        if not isinstance(imgs, list):
-            imgs = [imgs]
-        input_size = self.input_size
-
-        blob = cv2.dnn.blobFromImages(
-            imgs,
-            1.0 / self.input_std,
-            input_size,
-            (self.input_mean, self.input_mean, self.input_mean),
-            swapRB=True,
-        )
+        blob = nninput(imgs, shape=self.input_size, std=127.5)
         return self.session.run(self.output_names, {self.input_name: blob})[0]
