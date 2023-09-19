@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import onnxruntime
 
+from wasp.infer.detection.nn import nninput
 from wasp.infer.distance import distance2bbox, distance2kps
 
 
@@ -73,21 +74,6 @@ def anchors_centers(
         axis=1,
     ).reshape((-1, 2))
     return anchor_centers
-
-
-def nninput(
-    image: np.ndarray,
-    mean: float = 127.5,
-    std: float = 128.0,
-) -> np.ndarray:
-    *shape, _ = image.shape
-    return cv2.dnn.blobFromImage(
-        image,
-        1.0 / std,
-        shape,
-        (mean, mean, mean),
-        swapRB=True,
-    )
 
 
 class SCRFD:
