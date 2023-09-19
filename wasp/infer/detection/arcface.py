@@ -54,8 +54,8 @@ class ArcFace:
         input_cfg = self.session.get_inputs()[0]
         input_shape = input_cfg.shape
         input_name = input_cfg.name
-        self.input_size = tuple(input_shape[2:4][::-1])
-        print(f"{input_shape} -> {self.input_shape}")
+        *_, h, w = input_shape
+        self.input_size = (h, w)
         self.input_shape = input_shape
         outputs = self.session.get_outputs()
         output_names = [out.name for out in outputs]
