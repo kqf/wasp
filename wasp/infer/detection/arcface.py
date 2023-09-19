@@ -51,14 +51,11 @@ def estimate_norm(lmk, image_size=112, mode="arcface"):
 class ArcFace:
     def __init__(self, model_file):
         self.session = onnxruntime.InferenceSession(model_file)
-        self.input_mean = 127.5
-        self.input_std = 127.5
         input_cfg = self.session.get_inputs()[0]
         input_shape = input_cfg.shape
         input_name = input_cfg.name
         *_, h, w = input_shape
         self.input_size = (h, w)
-        self.input_shape = input_shape
         outputs = self.session.get_outputs()
         output_names = [out.name for out in outputs]
         self.input_name = input_name
