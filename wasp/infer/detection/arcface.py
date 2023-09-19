@@ -51,14 +51,11 @@ def estimate_norm(lmk, image_size=112, mode="arcface"):
 class ArcFace:
     def __init__(self, model_file):
         self.session = onnxruntime.InferenceSession(model_file)
-        self.input_mean = 127.5
-        self.input_std = 127.5
         input_cfg = self.session.get_inputs()[0]
         input_shape = input_cfg.shape
         input_name = input_cfg.name
         *_, h, w = input_shape
         self.input_size = (h, w)
-        self.input_shape = input_shape
         outputs = self.session.get_outputs()
         output_names = [out.name for out in outputs]
         self.input_name = input_name
@@ -66,14 +63,24 @@ class ArcFace:
         assert len(self.output_names) == 1
         self.output_shape = outputs[0].shape
 
-    def get(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
-        aimg = norm_crop(
+    def __call__(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
+        # Crop the image using keypoints
+        crop = norm_crop(
             image,
             landmark=keypoints,
             image_size=self.input_size[0],
         )
-        return self.features(aimg).flatten()
+        # Prepare the input
+        blob = nninput(
+            crop,
+            shape=self.input_size,
+            std=127.5,
+        )
 
-    def features(self, imgs):
-        blob = nninput(imgs, shape=self.input_size, std=127.5)
-        return self.session.run(self.output_names, {self.input_name: blob})[0]
+        # Infer from the network
+        features = self.session.run(
+            self.output_names,
+            {self.input_name: blob},
+        )[0]
+
+        return features.flatten()
