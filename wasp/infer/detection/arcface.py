@@ -46,7 +46,7 @@ def estimate_norm(lmk, image_size=112, mode="arcface"):
     return tform.params[0:2, :]
 
 
-class ArcFaceONNX:
+class ArcFace:
     def __init__(self, model_file):
         self.session = onnxruntime.InferenceSession(model_file)
         self.input_mean = 127.5
@@ -55,6 +55,7 @@ class ArcFaceONNX:
         input_shape = input_cfg.shape
         input_name = input_cfg.name
         self.input_size = tuple(input_shape[2:4][::-1])
+        print(f"{input_shape} -> {self.input_shape}")
         self.input_shape = input_shape
         outputs = self.session.get_outputs()
         output_names = [out.name for out in outputs]

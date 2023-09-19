@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import pytest
 
-from wasp.infer.detection.arcface import ArcFaceONNX
+from wasp.infer.detection.arcface import ArcFace
 
 MODEL = "models/w600k_r50.onnx"
 
@@ -22,15 +22,15 @@ def image() -> np.ndarray:
 
 
 @pytest.fixture
-def model() -> ArcFaceONNX:
-    return ArcFaceONNX(MODEL)
+def model() -> ArcFace:
+    return ArcFace(MODEL)
 
 
 @pytest.mark.skipif(
     not model_exists(),
     reason="File doesn't exists, skipping the test",
 )
-def test_srfd_inferencd(model: ArcFaceONNX, image: np.ndarray):
+def test_srfd_inferencd(model: ArcFace, image: np.ndarray):
     keypoints = np.array(
         [
             [269.48657, 267.8749],
