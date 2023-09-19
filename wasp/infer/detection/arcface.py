@@ -66,14 +66,24 @@ class ArcFace:
         assert len(self.output_names) == 1
         self.output_shape = outputs[0].shape
 
-    def get(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
-        aimg = norm_crop(
+    def __call__(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
+        # Crop the image using keypoints
+        crop = norm_crop(
             image,
             landmark=keypoints,
             image_size=self.input_size[0],
         )
-        return self.features(aimg).flatten()
+        # Prepare the input
+        blob = nninput(
+            crop,
+            shape=self.input_size,
+            std=127.5,
+        )
 
-    def features(self, imgs):
-        blob = nninput(imgs, shape=self.input_size, std=127.5)
-        return self.session.run(self.output_names, {self.input_name: blob})[0]
+        # Infer from the network
+        features = self.session.run(
+            self.output_names,
+            {self.input_name: blob},
+        )[0]
+
+        return features.flatten()

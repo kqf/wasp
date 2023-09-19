@@ -40,7 +40,7 @@ def test_srfd_inferencd(model: ArcFace, image: np.ndarray):
             [315.51984, 347.4897],
         ]
     )
-    representation = model.get(image, keypoints)
+    representation = model(image, keypoints)
     assert representation.shape == (512,)
     np.testing.assert_almost_equal(np.sum(representation), 10.953, 3)
     np.testing.assert_almost_equal(np.mean(representation), 0.021, 3)
