@@ -60,8 +60,6 @@ class ArcFace:
         output_names = [out.name for out in outputs]
         self.input_name = input_name
         self.output_names = output_names
-        assert len(self.output_names) == 1
-        self.output_shape = outputs[0].shape
 
     def __call__(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
         # Crop the image using keypoints
