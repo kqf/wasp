@@ -70,7 +70,7 @@ class ArcFace:
         crop = norm_crop(
             image,
             landmark=keypoints,
-            image_size=self.input_size[0],
+            image_size=self.resolution[0],
         )
         # Prepare the input
         blob = nninput(
@@ -80,9 +80,5 @@ class ArcFace:
         )
 
         # Infer from the network
-        features = self.session.run(
-            self.output_names,
-            {self.iname: blob},
-        )[0]
-
+        features = self.session.run(self.onames, {self.iname: blob})[0]
         return features.flatten()
