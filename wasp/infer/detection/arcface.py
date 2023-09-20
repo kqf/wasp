@@ -48,37 +48,37 @@ def estimate_norm(lmk, image_size=112, mode="arcface"):
     return tform.params[0:2, :]
 
 
+def _read_model(model: str):
+    session = onnxruntime.InferenceSession(model)
+    iconf = session.get_inputs()[0]
+    shape = iconf.shape
+    input_name = iconf.name
+    outputs = session.get_outputs()
+    output_names = [out.name for out in outputs]
+    *_, h, w = shape
+    return session, (h, w), input_name, output_names
+
+
 class ArcFace:
-    def __init__(self, model_file):
-        self.session = onnxruntime.InferenceSession(model_file)
-        input_cfg = self.session.get_inputs()[0]
-        input_shape = input_cfg.shape
-        input_name = input_cfg.name
-        *_, h, w = input_shape
-        self.input_size = (h, w)
-        outputs = self.session.get_outputs()
-        output_names = [out.name for out in outputs]
-        self.input_name = input_name
-        self.output_names = output_names
+    def __init__(self, model):
+        self.session, self.resolution, self.iname, self.onames = _read_model(
+            model,
+        )
 
     def __call__(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
         # Crop the image using keypoints
         crop = norm_crop(
             image,
             landmark=keypoints,
-            image_size=self.input_size[0],
+            image_size=self.resolution[0],
         )
         # Prepare the input
         blob = nninput(
             crop,
-            shape=self.input_size,
+            shape=self.resolution,
             std=127.5,
         )
 
         # Infer from the network
-        features = self.session.run(
-            self.output_names,
-            {self.input_name: blob},
-        )[0]
-
+        features = self.session.run(self.onames, {self.iname: blob})[0]
         return features.flatten()
