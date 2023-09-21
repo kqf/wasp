@@ -4,7 +4,7 @@ from typing import Optional
 import cv2
 import numpy as np
 import onnxruntime
-from skimage import transform as trans
+from skimage.transform import SimilarityTransform
 
 from wasp.infer.detection.nn import nninput
 
@@ -50,9 +50,9 @@ def estimate_norm(
 
     ratio = float(image_size) / expected_size
     dst = arcface_dst * ratio
-    tform = trans.SimilarityTransform()
-    tform.estimate(keypoints, dst)
-    return tform.params[0:2, :]
+    similarity = SimilarityTransform()
+    similarity.estimate(keypoints, dst)
+    return similarity.params[0:2, :]
 
 
 def _read_model(model: str):
