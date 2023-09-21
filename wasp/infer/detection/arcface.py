@@ -33,11 +33,11 @@ def norm_crop(img, landmark, image_size=112):
 
 
 def estimate_norm(
-    keypoints,
-    image_size=112,
-    expected_size=112,
-    expected_keypoints_shape=(5, 2),
-):
+    keypoints: np.ndarray,
+    image_size: int = 112,
+    expected_size: int = 112,
+    expected_keypoints_shape: tuple[int, int] = (5, 2),
+) -> np.ndarray:
     if image_size % 112 != 0:
         raise RuntimeError(
             f"Expected the image size multiple of {expected_size}",
