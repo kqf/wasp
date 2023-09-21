@@ -27,12 +27,12 @@ arcface_dst = np.array(
 )
 
 
-def norm_crop(img, landmark, image_size=112, mode="arcface"):
-    M = estimate_norm(landmark, image_size, mode)
+def norm_crop(img, landmark, image_size=112):
+    M = estimate_norm(landmark, image_size)
     return cv2.warpAffine(img, M, (image_size, image_size), borderValue=0.0)
 
 
-def estimate_norm(lmk, image_size=112, mode="arcface"):
+def estimate_norm(lmk, image_size=112):
     assert lmk.shape == (5, 2)
     assert image_size % 112 == 0 or image_size % 128 == 0
     if image_size % 112 == 0:
@@ -51,8 +51,7 @@ def estimate_norm(lmk, image_size=112, mode="arcface"):
 def _read_model(model: str):
     session = onnxruntime.InferenceSession(model)
     iconf = session.get_inputs()[0]
-    shape = iconf.shape
-    input_name = iconf.name
+    shape, input_name = iconf.shape, iconf.name
     outputs = session.get_outputs()
     output_names = [out.name for out in outputs]
     *_, h, w = shape
