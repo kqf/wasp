@@ -4,7 +4,7 @@ from typing import Optional
 import cv2
 import numpy as np
 import onnxruntime
-from skimage import transform as trans
+from skimage.transform import SimilarityTransform
 
 from wasp.infer.detection.nn import nninput
 
@@ -27,17 +27,17 @@ arcface_dst = np.array(
 )
 
 
-def norm_crop(img, landmark, image_size=112):
-    M = estimate_norm(landmark, image_size)
-    return cv2.warpAffine(img, M, (image_size, image_size), borderValue=0.0)
+def norm_crop(image, keypoints, image_size=112):
+    M = estimate_norm(keypoints, image_size)
+    return cv2.warpAffine(image, M, (image_size, image_size), borderValue=0.0)
 
 
 def estimate_norm(
-    keypoints,
-    image_size=112,
-    expected_size=112,
-    expected_keypoints_shape=(5, 2),
-):
+    keypoints: np.ndarray,
+    image_size: int = 112,
+    expected_size: int = 112,
+    expected_keypoints_shape: tuple[int, int] = (5, 2),
+) -> np.ndarray:
     if image_size % 112 != 0:
         raise RuntimeError(
             f"Expected the image size multiple of {expected_size}",
@@ -50,9 +50,9 @@ def estimate_norm(
 
     ratio = float(image_size) / expected_size
     dst = arcface_dst * ratio
-    tform = trans.SimilarityTransform()
-    tform.estimate(keypoints, dst)
-    return tform.params[0:2, :]
+    similarity = SimilarityTransform()
+    similarity.estimate(keypoints, dst)
+    return similarity.params[0:2, :]
 
 
 def _read_model(model: str):
@@ -75,7 +75,7 @@ class ArcFace:
         # Crop the image using keypoints
         crop = norm_crop(
             image,
-            landmark=keypoints,
+            keypoints=keypoints,
             image_size=self.resolution[0],
         )
         # Prepare the input
