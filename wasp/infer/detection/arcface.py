@@ -27,9 +27,9 @@ arcface_dst = np.array(
 )
 
 
-def norm_crop(img, landmark, image_size=112):
-    M = estimate_norm(landmark, image_size)
-    return cv2.warpAffine(img, M, (image_size, image_size), borderValue=0.0)
+def norm_crop(image, keypoints, image_size=112):
+    M = estimate_norm(keypoints, image_size)
+    return cv2.warpAffine(image, M, (image_size, image_size), borderValue=0.0)
 
 
 def estimate_norm(
@@ -75,7 +75,7 @@ class ArcFace:
         # Crop the image using keypoints
         crop = norm_crop(
             image,
-            landmark=keypoints,
+            keypoints=keypoints,
             image_size=self.resolution[0],
         )
         # Prepare the input
