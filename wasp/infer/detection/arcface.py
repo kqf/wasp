@@ -15,7 +15,7 @@ class Face:
     embedding: Optional[np.ndarray] = None
 
 
-arcface_dst = np.array(
+ARCFACE_DISTANCE = np.array(
     [
         [38.2946, 51.6963],
         [73.5318, 51.5014],
@@ -49,7 +49,7 @@ def estimate_norm(
         )
 
     ratio = float(image_size) / expected_size
-    dst = arcface_dst * ratio
+    dst = ARCFACE_DISTANCE * ratio
     similarity = SimilarityTransform()
     similarity.estimate(keypoints, dst)
     return similarity.params[0:2, :]
