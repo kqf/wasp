@@ -76,7 +76,10 @@ ARCFACE_DISTANCE = np.array(
 
 def norm_crop(image, keypoints, image_size=112):
     M = estimate_norm(keypoints, image_size)
-    return cv2.warpAffine(image, M, (image_size, image_size), borderValue=0.0)
+    return (
+        cv2.warpAffine(image, M, (image_size, image_size), borderValue=0.0),
+        M,
+    )
 
 
 def estimate_norm(
