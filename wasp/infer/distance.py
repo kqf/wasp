@@ -1,4 +1,6 @@
+import cv2
 import numpy as np
+from skimage.transform import SimilarityTransform
 
 
 def distance2bbox(
@@ -58,3 +60,43 @@ def distance2kps(
         preds.extend((px, py))
 
     return np.stack(preds, axis=-1)
+
+
+ARCFACE_DISTANCE = np.array(
+    [
+        [38.2946, 51.6963],
+        [73.5318, 51.5014],
+        [56.0252, 71.7366],
+        [41.5493, 92.3655],
+        [70.7299, 92.2041],
+    ],
+    dtype=np.float32,
+)
+
+
+def norm_crop(image, keypoints, image_size=112):
+    M = estimate_norm(keypoints, image_size)
+    return cv2.warpAffine(image, M, (image_size, image_size), borderValue=0.0)
+
+
+def estimate_norm(
+    keypoints: np.ndarray,
+    image_size: int = 112,
+    expected_size: int = 112,
+    expected_keypoints_shape: tuple[int, int] = (5, 2),
+) -> np.ndarray:
+    if image_size % 112 != 0:
+        raise RuntimeError(
+            f"Expected the image size multiple of {expected_size}",
+        )
+
+    if keypoints.shape != expected_keypoints_shape:
+        raise RuntimeError(
+            f"Expected the keypoints of shape {expected_keypoints_shape}",
+        )
+
+    ratio = float(image_size) / expected_size
+    dst = ARCFACE_DISTANCE * ratio
+    similarity = SimilarityTransform()
+    similarity.estimate(keypoints, dst)
+    return similarity.params[0:2, :]
