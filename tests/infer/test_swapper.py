@@ -14,9 +14,6 @@ def swapper():
     return INSwapper(model_file, session)
 
 
-# Happy path tests
-
-
 @pytest.mark.parametrize(
     "img, target, source, paste_back",
     [
