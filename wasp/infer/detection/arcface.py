@@ -32,7 +32,7 @@ class ArcFace:
 
     def __call__(self, image: np.ndarray, keypoints: np.ndarray) -> np.ndarray:
         # Crop the image using keypoints
-        crop = norm_crop(
+        crop, _ = norm_crop(
             image,
             keypoints=keypoints,
             image_size=self.resolution[0],
