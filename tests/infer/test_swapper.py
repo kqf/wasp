@@ -16,7 +16,7 @@ def swapper():
     return INSwapper(model_file, session)
 
 
-MODEL = "models/w600k_r501.onnx"
+MODEL = "models/inswapper_128.onnx"
 
 
 def model_exists():
