@@ -63,6 +63,10 @@ def test_get(swapper, img, target, source, paste_back):
 # Edge cases
 
 
+@pytest.mark.skipif(
+    not model_exists(),
+    reason="File doesn't exists, skipping the test",
+)
 @pytest.mark.parametrize(
     "img, target, source, paste_back",
     [
@@ -99,6 +103,10 @@ def test_get_edge_cases(swapper, img, target, source, paste_back):
 # Error cases
 
 
+@pytest.mark.skipif(
+    not model_exists(),
+    reason="File doesn't exists, skipping the test",
+)
 @pytest.mark.parametrize(
     "img, target, source, paste_back",
     [
