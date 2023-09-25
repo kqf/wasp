@@ -10,10 +10,8 @@ source = np.ones((512,))
 
 
 @pytest.fixture
-def swapper():
-    model_file = "path/to/model.onnx"
-    session = None
-    return INSwapper(model_file, session)
+def swapper() -> INSwapper:
+    return INSwapper(MODEL, None)
 
 
 MODEL = "models/inswapper_128.onnx"
