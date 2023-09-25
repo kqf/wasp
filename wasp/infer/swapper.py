@@ -4,9 +4,7 @@ import onnx
 import onnxruntime
 from onnx import numpy_helper
 
-
-def norm_crop2():
-    pass
+from wasp.infer.distance import norm_crop
 
 
 class INSwapper:
@@ -45,7 +43,7 @@ class INSwapper:
         )[0]
 
     def get(self, img, target_face, source_face, paste_back=False):
-        aimg, M = norm_crop2(img, target_face.kps, self.input_size[0])
+        aimg, M = norm_crop(img, target_face.kps, self.input_size[0])
         blob = cv2.dnn.blobFromImage(
             aimg,
             1.0 / self.input_std,
