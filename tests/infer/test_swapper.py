@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 
@@ -8,12 +10,21 @@ source = np.ones((512,))
 
 
 @pytest.fixture
-def swapper():
-    model_file = "path/to/model.onnx"
-    session = None
-    return INSwapper(model_file, session)
+def swapper() -> INSwapper:
+    return INSwapper(MODEL, None)
 
 
+MODEL = "models/inswapper_128.onnx"
+
+
+def model_exists():
+    return os.path.exists(MODEL)
+
+
+@pytest.mark.skipif(
+    not model_exists(),
+    reason="File doesn't exists, skipping the test",
+)
 @pytest.mark.parametrize(
     "img, target, source, paste_back",
     [
@@ -50,6 +61,10 @@ def test_get(swapper, img, target, source, paste_back):
 # Edge cases
 
 
+@pytest.mark.skipif(
+    not model_exists(),
+    reason="File doesn't exists, skipping the test",
+)
 @pytest.mark.parametrize(
     "img, target, source, paste_back",
     [
@@ -86,6 +101,10 @@ def test_get_edge_cases(swapper, img, target, source, paste_back):
 # Error cases
 
 
+@pytest.mark.skipif(
+    not model_exists(),
+    reason="File doesn't exists, skipping the test",
+)
 @pytest.mark.parametrize(
     "img, target, source, paste_back",
     [
