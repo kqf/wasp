@@ -64,8 +64,6 @@ class INSwapper:
         # print(latent.shape, latent.dtype, pred.shape)
         img_fake = pred.transpose((0, 2, 3, 1))[0]
         bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
-        if not paste_back:
-            return bgr_fake, M
         return self._extracted_from_get_22(img, bgr_fake, aimg, M)
 
     # TODO Rename this here and in `get`
