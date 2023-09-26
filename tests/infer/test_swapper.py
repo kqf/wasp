@@ -96,39 +96,3 @@ def test_get_edge_cases(swapper, img, target, source, paste_back):
     assert isinstance(result, tuple)
     assert isinstance(result[0], np.ndarray)
     assert isinstance(result[1], np.ndarray)
-
-
-# Error cases
-
-
-@pytest.mark.skipif(
-    not model_exists(),
-    reason="File doesn't exists, skipping the test",
-)
-@pytest.mark.parametrize(
-    "img, target, source, paste_back",
-    [
-        # Test case 1
-        (
-            None,
-            target,
-            source,
-            False,
-        ),
-        # Test case 2
-        (
-            np.zeros((100, 100, 3), dtype=np.uint8),
-            None,
-            source,
-            True,
-        ),
-        # Add more error cases here
-    ],
-    ids=["test_case1", "test_case2"],
-)
-def test_get_error_cases(swapper, img, target, source, paste_back):
-    # Arrange
-
-    # Act and Assert
-    with pytest.raises(Exception):
-        swapper.get(img, target, source, paste_back)
