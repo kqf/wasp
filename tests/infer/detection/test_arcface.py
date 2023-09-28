@@ -1,6 +1,5 @@
 import os
 
-import cv2
 import numpy as np
 import pytest
 
@@ -11,14 +10,6 @@ MODEL = "models/w600k_r50.onnx"
 
 def model_exists():
     return os.path.exists(MODEL)
-
-
-@pytest.fixture
-def image() -> np.ndarray:
-    return cv2.cvtColor(
-        cv2.imread("tests/assets/lenna.png"),
-        cv2.COLOR_BGR2RGB,
-    )
 
 
 @pytest.fixture
