@@ -12,9 +12,9 @@ source = np.ones((512,))
 @pytest.fixture
 def swapper() -> INSwapper:
     return INSwapper(MODEL, None)
+  
 
-
-MODEL = "models/inswapper_128.onnx"
+MODEL = "models/inswapper_128.onnx
 
 
 def model_exists():
