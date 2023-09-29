@@ -6,9 +6,6 @@ import pytest
 from wasp.face import Face
 from wasp.infer.swapper import INSwapper
 
-target = np.zeros((512,))
-source = np.ones((512,))
-
 
 @pytest.fixture
 def swapper() -> INSwapper:
@@ -36,11 +33,26 @@ def keypoints():
 
 
 @pytest.fixture
-def source(keypoints):
+def bbox():
+    return np.array(
+        [207.30132, 178.63065, 353.27258, 389.34088],
+    )
+
+
+@pytest.fixture
+def source(bbox, keypoints):
     return Face(
-        bbox=np.array(
-            [207.30132, 178.63065, 353.27258, 389.34088],
-        ),
+        bbox=bbox,
+        kps=keypoints,
+        detection_score=0.9,
+        embedding=np.random.rand(512),
+    )
+
+
+@pytest.fixture
+def target(bbox, keypoints):
+    return Face(
+        bbox=bbox,
         kps=keypoints,
         detection_score=0.9,
         embedding=np.random.rand(512),
