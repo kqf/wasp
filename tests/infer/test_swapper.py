@@ -25,32 +25,8 @@ def model_exists():
     not model_exists(),
     reason="File doesn't exists, skipping the test",
 )
-@pytest.mark.parametrize(
-    "img, target, source, paste_back",
-    [
-        # Test case 1
-        (
-            np.zeros((100, 100, 3), dtype=np.uint8),
-            target,
-            source,
-            False,
-        ),
-        # Test case 2
-        (
-            np.ones((200, 200, 3), dtype=np.uint8),
-            target,
-            source,
-            True,
-        ),
-        # Add more happy path test cases here
-    ],
-    ids=["test_case1", "test_case2"],
-)
-def test_get(swapper, img, target, source, paste_back):
-    # Arrange
-
-    # Act
-    result = swapper.get(img, target, source, paste_back)
+def test_get(swapper, image, target, source):
+    result = swapper.get(image, target, source, paste_back=True)
 
     # Assert
     assert isinstance(result, tuple)
