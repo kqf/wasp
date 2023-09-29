@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pytest
 
+from wasp.face import Face
 from wasp.infer.swapper import INSwapper
 
 target = np.zeros((512,))
@@ -19,6 +20,31 @@ MODEL = "models/inswapper_128.onnx"
 
 def model_exists():
     return os.path.exists(MODEL)
+
+
+@pytest.fixture
+def keypoints():
+    return np.array(
+        [
+            [269.48657, 267.8749],
+            [334.58054, 266.53412],
+            [313.75803, 321.2535],
+            [271.43204, 349.04657],
+            [315.51984, 347.4897],
+        ]
+    )
+
+
+@pytest.fixture
+def source(keypoints):
+    return Face(
+        bbox=np.array(
+            [207.30132, 178.63065, 353.27258, 389.34088],
+        ),
+        kps=keypoints,
+        detection_score=0.9,
+        embedding=np.random.rand(512),
+    )
 
 
 @pytest.mark.skipif(
