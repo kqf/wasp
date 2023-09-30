@@ -57,8 +57,8 @@ class INSwapper:
         pred = self.session.run(
             self.output_names,
             {
-                self.input_names[0]: blob,
-                self.input_names[1]: latent,
+                self.input_names[0]: blob.astype(np.float32),
+                self.input_names[1]: latent.astype(np.float32),
             },
         )[0]
         # print(latent.shape, latent.dtype, pred.shape)
@@ -77,7 +77,9 @@ class INSwapper:
         fake_diff[:, -2:] = 0
         IM = cv2.invertAffineTransform(M)
         img_white = np.full(
-            (aimg.shape[0], aimg.shape[1]), 255, dtype=np.float32
+            (aimg.shape[0], aimg.shape[1]),
+            255,
+            dtype=np.float32,
         )
         bgr_fake = cv2.warpAffine(
             bgr_fake,
@@ -128,7 +130,8 @@ class INSwapper:
         fake_diff /= 255
         # img_mask = fake_diff
         img_mask = np.reshape(
-            img_mask, [img_mask.shape[0], img_mask.shape[1], 1]
+            img_mask,
+            [img_mask.shape[0], img_mask.shape[1], 1],
         )
         fake_merged = img_mask * bgr_fake + (1 - img_mask) * target_img.astype(
             np.float32
