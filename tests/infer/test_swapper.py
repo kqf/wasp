@@ -1,6 +1,5 @@
 import os
 
-import cv2
 import numpy as np
 import pytest
 
@@ -66,8 +65,4 @@ def target(bbox, keypoints):
 )
 def test_get(swapper, image, target, source):
     result = swapper.get(image, target, source, paste_back=True)
-
-    # Assert
-    assert isinstance(result, tuple)
-    assert isinstance(result[0], np.ndarray)
-    assert isinstance(result[1], np.ndarray)
+    assert result.shape == image.shape
