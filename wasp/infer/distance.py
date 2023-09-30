@@ -88,11 +88,6 @@ def estimate_norm(
     expected_size: int = 112,
     expected_keypoints_shape: tuple[int, int] = (5, 2),
 ) -> np.ndarray:
-    if image_size % 112 != 0:
-        raise RuntimeError(
-            f"Expected the image size multiple of {expected_size}",
-        )
-
     if keypoints.shape != expected_keypoints_shape:
         raise RuntimeError(
             f"Expected the keypoints of shape {expected_keypoints_shape}",

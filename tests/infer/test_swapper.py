@@ -1,6 +1,5 @@
 import os
 
-import cv2
 import numpy as np
 import pytest
 
@@ -65,8 +64,7 @@ def target(bbox, keypoints):
     reason="File doesn't exists, skipping the test",
 )
 def test_get(swapper, image, target, source):
-    resized_img = cv2.resize(image, (112, 112))
-    result = swapper.get(resized_img, target, source, paste_back=True)
+    result = swapper.get(image, target, source, paste_back=True)
 
     # Assert
     assert isinstance(result, tuple)
