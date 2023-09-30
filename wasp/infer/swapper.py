@@ -57,8 +57,8 @@ class INSwapper:
         pred = self.session.run(
             self.output_names,
             {
-                self.input_names[0]: blob,
-                self.input_names[1]: latent,
+                self.input_names[0]: blob.astype(np.float32),
+                self.input_names[1]: latent.astype(np.float32),
             },
         )[0]
         # print(latent.shape, latent.dtype, pred.shape)
