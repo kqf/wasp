@@ -45,7 +45,7 @@ def source(bbox, keypoints):
         bbox=bbox,
         kps=keypoints,
         detection_score=0.9,
-        embedding=np.random.rand(512),
+        embedding=np.ones(512),
     )
 
 
@@ -55,7 +55,7 @@ def target(bbox, keypoints):
         bbox=bbox,
         kps=keypoints,
         detection_score=0.9,
-        embedding=np.random.rand(512),
+        embedding=np.ones(512),
     )
 
 
@@ -65,4 +65,6 @@ def target(bbox, keypoints):
 )
 def test_get(swapper, image, target, source):
     result = swapper.get(image, target, source, paste_back=True)
+    np.testing.assert_almost_equal(np.mean(result), 127.86726506551106)
+    np.testing.assert_almost_equal(np.std(result), 58.55407466634696)
     assert result.shape == image.shape
