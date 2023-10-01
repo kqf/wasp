@@ -4,6 +4,7 @@ import onnx
 import onnxruntime
 from onnx import numpy_helper
 
+from wasp.infer.detection.nn import nninput
 from wasp.infer.distance import norm_crop
 
 
@@ -34,12 +35,11 @@ class INSwapper:
 
     def get(self, img, target_face, source_face, paste_back=False):
         aimg, M = norm_crop(img, target_face.kps, self.input_size[0])
-        blob = cv2.dnn.blobFromImage(
+        blob = nninput(
             aimg,
-            1.0 / self.input_std,
-            self.input_size,
-            (self.input_mean, self.input_mean, self.input_mean),
-            swapRB=True,
+            std=self.input_std,
+            mean=self.input_mean,
+            shape=self.input_size,
         )
         latent = source_face.normed_embedding.reshape((1, -1))
         latent = np.dot(latent, self.emap)
