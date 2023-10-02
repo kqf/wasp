@@ -9,9 +9,17 @@ from wasp.infer.distance import norm_crop
 
 
 class INSwapper:
-    def __init__(self, model_file=None, session=None):
+    def __init__(
+        self,
+        model_file=None,
+        session=None,
+        resolution: tuple[int, int] = (
+            128,
+            128,
+        ),
+    ):
         self.model_file = model_file
-        self.session = session
+        self.resolution = resolution
         model = onnx.load(self.model_file)
         graph = model.graph
         self.emap = numpy_helper.to_array(graph.initializer[-1])
@@ -20,27 +28,20 @@ class INSwapper:
             None,
         )
         inputs = self.session.get_inputs()
-        self.input_names = []
+        self.input_names: list[str] = []
         self.input_names.extend(inp.name for inp in inputs)
         outputs = self.session.get_outputs()
         output_names = [out.name for out in outputs]
         self.output_names = output_names
         assert len(self.output_names) == 1
-        output_shape = outputs[0].shape
-        input_cfg = inputs[0]
-        input_shape = input_cfg.shape
-        self.input_shape = input_shape
-        print("inswapper-shape:", self.input_shape, output_shape)
-        self.input_size = tuple(input_shape[2:4][::-1])
-        print(self.input_size)
 
     def get(self, img, target_face, source_face, paste_back=False):
-        aimg, M = norm_crop(img, target_face.kps, self.input_size[0])
+        aimg, M = norm_crop(img, target_face.kps, self.resolution[0])
         blob = nninput(
             aimg,
             std=255.0,
             mean=0.0,
-            shape=self.input_size,
+            shape=self.resolution,
         )
         latent = source_face.normed_embedding.reshape((1, -1))
         latent = np.dot(latent, self.emap)
