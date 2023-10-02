@@ -32,14 +32,11 @@ class INSwapper:
         self.input_shape = input_shape
         print("inswapper-shape:", self.input_shape, output_shape)
         self.input_size = tuple(input_shape[2:4][::-1])
-        print(self.input_size)
 
     def get(self, img, target_face, source_face, paste_back=False):
         aimg, M = norm_crop(img, target_face.kps, self.input_size[0])
         blob = nninput(
             aimg,
-            std=255.0,
-            mean=0.0,
             shape=self.input_size,
         )
         latent = source_face.normed_embedding.reshape((1, -1))
