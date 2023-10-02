@@ -15,10 +15,10 @@ class INSwapper:
         model = onnx.load(self.model_file)
         graph = model.graph
         self.emap = numpy_helper.to_array(graph.initializer[-1])
-        self.input_mean = 0.0
-        self.input_std = 255.0
-        if self.session is None:
-            self.session = onnxruntime.InferenceSession(self.model_file, None)
+        self.session = session or onnxruntime.InferenceSession(
+            self.model_file,
+            None,
+        )
         inputs = self.session.get_inputs()
         self.input_names = []
         self.input_names.extend(inp.name for inp in inputs)
@@ -37,8 +37,6 @@ class INSwapper:
         aimg, M = norm_crop(img, target_face.kps, self.input_size[0])
         blob = nninput(
             aimg,
-            std=self.input_std,
-            mean=self.input_mean,
             shape=self.input_size,
         )
         latent = source_face.normed_embedding.reshape((1, -1))
