@@ -18,13 +18,12 @@ class INSwapper:
             128,
         ),
     ):
-        self.model_file = model_file
         self.resolution = resolution
-        model = onnx.load(self.model_file)
-        graph = model.graph
-        self.emap = numpy_helper.to_array(graph.initializer[-1])
+        self.emap = numpy_helper.to_array(
+            onnx.load(model_file).graph.initializer[-1],
+        )
         self.session = session or onnxruntime.InferenceSession(
-            self.model_file,
+            model_file,
             None,
         )
         inputs = self.session.get_inputs()
@@ -93,13 +92,9 @@ class INSwapper:
         fake_diff[fake_diff < fthresh] = 0
         fake_diff[fake_diff >= fthresh] = 255
         img_mask = img_white
-        mask_h_inds, mask_w_inds = np.where(img_mask == 255)
-        # mask_h = np.max(mask_h_inds, 10) - np.min(mask_h_inds, 10)
-        # mask_w = np.max(mask_w_inds, 10) - np.min(mask_w_inds, 10)
         # mask_size = int(np.sqrt(mask_h * mask_w))
         mask_size = 100
         k = max(mask_size // 10, 10)
-        # k = max(mask_size//20, 6)
         # k = 6
         kernel = np.ones((k, k), np.uint8)
         img_mask = cv2.erode(img_mask, kernel, iterations=1)
