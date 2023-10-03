@@ -4,8 +4,19 @@ import onnx
 import onnxruntime
 from onnx import numpy_helper
 
+from wasp.face import Face
 from wasp.infer.detection.nn import nninput
 from wasp.infer.distance import norm_crop
+
+
+def _diff(bgr_fake, aimg) -> np.ndarray:
+    fake_diff = bgr_fake.astype(np.float32) - aimg.astype(np.float32)
+    fake_diff = np.abs(fake_diff).mean(axis=2)
+    fake_diff[:2, :] = 0
+    fake_diff[-2:, :] = 0
+    fake_diff[:, :2] = 0
+    fake_diff[:, -2:] = 0
+    return fake_diff
 
 
 class INSwapper:
@@ -31,17 +42,23 @@ class INSwapper:
         self.input_names.extend(inp.name for inp in inputs)
         self.output_names = [out.name for out in self.session.get_outputs()]
 
-    def get(self, img, target_face, source_face, paste_back=False):
-        aimg, M = norm_crop(img, target_face.kps, self.resolution[0])
+    def get(
+        self,
+        image: np.ndarray,
+        target: Face,
+        source: Face,
+    ) -> np.ndarray:
+        crop, M = norm_crop(image, target.kps, self.resolution[0])
         blob = nninput(
-            aimg,
+            crop,
             std=255.0,
             mean=0.0,
             shape=self.resolution,
         )
-        latent = source_face.normed_embedding.reshape((1, -1))
+        latent = source.normed_embedding.reshape((1, -1))
         latent = np.dot(latent, self.emap)
         latent /= np.linalg.norm(latent)
+
         pred = self.session.run(
             self.output_names,
             {
@@ -52,17 +69,12 @@ class INSwapper:
         # print(latent.shape, latent.dtype, pred.shape)
         img_fake = pred.transpose((0, 2, 3, 1))[0]
         bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
-        return self.prepare_features(img, bgr_fake, aimg, M)
+        return self.blend(image, bgr_fake, crop, M)
 
     # TODO Rename this here and in `get`
-    def prepare_features(self, img, bgr_fake, aimg, M):
+    def blend(self, img, bgr_fake, aimg, M):
         target_img = img
-        fake_diff = bgr_fake.astype(np.float32) - aimg.astype(np.float32)
-        fake_diff = np.abs(fake_diff).mean(axis=2)
-        fake_diff[:2, :] = 0
-        fake_diff[-2:, :] = 0
-        fake_diff[:, :2] = 0
-        fake_diff[:, -2:] = 0
+        fake_diff = _diff(bgr_fake, aimg)
         IM = cv2.invertAffineTransform(M)
         img_white = np.full(
             (aimg.shape[0], aimg.shape[1]),
