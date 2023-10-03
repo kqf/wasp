@@ -18,13 +18,12 @@ class INSwapper:
             128,
         ),
     ):
-        self.model_file = model_file
         self.resolution = resolution
-        model = onnx.load(self.model_file)
-        graph = model.graph
-        self.emap = numpy_helper.to_array(graph.initializer[-1])
+        self.emap = numpy_helper.to_array(
+            onnx.load(model_file).graph.initializer[-1],
+        )
         self.session = session or onnxruntime.InferenceSession(
-            self.model_file,
+            model_file,
             None,
         )
         inputs = self.session.get_inputs()
