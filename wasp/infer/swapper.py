@@ -52,10 +52,10 @@ class INSwapper:
         # print(latent.shape, latent.dtype, pred.shape)
         img_fake = pred.transpose((0, 2, 3, 1))[0]
         bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
-        return self.prepare_features(img, bgr_fake, aimg, M)
+        return self.blend(img, bgr_fake, aimg, M)
 
     # TODO Rename this here and in `get`
-    def prepare_features(self, img, bgr_fake, aimg, M):
+    def blend(self, img, bgr_fake, aimg, M):
         target_img = img
         fake_diff = bgr_fake.astype(np.float32) - aimg.astype(np.float32)
         fake_diff = np.abs(fake_diff).mean(axis=2)
