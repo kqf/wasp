@@ -31,7 +31,7 @@ class INSwapper:
         self.input_names.extend(inp.name for inp in inputs)
         self.output_names = [out.name for out in self.session.get_outputs()]
 
-    def get(self, img, target_face, source_face, paste_back=False):
+    def get(self, img, target_face, source_face):
         aimg, M = norm_crop(img, target_face.kps, self.resolution[0])
         blob = nninput(
             aimg,
