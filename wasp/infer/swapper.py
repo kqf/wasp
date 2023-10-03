@@ -4,6 +4,7 @@ import onnx
 import onnxruntime
 from onnx import numpy_helper
 
+from wasp.face import Face
 from wasp.infer.detection.nn import nninput
 from wasp.infer.distance import norm_crop
 
@@ -31,17 +32,18 @@ class INSwapper:
         self.input_names.extend(inp.name for inp in inputs)
         self.output_names = [out.name for out in self.session.get_outputs()]
 
-    def get(self, img, target_face, source_face):
-        aimg, M = norm_crop(img, target_face.kps, self.resolution[0])
+    def get(self, image, target: Face, source: Face) -> np.ndarray:
+        crop, M = norm_crop(image, target.kps, self.resolution[0])
         blob = nninput(
-            aimg,
+            crop,
             std=255.0,
             mean=0.0,
             shape=self.resolution,
         )
-        latent = source_face.normed_embedding.reshape((1, -1))
+        latent = source.normed_embedding.reshape((1, -1))
         latent = np.dot(latent, self.emap)
         latent /= np.linalg.norm(latent)
+
         pred = self.session.run(
             self.output_names,
             {
@@ -52,7 +54,7 @@ class INSwapper:
         # print(latent.shape, latent.dtype, pred.shape)
         img_fake = pred.transpose((0, 2, 3, 1))[0]
         bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
-        return self.blend(img, bgr_fake, aimg, M)
+        return self.blend(image, bgr_fake, crop, M)
 
     # TODO Rename this here and in `get`
     def blend(self, img, bgr_fake, aimg, M):
