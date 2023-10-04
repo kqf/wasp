@@ -80,7 +80,7 @@ class INSwapper:
             255,
             dtype=np.float32,
         )
-        bgr_fake = cv2.warpAffine(
+        bgr_f = cv2.warpAffine(
             bgr_fake,
             IM,
             (target_img.shape[1], target_img.shape[0]),
@@ -128,8 +128,8 @@ class INSwapper:
             img_mask,
             [img_mask.shape[0], img_mask.shape[1], 1],
         )
-        fake_merged = img_mask * bgr_fake + (1 - img_mask) * target_img.astype(
-            np.float32
+        fake_merged = img_mask * bgr_f + (1 - img_mask) * target_img.astype(
+            np.float32,
         )
         fake_merged = fake_merged.astype(np.uint8)
         return fake_merged
