@@ -74,7 +74,6 @@ class INSwapper:
     # TODO Rename this here and in `get`
     def blend(self, img, bgr_fake, aimg, M):
         target_img = img
-        fake_diff = _diff(bgr_fake, aimg)
         IM = cv2.invertAffineTransform(M)
         img_white = np.full(
             (aimg.shape[0], aimg.shape[1]),
@@ -94,7 +93,7 @@ class INSwapper:
             borderValue=0.0,
         )
         fake_diff = cv2.warpAffine(
-            fake_diff,
+            _diff(bgr_fake, aimg),
             IM,
             (target_img.shape[1], target_img.shape[0]),
             borderValue=0.0,
