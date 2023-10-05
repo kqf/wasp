@@ -19,25 +19,6 @@ def _diff(bgr_fake, aimg) -> np.ndarray:
     return fake_diff
 
 
-def warp_and_mask(self, bgr_fake, fake_diff, M, target_shape):
-    # Warp the fake image and create a mask
-    IM = cv2.invertAffineTransform(M)
-
-    # Warp the fake image
-    warped_fake = cv2.warpAffine(
-        bgr_fake, IM, (target_shape[1], target_shape[0]), borderValue=0.0
-    )
-
-    # Create a mask based on the fake difference
-    img_white = np.full(
-        (fake_diff.shape[0], fake_diff.shape[1]), 255, dtype=np.float32
-    )
-    img_white[fake_diff >= 10] = 255
-    img_white[fake_diff < 10] = 0
-
-    return warped_fake, img_white
-
-
 class INSwapper:
     def __init__(
         self,
@@ -88,7 +69,7 @@ class INSwapper:
         # print(latent.shape, latent.dtype, pred.shape)
         img_fake = pred.transpose((0, 2, 3, 1))[0]
         bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
-        return self.blend(image, bgr_fake, crop, M)
+        return self.blend(image.copy(), bgr_fake, crop, M)
 
     # TODO Rename this here and in `get`
     def blend(self, img, bgr_fake, aimg, M):
