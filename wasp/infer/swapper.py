@@ -71,7 +71,6 @@ class INSwapper:
         bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
         return self.blend(image.copy(), bgr_fake, crop, M)
 
-    # TODO Rename this here and in `get`
     def blend(self, image, bgr_fake, crop, M):
         IM = cv2.invertAffineTransform(M)
         white = np.full((crop.shape[0], crop.shape[1]), 255, dtype=np.float32)
