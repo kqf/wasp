@@ -19,25 +19,6 @@ def _diff(bgr_fake, aimg) -> np.ndarray:
     return fake_diff
 
 
-def warp_and_mask(self, bgr_fake, fake_diff, M, target_shape):
-    # Warp the fake image and create a mask
-    IM = cv2.invertAffineTransform(M)
-
-    # Warp the fake image
-    warped_fake = cv2.warpAffine(
-        bgr_fake, IM, (target_shape[1], target_shape[0]), borderValue=0.0
-    )
-
-    # Create a mask based on the fake difference
-    img_white = np.full(
-        (fake_diff.shape[0], fake_diff.shape[1]), 255, dtype=np.float32
-    )
-    img_white[fake_diff >= 10] = 255
-    img_white[fake_diff < 10] = 0
-
-    return warped_fake, img_white
-
-
 class INSwapper:
     def __init__(
         self,
@@ -88,11 +69,10 @@ class INSwapper:
         # print(latent.shape, latent.dtype, pred.shape)
         img_fake = pred.transpose((0, 2, 3, 1))[0]
         bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
-        return self.blend(image, bgr_fake, crop, M)
+        return self.blend(image.copy(), bgr_fake, crop, M)
 
     # TODO Rename this here and in `get`
-    def blend(self, img, bgr_fake, aimg, M):
-        target_img = img
+    def blend(self, image, bgr_fake, aimg, M):
         IM = cv2.invertAffineTransform(M)
         img_white = np.full(
             (aimg.shape[0], aimg.shape[1]),
@@ -102,19 +82,19 @@ class INSwapper:
         bgr_f = cv2.warpAffine(
             bgr_fake,
             IM,
-            (target_img.shape[1], target_img.shape[0]),
+            (image.shape[1], image.shape[0]),
             borderValue=0.0,
         )
         img_white = cv2.warpAffine(
             img_white,
             IM,
-            (target_img.shape[1], target_img.shape[0]),
+            (image.shape[1], image.shape[0]),
             borderValue=0.0,
         )
         fake_diff = cv2.warpAffine(
             _diff(bgr_fake, aimg),
             IM,
-            (target_img.shape[1], target_img.shape[0]),
+            (image.shape[1], image.shape[0]),
             borderValue=0.0,
         )
         img_white[img_white > 20] = 255
@@ -147,7 +127,7 @@ class INSwapper:
             img_mask,
             [img_mask.shape[0], img_mask.shape[1], 1],
         )
-        fake_merged = img_mask * bgr_f + (1 - img_mask) * target_img.astype(
+        fake_merged = img_mask * bgr_f + (1 - img_mask) * image.astype(
             np.float32,
         )
         fake_merged = fake_merged.astype(np.uint8)
