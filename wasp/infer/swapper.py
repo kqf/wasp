@@ -72,36 +72,32 @@ class INSwapper:
         return self.blend(image.copy(), bgr_fake, crop, M)
 
     # TODO Rename this here and in `get`
-    def blend(self, image, bgr_fake, aimg, M):
+    def blend(self, image, bgr_fake, crop, M):
         IM = cv2.invertAffineTransform(M)
-        img_white = np.full(
-            (aimg.shape[0], aimg.shape[1]),
-            255,
-            dtype=np.float32,
-        )
+        white = np.full((crop.shape[0], crop.shape[1]), 255, dtype=np.float32)
         bgr_f = cv2.warpAffine(
             bgr_fake,
             IM,
             (image.shape[1], image.shape[0]),
             borderValue=0.0,
         )
-        img_white = cv2.warpAffine(
-            img_white,
+        white = cv2.warpAffine(
+            white,
             IM,
             (image.shape[1], image.shape[0]),
             borderValue=0.0,
         )
         fake_diff = cv2.warpAffine(
-            _diff(bgr_fake, aimg),
+            _diff(bgr_fake, crop),
             IM,
             (image.shape[1], image.shape[0]),
             borderValue=0.0,
         )
-        img_white[img_white > 20] = 255
+        white[white > 20] = 255
         fthresh = 10
         fake_diff[fake_diff < fthresh] = 0
         fake_diff[fake_diff >= fthresh] = 255
-        img_mask = img_white
+        img_mask = white
         # mask_size = int(np.sqrt(mask_h * mask_w))
         mask_size = 100
         k = max(mask_size // 10, 10)
