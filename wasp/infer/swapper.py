@@ -26,8 +26,8 @@ def warp(image, IM, shape):
         (shape[1], shape[0]),
         borderValue=0.0,
     )
-  
-  
+
+
 class INSwapper:
     def __init__(
         self,
@@ -83,24 +83,9 @@ class INSwapper:
     def blend(self, image, bgr_fake, crop, M):
         IM = cv2.invertAffineTransform(M)
         white = np.full((crop.shape[0], crop.shape[1]), 255, dtype=np.float32)
-        bgr_f = cv2.warpAffine(
-            bgr_fake,
-            IM,
-            (image.shape[1], image.shape[0]),
-            borderValue=0.0,
-        )
-        white = cv2.warpAffine(
-            white,
-            IM,
-            (image.shape[1], image.shape[0]),
-            borderValue=0.0,
-        )
-        fake_diff = cv2.warpAffine(
-            _diff(bgr_fake, crop),
-            IM,
-            (image.shape[1], image.shape[0]),
-            borderValue=0.0,
-        )
+        bgr_f = warp(bgr_fake, IM, image.shape)
+        white = warp(white, IM, image.shape)
+        fake_diff = warp(_diff(bgr_fake, crop), IM, image.shape)
         white[white > 20] = 255
         fthresh = 10
         fake_diff[fake_diff < fthresh] = 0
