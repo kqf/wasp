@@ -19,7 +19,7 @@ def _diff(bgr_fake, aimg) -> np.ndarray:
     return fake_diff
 
 
-def warp(image, IM, shape):
+def warp(image: np.ndarray, IM: np.ndarray, shape: tuple) -> np.ndarray:
     return cv2.warpAffine(
         image,
         IM,
