@@ -19,6 +19,15 @@ def _diff(bgr_fake, aimg) -> np.ndarray:
     return fake_diff
 
 
+def warp(image, IM, shape):
+    return cv2.warpAffine(
+        image,
+        IM,
+        (shape[1], shape[0]),
+        borderValue=0.0,
+    )
+
+
 class INSwapper:
     def __init__(
         self,
