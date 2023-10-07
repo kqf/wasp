@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 
-from wasp.infer.detection.arcface import ArcFace
+from wasp.infer.arcface import ArcFace
 
 MODEL = "models/w600k_r50.onnx"
 
