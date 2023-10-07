@@ -4,8 +4,8 @@ from typing import Optional
 import numpy as np
 import onnxruntime
 
-from wasp.infer.detection.nn import nninput
 from wasp.infer.distance import norm_crop
+from wasp.infer.nn import nninput
 
 
 @dataclass
