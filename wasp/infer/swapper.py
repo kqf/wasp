@@ -1,3 +1,5 @@
+from functools import partial
+
 import cv2
 import numpy as np
 import onnx
@@ -83,9 +85,10 @@ class INSwapper:
     def blend(self, image, bgr_fake, crop, M):
         IM = cv2.invertAffineTransform(M)
         white = np.full((crop.shape[0], crop.shape[1]), 255, dtype=np.float32)
-        bgr_f = warp(bgr_fake, IM, image.shape)
-        white = warp(white, IM, image.shape)
-        fake_diff = warp(_diff(bgr_fake, crop), IM, image.shape)
+        warps = partial(warp, IM=IM, shape=image.shape)
+        bgr_f = warps(bgr_fake)
+        white = warps(white)
+        fake_diff = warps(_diff(bgr_fake, crop))
         white[white > 20] = 255
         fthresh = 10
         fake_diff[fake_diff < fthresh] = 0
