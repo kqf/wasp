@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from wasp.infer.detection.scrfd import SCRFD, nninput, resize_image
+from wasp.infer.scrfd import SCRFD, nninput, resize_image
 
-from wasp.infer.detection.scrfd import anchors_centers  # isort:skip
+from wasp.infer.scrfd import anchors_centers  # isort:skip
 
 
 MODEL = "models/det_10g.onnx"
