@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 import onnxruntime
 
-from wasp.infer.detection.nn import nninput
 from wasp.infer.distance import distance2bbox, distance2kps
+from wasp.infer.nn import nninput
 
 
 def nms_scores(

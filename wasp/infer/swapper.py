@@ -7,8 +7,8 @@ import onnxruntime
 from onnx import numpy_helper
 
 from wasp.face import Face
-from wasp.infer.detection.nn import nninput
 from wasp.infer.distance import norm_crop
+from wasp.infer.nn import nninput
 
 
 def _diff(bgr_fake, aimg) -> np.ndarray:
