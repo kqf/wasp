@@ -19,3 +19,14 @@ def nninput(
         (mean, mean, mean),
         swapRB=True,
     )
+
+
+def nnoutput(blob: np.ndarray, norm=255) -> np.ndarray:
+    # Convert to channels last as normal image
+    channels_last = blob.transpose((0, 2, 3, 1))[0]
+
+    # Convert RGB image
+    rgb = np.clip(norm * channels_last, 0, 255).astype(np.uint8)
+
+    # Convert back to BGR
+    return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
