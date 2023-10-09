@@ -83,8 +83,11 @@ class INSwapper:
         )[0]
         # Switch to channels last
         ch_laset = pred.transpose((0, 2, 3, 1))[0]
-        bgr_fake = np.clip(255 * ch_laset, 0, 255).astype(np.uint8)[:, :, ::-1]
-        return self.blend(image.copy(), bgr_fake, crop, M)
+        fake = cv2.cvtColor(
+            np.clip(255 * ch_laset, 0, 255).astype(np.uint8),
+            cv2.COLOR_RGB2BGR,
+        )
+        return self.blend(image.copy(), fake, crop, M)
 
     def blend(self, image, bgr_fake, crop, M):
         IM = cv2.invertAffineTransform(M)
