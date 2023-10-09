@@ -4,3 +4,4 @@ onnxruntime
 opencv-python
 matplotlib
 scikit-image
+nptyping

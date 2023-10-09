@@ -1,6 +1,7 @@
 from functools import partial
 
 import cv2
+import nptyping as npt
 import numpy as np
 import onnx
 import onnxruntime
@@ -59,27 +60,30 @@ class INSwapper:
         target: Face,
         source: Face,
     ) -> np.ndarray:
+        # Crop a single face:
         crop, M = norm_crop(image, target.kps, self.resolution[0])
-        blob = nninput(
+        blob: npt.NDArray[npt.Shape["1, 3, 128, 128"]] = nninput(
             crop,
             std=255.0,
             mean=0.0,
             shape=self.resolution,
         )
+        # latent[1, 512]
         latent = source.normed_embedding.reshape((1, -1))
         latent = np.dot(latent, self.emap)
         latent /= np.linalg.norm(latent)
+        print(latent.shape)
 
-        pred = self.session.run(
+        pred: npt.NDArray[npt.Shape["1, 3, 128, 128"]] = self.session.run(
             self.output_names,
             {
                 self.input_names[0]: blob.astype(np.float32),
                 self.input_names[1]: latent.astype(np.float32),
             },
         )[0]
-        # print(latent.shape, latent.dtype, pred.shape)
-        img_fake = pred.transpose((0, 2, 3, 1))[0]
-        bgr_fake = np.clip(255 * img_fake, 0, 255).astype(np.uint8)[:, :, ::-1]
+        # Switch to channels last
+        ch_laset = pred.transpose((0, 2, 3, 1))[0]
+        bgr_fake = np.clip(255 * ch_laset, 0, 255).astype(np.uint8)[:, :, ::-1]
         return self.blend(image.copy(), bgr_fake, crop, M)
 
     def blend(self, image, bgr_fake, crop, M):
