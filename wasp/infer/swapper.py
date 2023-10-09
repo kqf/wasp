@@ -9,7 +9,7 @@ from onnx import numpy_helper
 
 from wasp.face import Face
 from wasp.infer.distance import norm_crop
-from wasp.infer.nn import nninput
+from wasp.infer.nn import nninput, nnoutput
 
 
 def _diff(bgr_fake, aimg) -> np.ndarray:
@@ -81,12 +81,8 @@ class INSwapper:
                 self.input_names[1]: latent.astype(np.float32),
             },
         )[0]
-        # Switch to channels last
-        ch_laset = pred.transpose((0, 2, 3, 1))[0]
-        fake = cv2.cvtColor(
-            np.clip(255 * ch_laset, 0, 255).astype(np.uint8),
-            cv2.COLOR_RGB2BGR,
-        )
+        # Convert ot BGR image 
+        fake: npt.NDArray[npt.Shape["128, 128, 3"]] = nnoutput(pred)
         return self.blend(image.copy(), fake, crop, M)
 
     def blend(self, image, bgr_fake, crop, M):
