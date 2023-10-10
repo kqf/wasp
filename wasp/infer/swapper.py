@@ -85,13 +85,13 @@ class INSwapper:
         fake: npt.NDArray[npt.Shape["128, 128, 3"]] = nnoutput(pred)
         return self.blend(image.copy(), fake, crop, M)
 
-    def blend(self, image, bgr_fake, crop, M):
+    def blend(self, image, fake, crop, M) -> np.ndarray:
         IM = cv2.invertAffineTransform(M)
         white = np.full((crop.shape[0], crop.shape[1]), 255, dtype=np.float32)
         warps = partial(warp, IM=IM, shape=image.shape)
-        bgr_f = warps(bgr_fake)
+        bgr_f = warps(fake)
         white = warps(white)
-        fake_diff = warps(_diff(bgr_fake, crop))
+        fake_diff = warps(_diff(fake, crop))
         white[white > 20] = 255
         fthresh = 10
         fake_diff[fake_diff < fthresh] = 0
