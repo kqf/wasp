@@ -81,7 +81,7 @@ class INSwapper:
                 self.input_names[1]: latent.astype(np.float32),
             },
         )[0]
-        # Switch to channels last
+        # Convert ot BGR image 
         fake: npt.NDArray[npt.Shape["128, 128, 3"]] = nnoutput(pred)
         return self.blend(image.copy(), fake, crop, M)
 
