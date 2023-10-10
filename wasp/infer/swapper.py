@@ -22,6 +22,13 @@ def _diff(bgr_fake, aimg) -> np.ndarray:
     return fake_diff
 
 
+def erode(img_mask, mask_size=100) -> np.ndarray:
+    k = max(mask_size // 10, 10)
+    # k = 6
+    kernel = np.ones((k, k), np.uint8)
+    return cv2.erode(img_mask, kernel, iterations=1)
+
+
 def warp(image: np.ndarray, IM: np.ndarray, shape: tuple) -> np.ndarray:
     return cv2.warpAffine(
         image,
@@ -81,7 +88,7 @@ class INSwapper:
                 self.input_names[1]: latent.astype(np.float32),
             },
         )[0]
-        # Convert ot BGR image 
+        # Convert ot BGR image
         fake: npt.NDArray[npt.Shape["128, 128, 3"]] = nnoutput(pred)
         return self.blend(image.copy(), fake, crop, M)
 
@@ -96,13 +103,8 @@ class INSwapper:
         fthresh = 10
         fake_diff[fake_diff < fthresh] = 0
         fake_diff[fake_diff >= fthresh] = 255
-        img_mask = white
-        # mask_size = int(np.sqrt(mask_h * mask_w))
         mask_size = 100
-        k = max(mask_size // 10, 10)
-        # k = 6
-        kernel = np.ones((k, k), np.uint8)
-        img_mask = cv2.erode(img_mask, kernel, iterations=1)
+        img_mask = erode(white, mask_size=mask_size)
         kernel = np.ones((2, 2), np.uint8)
         fake_diff = cv2.dilate(fake_diff, kernel, iterations=1)
         k = max(mask_size // 20, 5)
