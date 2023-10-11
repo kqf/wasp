@@ -22,11 +22,9 @@ def _diff(bgr_fake, aimg) -> np.ndarray:
     return fake_diff
 
 
-def erode(img_mask, mask_size=100) -> np.ndarray:
-    k = max(mask_size // 10, 10)
-    # k = 6
+def distort(img_mask, k, func) -> np.ndarray:
     kernel = np.ones((k, k), np.uint8)
-    return cv2.erode(img_mask, kernel, iterations=1)
+    return func(img_mask, kernel, iterations=1)
 
 
 def warp(image: np.ndarray, IM: np.ndarray, shape: tuple) -> np.ndarray:
@@ -104,7 +102,7 @@ class INSwapper:
         fake_diff[fake_diff < fthresh] = 0
         fake_diff[fake_diff >= fthresh] = 255
         mask_size = 100
-        img_mask = erode(white, mask_size=mask_size)
+        img_mask = distort(white, k=10, func=cv2.erode)
         kernel = np.ones((2, 2), np.uint8)
         fake_diff = cv2.dilate(fake_diff, kernel, iterations=1)
         k = max(mask_size // 20, 5)
