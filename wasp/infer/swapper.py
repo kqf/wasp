@@ -27,6 +27,13 @@ def distort(img_mask, k, func) -> np.ndarray:
     return func(img_mask, kernel, iterations=1)
 
 
+def blur(img_mask, k):
+    kernel_size = (k, k)
+    blur_size = tuple(2 * i + 1 for i in kernel_size)
+    img_mask = cv2.GaussianBlur(img_mask, blur_size, 0)
+    return img_mask
+
+  
 def warp(image: np.ndarray, IM: np.ndarray, shape: tuple) -> np.ndarray:
     return cv2.warpAffine(
         image,
@@ -103,13 +110,7 @@ class INSwapper:
         fake_diff[fake_diff >= fthresh] = 255
         img_mask = distort(white, k=10, func=cv2.erode)
         fake_diff = distort(fake_diff, k=2, func=cv2.dilate)
-        mask_size = 100
-        k = max(mask_size // 20, 5)
-        # k = 3
-        # k = 3
-        kernel_size = (k, k)
-        blur_size = tuple(2 * i + 1 for i in kernel_size)
-        img_mask = cv2.GaussianBlur(img_mask, blur_size, 0)
+        img_mask = blur(img_mask, k=5)
         k = 5
         kernel_size = (k, k)
         blur_size = tuple(2 * i + 1 for i in kernel_size)
