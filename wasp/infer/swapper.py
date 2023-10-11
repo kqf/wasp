@@ -101,10 +101,9 @@ class INSwapper:
         fthresh = 10
         fake_diff[fake_diff < fthresh] = 0
         fake_diff[fake_diff >= fthresh] = 255
-        mask_size = 100
         img_mask = distort(white, k=10, func=cv2.erode)
-        kernel = np.ones((2, 2), np.uint8)
-        fake_diff = cv2.dilate(fake_diff, kernel, iterations=1)
+        fake_diff = distort(fake_diff, k=2, func=cv2.dilate)
+        mask_size = 100
         k = max(mask_size // 20, 5)
         # k = 3
         # k = 3
