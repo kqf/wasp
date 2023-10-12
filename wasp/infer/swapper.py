@@ -33,7 +33,7 @@ def blur(img_mask, k):
     img_mask = cv2.GaussianBlur(img_mask, blur_size, 0)
     return img_mask
 
-
+  
 def warp(image: np.ndarray, IM: np.ndarray, shape: tuple) -> np.ndarray:
     return cv2.warpAffine(
         image,
