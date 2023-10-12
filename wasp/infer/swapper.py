@@ -101,7 +101,6 @@ class INSwapper:
         IM = cv2.invertAffineTransform(M)
         white = np.full((crop.shape[0], crop.shape[1]), 255, dtype=np.float32)
         warps = partial(warp, IM=IM, shape=image.shape)
-        bgr_f = warps(fake)
         white = warps(white)
         fake_diff = warps(_diff(fake, crop))
         white[white > 20] = 255
@@ -119,6 +118,7 @@ class INSwapper:
             img_mask,
             [img_mask.shape[0], img_mask.shape[1], 1],
         )
+        bgr_f = warps(fake)
         fake_merged = img_mask * bgr_f + (1 - img_mask) * image.astype(
             np.float32,
         )
