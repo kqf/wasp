@@ -110,7 +110,8 @@ class INSwapper:
         img_mask = blur(img_mask, k=5)
         fake_diff = blur(fake_diff, k=5)
         img_mask /= 255
-        fake_diff /= 255
+        # TODO: Try with normalization
+        # fake_diff /= 255
         # img_mask = fake_diff
         img_mask = np.reshape(
             img_mask,
