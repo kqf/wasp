@@ -103,7 +103,7 @@ class INSwapper:
         warps = partial(warp, IM=IM, shape=image.shape)
         white = warps(white)
         fake_diff = warps(_diff(fake, crop))
-        white[white > 20] = 255
+        white = np.where(white > 20, 255, white)
         fthresh = 10
         fake_diff[fake_diff < fthresh] = 0
         fake_diff[fake_diff >= fthresh] = 255
