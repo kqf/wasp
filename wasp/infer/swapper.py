@@ -106,7 +106,6 @@ class INSwapper:
         fake_diff = np.where(fake_diff >= 10, 255.0, 0.0)
         white = np.where(white > 20, 255, white)
         img_mask = distort(white, k=10, func=cv2.erode)
-        fake_diff = distort(fake_diff, k=2, func=cv2.dilate)
         img_mask = blur(img_mask, k=5)
         img_mask /= 255
         img_mask = np.reshape(
