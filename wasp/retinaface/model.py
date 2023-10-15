@@ -5,6 +5,8 @@ from torch import nn
 from torchvision import models
 from torchvision.models import _utils
 
+from wasp.retinaface.fpn import FPN, SSH
+
 
 class ClassHead(nn.Module):
     def __init__(self, in_channels: int = 512, num_anchors: int = 3) -> None:
