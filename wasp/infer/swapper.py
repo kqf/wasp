@@ -102,11 +102,8 @@ class INSwapper:
         white = np.full((crop.shape[0], crop.shape[1]), 255, dtype=np.float32)
         warps = partial(warp, IM=IM, shape=image.shape)
         white = warps(white)
-        fake_diff = warps(_diff(fake, crop))
-        fake_diff = np.where(fake_diff >= 10, 255.0, 0.0)
         white = np.where(white > 20, 255, white)
         img_mask = distort(white, k=10, func=cv2.erode)
-        img_mask = blur(img_mask, k=5)
         img_mask /= 255
         img_mask = np.reshape(
             img_mask,
