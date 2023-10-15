@@ -104,7 +104,6 @@ class INSwapper:
         white = warps(white)
         white = np.where(white > 20, 255, white)
         img_mask = distort(white, k=10, func=cv2.erode)
-
         img_mask /= 255
         img_mask = np.reshape(
             img_mask,
