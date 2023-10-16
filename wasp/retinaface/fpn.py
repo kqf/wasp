@@ -60,7 +60,7 @@ def conv_dw(
 
 class SSH(nn.Module):
     def __init__(self, in_channel: int, out_channel: int) -> None:
-        # super().__init__()
+        super().__init__()
         if out_channel % 4 != 0:
             raise ValueError(
                 f"Expect out channel % 4 == 0, but we got {out_channel % 4}"
