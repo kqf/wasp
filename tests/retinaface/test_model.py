@@ -11,7 +11,7 @@ from wasp.retinaface.model import RetinaFace
         torch.randn(1, 3, 1280, 720),  # Random input image
     ],
 )
-def test_retinaface_forward(inputs):
+def test_retinaface(inputs):
     model = RetinaFace(
         name="Resnet50",
         pretrained=False,
@@ -20,23 +20,21 @@ def test_retinaface_forward(inputs):
         out_channels=256,
     )
 
-    # Act
-    bbox_regressions, classifications, ldm_regressions = model.forward(inputs)
+    bboxes, classes, landmarks = model(inputs)
 
-    # Assert
-    assert bbox_regressions.shape == (
+    assert bboxes.shape == (
         inputs.shape[0],
         12,
         inputs.shape[2] // 4,
         inputs.shape[3] // 4,
     )
-    assert classifications.shape == (
+    assert classes.shape == (
         inputs.shape[0],
         6,
         inputs.shape[2] // 4,
         inputs.shape[3] // 4,
     )
-    assert ldm_regressions.shape == (
+    assert landmarks.shape == (
         inputs.shape[0],
         10,
         inputs.shape[2] // 4,
