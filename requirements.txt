@@ -5,3 +5,5 @@ opencv-python
 matplotlib
 scikit-image
 nptyping
+torch
+torchvision
