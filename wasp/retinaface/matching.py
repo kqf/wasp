@@ -22,7 +22,6 @@ def point_form(boxes: torch.Tensor) -> torch.Tensor:
         dim=1,
     )
 
-
 def encode(*args):
     pass
 
