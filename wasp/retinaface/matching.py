@@ -51,6 +51,10 @@ def encode(
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
 
 
+def to_shape(x, matched) -> torch.Tensor:
+    return x.unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
+
+
 def encode_landm(
     matched: torch.Tensor,
     priors: torch.Tensor,
@@ -71,18 +75,10 @@ def encode_landm(
     """
     # dist b/t match center and prior's center
     matched = torch.reshape(matched, (matched.size(0), 5, 2))
-    priors_cx = (
-        priors[:, 0].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
-    )
-    priors_cy = (
-        priors[:, 1].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
-    )
-    priors_w = (
-        priors[:, 2].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
-    )
-    priors_h = (
-        priors[:, 3].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
-    )
+    priors_cx = to_shape(priors[:, 0], matched)
+    priors_cy = to_shape(priors[:, 1], matched)
+    priors_w = to_shape(priors[:, 2], matched)
+    priors_h = to_shape(priors[:, 3], matched)
     priors = torch.cat([priors_cx, priors_cy, priors_w, priors_h], dim=2)
     g_cxcy = matched[:, :, :2] - priors[:, :, :2]
     # encode variance
