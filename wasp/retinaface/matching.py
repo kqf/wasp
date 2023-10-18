@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Union
 
 import torch
 
@@ -51,8 +51,44 @@ def encode(
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
 
 
-def encode_landm(*args):
-    pass
+def encode_landm(
+    matched: torch.Tensor,
+    priors: torch.Tensor,
+    variances: Union[List[float], Tuple[float, float]],
+) -> torch.Tensor:
+    """Encodes the variances from the priorbox
+    layers into the ground truth boxes we have matched.
+
+    (based on jaccard overlap) with the prior boxes.
+    Args:
+        matched: Coords of ground truth for each prior in point-form
+            Shape: [num_priors, 10].
+        priors: Prior boxes in center-offset form
+            Shape: [num_priors,4].
+        variances: Variances of priorboxes
+    Return:
+        encoded landmarks, Shape: [num_priors, 10]
+    """
+    # dist b/t match center and prior's center
+    matched = torch.reshape(matched, (matched.size(0), 5, 2))
+    priors_cx = (
+        priors[:, 0].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
+    )
+    priors_cy = (
+        priors[:, 1].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
+    )
+    priors_w = (
+        priors[:, 2].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
+    )
+    priors_h = (
+        priors[:, 3].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
+    )
+    priors = torch.cat([priors_cx, priors_cy, priors_w, priors_h], dim=2)
+    g_cxcy = matched[:, :, :2] - priors[:, :, :2]
+    # encode variance
+    g_cxcy /= variances[0] * priors[:, :, 2:]
+    # return target for smooth_l1_loss
+    return g_cxcy.reshape(g_cxcy.size(0), -1)
 
 
 def match(
