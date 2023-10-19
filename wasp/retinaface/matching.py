@@ -3,6 +3,32 @@ from typing import List, Tuple, Union
 import torch
 
 
+def intersect(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
+    """We resize both tensors to [A,B,2] without new malloc.
+
+    [A, 2] -> [A, 1, 2] -> [A, B, 2]
+    [B, 2] -> [1, B, 2] -> [A, B, 2]
+    Then we compute the area of intersect between box_a and box_b.
+    Args:
+      box_a: bounding boxes, Shape: [A, 4].
+      box_b: bounding boxes, Shape: [B, 4].
+    Return:
+      intersection area, Shape: [A, B].
+    """
+    a = box_a.size(0)
+    b = box_b.size(0)
+    max_xy = torch.min(
+        box_a[:, 2:].unsqueeze(1).expand(a, b, 2),
+        box_b[:, 2:].unsqueeze(0).expand(a, b, 2),
+    )
+    min_xy = torch.max(
+        box_a[:, :2].unsqueeze(1).expand(a, b, 2),
+        box_b[:, :2].unsqueeze(0).expand(a, b, 2),
+    )
+    inter = torch.clamp((max_xy - min_xy), min=0)
+    return inter[:, :, 0] * inter[:, :, 1]
+
+
 def iou(*args):
     pass
 
