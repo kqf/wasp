@@ -5,9 +5,8 @@ from wasp.retinaface.matching import match
 
 def test_match(
     threshold=0.5,
-    box_gt=torch.tensor([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]),
     priors=torch.tensor([[0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9]]),
-    variances=None,
+    box_gt=torch.tensor([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]),
     labels_gt=torch.tensor([1, 2]),
     landmarks_gt=torch.tensor(
         [
@@ -16,6 +15,7 @@ def test_match(
         ]
     ),
     batch_id=0,
+    variances=None,
 ):
     variances = variances or [0.1, 0.1, 0.2, 0.2]
     box_t = torch.zeros(1, priors.size(0), 4)
@@ -33,3 +33,4 @@ def test_match(
         landmarks_t=landmarks_t,
         batch_id=batch_id,
     )
+    torch.testing.assert_close(label_t, torch.Tensor([[1.0, 0.0]]))
