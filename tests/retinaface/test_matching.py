@@ -15,12 +15,12 @@ def test_match(
             [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1],
         ]
     ),
-    box_t=torch.zeros(2, 4),
-    label_t=torch.zeros(2),
-    landmarks_t=torch.zeros(2, 10),
     batch_id=0,
 ):
     variances = variances or [0.1, 0.1, 0.2, 0.2]
+    box_t = torch.zeros(1, priors.size(0), 4)
+    label_t = torch.zeros(1, 2)
+    landmarks_t = torch.zeros(1, 2, 10)
     match(
         threshold=threshold,
         box_gt=box_gt,
