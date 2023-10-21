@@ -16,7 +16,6 @@ def test_match(
     ),
     batch_id=0,
     variances=None,
-):
     variances = variances or [0.1, 0.1, 0.2, 0.2]
     box_t = torch.zeros(1, priors.size(0), 4)
     label_t = torch.zeros(1, 2)
