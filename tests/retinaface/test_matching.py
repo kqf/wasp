@@ -34,3 +34,15 @@ def test_match(
         batch_id=batch_id,
     )
     torch.testing.assert_close(label_t, torch.Tensor([[1.0, 0.0]]))
+    print(box_t.cpu().numpy().__repr__())
+    torch.testing.assert_close(
+        box_t,
+        torch.Tensor(
+            [
+                [
+                    [0.000000e00, 0.0000000e00, -6.9314704e00, -9.1629066e00],
+                    [0.000000e00, 6.6227386e-07, -1.3862944e01, -1.5040774e01],
+                ]
+            ]
+        ),
+    )
