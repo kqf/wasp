@@ -34,6 +34,7 @@ def test_match(
         batch_id=batch_id,
     )
     torch.testing.assert_close(label_t, torch.Tensor([[1.0, 0.0]]))
+    print(box_t.cpu().numpy().__repr__())
     torch.testing.assert_close(
         box_t,
         torch.Tensor(
@@ -76,4 +77,3 @@ def test_match(
             ]
         ),
     )
-
