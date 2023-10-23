@@ -40,7 +40,7 @@ class MultiBoxLoss(nn.Module):
         """Multibox Loss.
 
         Args:
-            predictions: A tuple containing locations predictions, confidence predictions,
+            predictions: A tuple containing locations predictions, confidence,
             and prior boxes from SSD net.
                 conf shape: torch.size(batch_size, num_priors, num_classes)
                 loc shape: torch.size(batch_size, num_priors, 4)
@@ -58,9 +58,11 @@ class MultiBoxLoss(nn.Module):
         num_priors = priors.size(0)
 
         # match priors (default boxes) and ground truth boxes
-        boxes_t = torch.zeros(num_predicted_boxes, num_priors, 4).to(
-            targets[0].device
-        )
+        boxes_t = torch.zeros(
+            num_predicted_boxes,
+            num_priors,
+            4,
+        ).to(targets[0].device)
         landmarks_t = torch.zeros(num_predicted_boxes, num_priors, 10).to(
             targets[0].device
         )
