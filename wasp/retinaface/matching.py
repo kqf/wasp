@@ -189,7 +189,6 @@ def match(
     label_t[batch_id] = labels  # [num_priors] top class label for each prior
     landmarks_t[batch_id] = landmarks_gt
 
-
 def log_sum_exp(x):
     x_max = x.data.max()
     return torch.log(torch.sum(torch.exp(x - x_max), 1, keepdim=True)) + x_max
