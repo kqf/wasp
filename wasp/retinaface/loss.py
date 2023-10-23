@@ -58,9 +58,7 @@ class MultiBoxLoss(nn.Module):
         num_priors = priors.size(0)
 
         # match priors (default boxes) and ground truth boxes
-        boxes_t = torch.zeros(num_predicted_boxes, num_priors, 4).to(
-            targets[0].device
-        )
+        boxes_t = torch.zeros(num_predicted_boxes, num_priors, 4).to(targets[0].device)
         landmarks_t = torch.zeros(num_predicted_boxes, num_priors, 10).to(
             targets[0].device
         )
@@ -95,14 +93,10 @@ class MultiBoxLoss(nn.Module):
         positive_1 = conf_t > torch.zeros_like(conf_t)
         num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
         n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
-        pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
-            landmark_data
-        )
+        pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(landmark_data)
         landmarks_p = landmark_data[pos_idx1].view(-1, 10)
         landmarks_t = landmarks_t[pos_idx1].view(-1, 10)
-        loss_landm = F.smooth_l1_loss(
-            landmarks_p, landmarks_t, reduction="sum"
-        )
+        loss_landm = F.smooth_l1_loss(landmarks_p, landmarks_t, reduction="sum")
 
         positive = conf_t != torch.zeros_like(conf_t)
         conf_t[positive] = 1
@@ -115,9 +109,7 @@ class MultiBoxLoss(nn.Module):
 
         # Compute max conf across batch for hard negative mining
         batch_conf = confidence_data.view(-1, self.num_classes)
-        loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
-            1, conf_t.view(-1, 1)
-        )
+        loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, conf_t.view(-1, 1))
 
         # Hard Negative Mining
         loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
@@ -125,17 +117,13 @@ class MultiBoxLoss(nn.Module):
         _, loss_idx = loss_c.sort(1, descending=True)
         _, idx_rank = loss_idx.sort(1)
         num_pos = positive.long().sum(1, keepdim=True)
-        num_neg = torch.clamp(
-            self.negpos_ratio * num_pos, max=positive.size(1) - 1
-        )
+        num_neg = torch.clamp(self.negpos_ratio * num_pos, max=positive.size(1) - 1)
         neg = idx_rank < num_neg.expand_as(idx_rank)
 
         # Confidence Loss Including Positive and Negative Examples
         pos_idx = positive.unsqueeze(2).expand_as(confidence_data)
         neg_idx = neg.unsqueeze(2).expand_as(confidence_data)
-        conf_p = confidence_data[(pos_idx + neg_idx).gt(0)].view(
-            -1, self.num_classes
-        )
+        conf_p = confidence_data[(pos_idx + neg_idx).gt(0)].view(-1, self.num_classes)
         targets_weighted = conf_t[(positive + neg).gt(0)]
         loss_c = F.cross_entropy(conf_p, targets_weighted, reduction="sum")
 
