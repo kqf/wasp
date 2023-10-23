@@ -188,3 +188,7 @@ def match(
     box_t[batch_id] = loc  # [num_priors, 4] encoded offsets to learn
     label_t[batch_id] = labels  # [num_priors] top class label for each prior
     landmarks_t[batch_id] = landmarks_gt
+
+
+def log_sum_exp(*args, **kwargs):
+    pass
