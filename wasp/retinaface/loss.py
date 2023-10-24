@@ -4,7 +4,12 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from wasp.retinaface.matching import log_sum_exp, match
+from wasp.retinaface.matching import match
+
+
+def log_sum_exp(x):
+    x_max = x.data.max()
+    return torch.log(torch.sum(torch.exp(x - x_max), 1, keepdim=True)) + x_max
 
 
 class MultiBoxLoss(nn.Module):
