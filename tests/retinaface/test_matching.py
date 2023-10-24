@@ -47,7 +47,7 @@ def test_match(
         ),
     )
     torch.testing.assert_close(
-        landmarks_t,
+        landmarks_t[0],
         torch.Tensor(
             [
                 [
