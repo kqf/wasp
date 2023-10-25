@@ -107,7 +107,9 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
     def configure_optimizers(
         self,
     ) -> Tuple[
-        Callable[[bool], Union[Optimizer, List[Optimizer], List[LightningOptimizer]]],
+        Callable[
+            [bool], Union[Optimizer, List[Optimizer], List[LightningOptimizer]]
+        ],
         List[Any],
     ]:
         optimizer = object_from_dict(
@@ -115,7 +117,9 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
             params=[x for x in self.model.parameters() if x.requires_grad],
         )
 
-        scheduler = object_from_dict(self.config.scheduler, optimizer=optimizer)
+        scheduler = object_from_dict(
+            self.config.scheduler, optimizer=optimizer
+        )
 
         self.optimizers = [optimizer]  # type: ignore
         return self.optimizers, [scheduler]  # type: ignore
@@ -126,7 +130,9 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
 
         out = self.forward(images)
 
-        loss_localization, loss_classification, loss_landmarks = self.loss(out, targets)
+        loss_localization, loss_classification, loss_landmarks = self.loss(
+            out, targets
+        )
 
         total_loss = (
             self.loss_weights["localization"] * loss_localization
@@ -271,11 +277,17 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
             result_predictions += output["predictions"]
             result_gt += output["gt"]
 
-        _, _, average_precision = recall_precision(result_gt, result_predictions, 0.5)
+        _, _, average_precision = recall_precision(
+            result_gt, result_predictions, 0.5
+        )
 
         self.log("epoch", self.trainer.current_epoch, on_step=False, on_epoch=True, logger=True)  # type: ignore
         self.log(
-            "val_loss", average_precision, on_step=False, on_epoch=True, logger=True
+            "val_loss",
+            average_precision,
+            on_step=False,
+            on_epoch=True,
+            logger=True,
         )
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
