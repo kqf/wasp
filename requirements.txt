@@ -7,3 +7,4 @@ scikit-image
 nptyping
 torch
 torchvision
+types-PyYAML
