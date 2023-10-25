@@ -65,7 +65,9 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
     def setup(self, stage=0) -> None:  # type: ignore
         self.preproc = Preproc(img_dim=self.config.image_size[0])
 
-    def forward(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # type: ignore
+    def forward(
+        self, batch: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # type: ignore
         return self.model(batch)
 
     def train_dataloader(self) -> DataLoader:
@@ -108,7 +110,8 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         self,
     ) -> Tuple[
         Callable[
-            [bool], Union[Optimizer, List[Optimizer], List[LightningOptimizer]]
+            [bool],
+            Union[Optimizer, List[Optimizer], List[LightningOptimizer]],
         ],
         List[Any],
     ]:
@@ -118,20 +121,26 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         )
 
         scheduler = object_from_dict(
-            self.config.scheduler, optimizer=optimizer
+            self.config.scheduler,
+            optimizer=optimizer,
         )
 
         self.optimizers = [optimizer]  # type: ignore
         return self.optimizers, [scheduler]  # type: ignore
 
-    def training_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):  # type: ignore
+    def training_step(
+        self,
+        batch: Dict[str, torch.Tensor],
+        batch_idx: int,
+    ):  # type: ignore
         images = batch["image"]
         targets = batch["annotation"]
 
         out = self.forward(images)
 
         loss_localization, loss_classification, loss_landmarks = self.loss(
-            out, targets
+            out,
+            targets,
         )
 
         total_loss = (
@@ -183,7 +192,11 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
 
         return total_loss
 
-    def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):  # type: ignore
+    def validation_step(
+        self,
+        batch: Dict[str, torch.Tensor],
+        batch_idx: int,
+    ):  # type: ignore
         images = batch["image"]
 
         image_height = images.shape[2]
@@ -278,10 +291,18 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
             result_gt += output["gt"]
 
         _, _, average_precision = recall_precision(
-            result_gt, result_predictions, 0.5
+            result_gt,
+            result_predictions,
+            0.5,
         )
 
-        self.log("epoch", self.trainer.current_epoch, on_step=False, on_epoch=True, logger=True)  # type: ignore
+        self.log(
+            "epoch",
+            self.trainer.current_epoch,
+            on_step=False,
+            on_epoch=True,
+            logger=True,
+        )  # type: ignore
         self.log(
             "val_loss",
             average_precision,
@@ -291,7 +312,7 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         )
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
-        lr = [x["lr"] for x in self.optimizers[0].param_groups][0]  # type: ignore
+        lr = [x["lr"] for x in self.optimizers[0].param_groups][0]  # type: ignore # noqa
         return torch.from_numpy(np.array([lr]))[0].to(self.device)
 
 
