@@ -12,7 +12,6 @@ import yaml
 from addict import Dict as Adict
 from albumentations.core.serialization import from_dict
 from pytorch_lightning.core.optimizer import LightningOptimizer
-from pytorch_lightning.loggers import WandbLogger
 from retinaface.box_utils import decode
 from retinaface.data_augment import Preproc
 from retinaface.dataset import FaceDetectionDataset, detection_collate
@@ -333,7 +332,6 @@ def main() -> None:
 
     trainer = object_from_dict(
         config.trainer,
-        logger=WandbLogger(config.experiment_name),
         checkpoint_callback=object_from_dict(config.checkpoint_callback),
     )
 
