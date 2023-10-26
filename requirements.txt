@@ -8,3 +8,4 @@ nptyping
 torch
 torchvision
 types-PyYAML
+lightning
