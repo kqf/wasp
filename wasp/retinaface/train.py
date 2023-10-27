@@ -18,15 +18,13 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchvision.ops import nms
 
+from wasp.retinaface.matching import decode
+
 TRAIN_IMAGE_PATH = Path(os.environ["TRAIN_IMAGE_PATH"])
 VAL_IMAGE_PATH = Path(os.environ["VAL_IMAGE_PATH"])
 
 TRAIN_LABEL_PATH = Path(os.environ["TRAIN_LABEL_PATH"])
 VAL_LABEL_PATH = Path(os.environ["VAL_LABEL_PATH"])
-
-
-def decode(*args, **kwargs):
-    return None
 
 
 def object_from_dict(*args, **kwargs):
