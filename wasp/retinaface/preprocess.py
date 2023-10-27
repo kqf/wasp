@@ -2,7 +2,15 @@ import numpy as np
 
 
 def random_crop(*args, **kwargs):
-    return *args
+    return args
+
+
+def _pad_to_square(*args, **kwargs):
+    return args
+
+
+def random_horizontal_flip(*args, **kwargs):
+    return args
 
 
 class Preproc:
