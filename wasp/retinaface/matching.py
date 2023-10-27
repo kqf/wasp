@@ -101,6 +101,36 @@ def encode(
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
 
 
+# Adapted from https://github.com/Hakuyume/chainer-ssd
+def decode(
+    loc: torch.Tensor,
+    priors: torch.Tensor,
+    variances: Union[List[float], Tuple[float, float]],
+) -> torch.Tensor:
+    """Decodes locations from predictions using priors to undo the encoding
+        we did for offset regression at train time.
+
+    Args:
+        loc: location predictions for loc layers,
+            Shape: [num_priors, 4]
+        priors: Prior boxes in center-offset form.
+            Shape: [num_priors, 4].
+        variances: Variances of priorboxes
+    Return:
+        decoded bounding box predictions
+    """
+    boxes = torch.cat(
+        (
+            priors[:, :2] + loc[:, :2] * variances[0] * priors[:, 2:],
+            priors[:, 2:] * torch.exp(loc[:, 2:] * variances[1]),
+        ),
+        1,
+    )
+    boxes[:, :2] -= boxes[:, 2:] / 2
+    boxes[:, 2:] += boxes[:, :2]
+    return boxes
+
+
 def to_shape(x, matched) -> torch.Tensor:
     return x.unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
 

@@ -18,6 +18,8 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchvision.ops import nms
 
+from wasp.retinaface.matching import decode
+
 TRAIN_IMAGE_PATH = Path(os.environ["TRAIN_IMAGE_PATH"])
 VAL_IMAGE_PATH = Path(os.environ["VAL_IMAGE_PATH"])
 
