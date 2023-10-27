@@ -12,7 +12,6 @@ import yaml
 from addict import Dict as Adict
 from albumentations.core.serialization import from_dict
 from pytorch_lightning.core.optimizer import LightningOptimizer
-from retinaface.box_utils import decode
 from retinaface.data_augment import Preproc
 from retinaface.dataset import FaceDetectionDataset, detection_collate
 from torch.optim import Optimizer
@@ -24,6 +23,10 @@ VAL_IMAGE_PATH = Path(os.environ["VAL_IMAGE_PATH"])
 
 TRAIN_LABEL_PATH = Path(os.environ["TRAIN_LABEL_PATH"])
 VAL_LABEL_PATH = Path(os.environ["VAL_LABEL_PATH"])
+
+
+def decode(*args, **kwargs):
+    return None
 
 
 def object_from_dict(*args, **kwargs):
