@@ -37,7 +37,9 @@ class FaceDetectionDataset(data.Dataset):
         with label_path.open() as f:
             labels = json.load(f)
 
-        self.labels = [x for x in labels if (image_path / x["file_name"]).exists()]
+        self.labels = [
+            x for x in labels if (image_path / x["file_name"]).exists()
+        ]
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -72,15 +74,13 @@ class FaceDetectionDataset(data.Dataset):
                 landmarks = np.array(label["landmarks"])
                 # landmarks
                 annotation[0, 4:14] = landmarks.reshape(-1, 10)
-                if annotation[0, 4] < 0:
-                    annotation[0, 14] = -1
-                else:
-                    annotation[0, 14] = 1
-
+                annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
             annotations = np.append(annotations, annotation, axis=0)
 
         if self.rotate90:
-            image, annotations = random_rotate_90(image, annotations.astype(int))
+            image, annotations = random_rotate_90(
+                image, annotations.astype(int)
+            )
 
         image, annotations = self.preproc(image, annotations)
 
@@ -114,7 +114,9 @@ def random_rotate_90(
     transform = albu.Compose(
         [albu.RandomRotate90(p=1)],
         keypoint_params=albu.KeypointParams(format="xy"),
-        bbox_params=albu.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+        bbox_params=albu.BboxParams(
+            format="pascal_voc", label_fields=["category_ids"]
+        ),
     )
     transformed = transform(
         image=image,
@@ -136,7 +138,8 @@ def random_rotate_90(
 
 
 def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Custom collate fn for dealing with batches of images that have a different number of boxes.
+    """Custom collate fn for dealing with batches of images
+    that have a different number of boxes.
 
     Arguments:
         batch: (tuple) A tuple of tensor images and lists of annotations
@@ -144,7 +147,8 @@ def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
     Return:
         A tuple containing:
             1) (tensor) batch of images stacked on their 0 dim
-            2) (list of tensors) annotations for a given image are stacked on 0 dim
+            2) (list of tensors) annotations for a given
+            image are stacked on 0 dim
     """
     annotation = []
     images = []
