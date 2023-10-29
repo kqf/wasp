@@ -12,11 +12,11 @@ import yaml
 from addict import Dict as Adict
 from albumentations.core.serialization import from_dict
 from pytorch_lightning.core.optimizer import LightningOptimizer
-from retinaface.dataset import FaceDetectionDataset, detection_collate
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchvision.ops import nms
 
+from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
 from wasp.retinaface.preprocess import Preproc
 
