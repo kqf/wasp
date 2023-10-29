@@ -11,8 +11,9 @@ from torch.utils import data
 from wasp.retinaface.preprocess import Preproc
 
 
-def tensor_from_rgb_image(x):
-    return x
+def to_tensor(image: np.ndarray) -> torch.Tensor:
+    image = np.ascontiguousarray(np.transpose(image, (2, 0, 1)))
+    return torch.from_numpy(image)
 
 
 def load_rgb(image_path: Path | str) -> np.array:
@@ -40,9 +41,10 @@ class FaceDetectionDataset(data.Dataset):
         with label_path.open() as f:
             labels = json.load(f)
 
-        self.labels = [
-            x for x in labels if (image_path / x["file_name"]).exists()
-        ]
+        def exists(x):
+            return (image_path / x["file_name"]).exists()
+
+        self.labels = [x for x in labels if exists(x)]
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -82,7 +84,8 @@ class FaceDetectionDataset(data.Dataset):
 
         if self.rotate90:
             image, annotations = random_rotate_90(
-                image, annotations.astype(int)
+                image,
+                annotations.astype(int),
             )
 
         image, annotations = self.preproc(image, annotations)
@@ -90,7 +93,7 @@ class FaceDetectionDataset(data.Dataset):
         image = self.transform(image=image)["image"]
 
         return {
-            "image": tensor_from_rgb_image(image),
+            "image": to_tensor(image),
             "annotation": annotations.astype(np.float32),
             "file_name": file_name,
         }
