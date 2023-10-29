@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import albumentations as albu
+import cv2
 import numpy as np
 import torch
 from torch.utils import data
@@ -14,8 +15,10 @@ def tensor_from_rgb_image(x):
     return x
 
 
-def load_rgb(x):
-    return x
+def load_rgb(image_path: Path | str) -> np.array:
+    image = cv2.imread(str(image_path))
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
 
 
 class FaceDetectionDataset(data.Dataset):
