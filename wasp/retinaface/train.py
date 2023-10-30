@@ -71,7 +71,7 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         return self.model(batch)
 
     def train_dataloader(self) -> DataLoader:
-        result = DataLoader(
+        return DataLoader(
             FaceDetectionDataset(
                 label_path=TRAIN_LABEL_PATH,
                 image_path=TRAIN_IMAGE_PATH,
@@ -86,10 +86,9 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
             drop_last=False,
             collate_fn=detection_collate,
         )
-        return result
 
     def val_dataloader(self) -> DataLoader:
-        result = DataLoader(
+        return DataLoader(
             FaceDetectionDataset(
                 label_path=VAL_LABEL_PATH,
                 image_path=VAL_IMAGE_PATH,
@@ -104,7 +103,6 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
             drop_last=True,
             collate_fn=detection_collate,
         )
-        return result
 
     def configure_optimizers(
         self,
