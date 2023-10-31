@@ -5,8 +5,14 @@ def random_crop(*args, **kwargs):
     return args
 
 
-def _pad_to_square(*args, **kwargs):
-    return args
+def _pad_to_square(image: np.ndarray, pad_image_flag: bool) -> np.ndarray:
+    if not pad_image_flag:
+        return image
+    height, width = image.shape[:2]
+    long_side = max(width, height)
+    image_t = np.zeros((long_side, long_side, 3), dtype=image.dtype)
+    image_t[:height, :width] = image
+    return image_t
 
 
 def random_horizontal_flip(*args, **kwargs):
