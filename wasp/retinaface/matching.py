@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 
+import numpy as np
 import torch
 
 
@@ -223,3 +224,13 @@ def match(
 def log_sum_exp(x):
     x_max = x.data.max()
     return torch.log(torch.sum(torch.exp(x - x_max), 1, keepdim=True)) + x_max
+
+
+def iof(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Returns iof of a and b, numpy version for data augmentation."""
+    lt = np.maximum(a[:, np.newaxis, :2], b[:, :2])
+    rb = np.minimum(a[:, np.newaxis, 2:], b[:, 2:])
+
+    area_i = np.prod(rb - lt, axis=2) * (lt < rb).all(axis=2)
+    area_a = np.prod(a[:, 2:] - a[:, :2], axis=1)
+    return area_i / np.maximum(area_a[:, np.newaxis], 1)
