@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 
 
@@ -15,8 +17,33 @@ def _pad_to_square(image: np.ndarray, pad_image_flag: bool) -> np.ndarray:
     return image_t
 
 
-def random_horizontal_flip(*args, **kwargs):
-    return args
+def random_horizontal_flip(
+    image: np.ndarray,
+    boxes: np.ndarray,
+    landms: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    width = image.shape[1]
+    if random.randrange(2):
+        image = image[:, ::-1]
+        boxes = boxes.copy()
+        boxes[:, 0::2] = width - boxes[:, 2::-2]
+
+        # landm
+        landms = landms.copy()
+        landms = landms.reshape([-1, 5, 2])
+        landms[:, :, 0] = width - landms[:, :, 0]
+        _extracted_from_random_horizontal_flip_16(landms, 1, 0)
+        _extracted_from_random_horizontal_flip_16(landms, 4, 3)
+        landms = landms.reshape([-1, 10])
+
+    return image, boxes, landms
+
+
+# TODO Rename this here and in `random_horizontal_flip`
+def _extracted_from_random_horizontal_flip_16(landms, arg1, arg2):
+    tmp = landms[:, arg1, :].copy()
+    landms[:, arg1, :] = landms[:, arg2, :]
+    landms[:, arg2, :] = tmp
 
 
 class Preproc:
