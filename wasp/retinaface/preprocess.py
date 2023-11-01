@@ -32,15 +32,15 @@ def random_horizontal_flip(
         landms = landms.copy()
         landms = landms.reshape([-1, 5, 2])
         landms[:, :, 0] = width - landms[:, :, 0]
-        _extracted_from_random_horizontal_flip_16(landms, 1, 0)
-        _extracted_from_random_horizontal_flip_16(landms, 4, 3)
+        flip_landmark(landms, 1, 0)
+        flip_landmark(landms, 4, 3)
         landms = landms.reshape([-1, 10])
 
     return image, boxes, landms
 
 
 # TODO Rename this here and in `random_horizontal_flip`
-def _extracted_from_random_horizontal_flip_16(landms, arg1, arg2):
+def flip_landmark(landms, arg1, arg2):
     tmp = landms[:, arg1, :].copy()
     landms[:, arg1, :] = landms[:, arg2, :]
     landms[:, arg2, :] = tmp
