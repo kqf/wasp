@@ -28,8 +28,32 @@ def get_overlaps(gt_boxes: np.ndarray, box: np.ndarray) -> np.ndarray:
     return intersection / (union + 1e-7)
 
 
-def get_ap(gt, image):
-    return gt
+def get_envelope(*args, **kwargs):
+    pass
+
+
+def get_ap(recalls: np.ndarray, precisions: np.ndarray) -> float:
+    """Calculate area under precision/recall curve.
+
+    Args:
+      recalls:
+      precisions:
+
+    Returns:
+
+    """
+    # correct AP calculation
+    # first append sentinel values at the end
+    recalls = np.concatenate(([0.0], recalls, [1.0]))
+    precisions = np.concatenate(([0.0], precisions, [0.0]))
+
+    precisions = get_envelope(precisions)
+
+    # to calculate area under PR curve,
+    # look for points where X axis (recall) changes value
+    i = np.where(recalls[1:] != recalls[:-1])[0]
+
+    return np.sum((recalls[i + 1] - recalls[i]) * precisions[i + 1])
 
 
 def recall_precision(
