@@ -5,8 +5,27 @@ def group_by_key(gt, image):
     return gt
 
 
-def get_overlaps(gt, image):
-    return gt
+def get_overlaps(gt_boxes: np.ndarray, box: np.ndarray) -> np.ndarray:
+    i_xmin = np.maximum(gt_boxes[:, 0], box[0])
+    i_ymin = np.maximum(gt_boxes[:, 1], box[1])
+
+    gt_xmax = gt_boxes[:, 0] + gt_boxes[:, 2]
+    gt_ymax = gt_boxes[:, 1] + gt_boxes[:, 3]
+
+    box_xmax = box[0] + box[2]
+    box_ymax = box[1] + box[3]
+
+    i_xmax = np.minimum(gt_xmax, box_xmax)
+    i_ymax = np.minimum(gt_ymax, box_ymax)
+
+    iw = np.maximum(i_xmax - i_xmin, 0.0)
+    ih = np.maximum(i_ymax - i_ymin, 0.0)
+
+    intersection = iw * ih
+
+    union = box[2] * box[3] + gt_boxes[:, 2] * gt_boxes[:, 3] - intersection
+
+    return intersection / (union + 1e-7)
 
 
 def get_ap(gt, image):
