@@ -28,8 +28,18 @@ def get_overlaps(gt_boxes: np.ndarray, box: np.ndarray) -> np.ndarray:
     return intersection / (union + 1e-7)
 
 
-def get_envelope(*args, **kwargs):
-    pass
+def get_envelope(precisions: np.ndarray) -> np.array:
+    """Compute the envelope of the precision curve.
+
+    Args:
+      precisions:
+
+    Returns: enveloped precision
+
+    """
+    for i in range(precisions.size - 1, 0, -1):
+        precisions[i - 1] = np.maximum(precisions[i - 1], precisions[i])
+    return precisions
 
 
 def get_ap(recalls: np.ndarray, precisions: np.ndarray) -> float:
