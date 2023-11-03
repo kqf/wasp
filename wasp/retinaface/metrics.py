@@ -1,8 +1,28 @@
+from collections import defaultdict
+from typing import Any
+
 import numpy as np
 
 
-def group_by_key(gt, image):
-    return gt
+def groupby(detections: list[dict], key: Any) -> defaultdict:
+    """Groups list of dictionaries by key.
+
+    >>> c = [{"a": 1, "b": "Wednesday"}, {"a": (1, 2, 3), "b": 16.5}]
+    defaultdict(list,
+            {1: [{'a': 1, 'b': 'Wednesday'}],
+             (1, 2, 3): [{'a': (1, 2, 3), 'b': 16.5}]})
+
+    Args:
+        list_dicts:
+        key:
+
+    Returns:
+
+    """
+    groups: defaultdict = defaultdict(list)
+    for detection in detections:
+        groups[detection[key]].append(detection)
+    return groups
 
 
 def get_overlaps(gt_boxes: np.ndarray, box: np.ndarray) -> np.ndarray:
@@ -72,7 +92,7 @@ def recall_precision(
     iou_threshold: float,
 ) -> tuple[np.array, np.array, np.array]:
     num_gts = len(gt)
-    image_gts = group_by_key(gt, "image_id")
+    image_gts = groupby(gt, "image_id")
 
     image_gt_boxes = {
         img_id: np.array([[float(z) for z in b["bbox"]] for b in boxes])
