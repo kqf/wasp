@@ -1,5 +1,6 @@
 import argparse
 import os
+import pydoc
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
@@ -28,8 +29,16 @@ TRAIN_LABEL_PATH = Path(os.environ["TRAIN_LABEL_PATH"])
 VAL_LABEL_PATH = Path(os.environ["VAL_LABEL_PATH"])
 
 
-def object_from_dict(*args, **kwargs):
-    return None
+def object_from_dict(d, parent=None, **default_kwargs):
+    kwargs = d.copy()
+    object_type = kwargs.pop("type")
+    for name, value in default_kwargs.items():
+        kwargs.setdefault(name, value)
+
+    if parent is not None:
+        return getattr(parent, object_type)(**kwargs)  # skipcq PTC-W0034
+
+    return pydoc.locate(object_type)(**kwargs)
 
 
 def get_args() -> Any:
