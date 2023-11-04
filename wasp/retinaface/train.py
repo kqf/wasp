@@ -18,6 +18,7 @@ from torchvision.ops import nms
 
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
+from wasp.retinaface.metrics import recall_precision
 from wasp.retinaface.preprocess import Preproc
 
 TRAIN_IMAGE_PATH = Path(os.environ["TRAIN_IMAGE_PATH"])
@@ -29,10 +30,6 @@ VAL_LABEL_PATH = Path(os.environ["VAL_LABEL_PATH"])
 
 def object_from_dict(*args, **kwargs):
     return None
-
-
-def recall_precision(*args, **kwargs):
-    return 0
 
 
 def get_args() -> Any:
