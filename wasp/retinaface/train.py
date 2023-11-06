@@ -2,6 +2,7 @@ import argparse
 import os
 import pydoc
 from collections import OrderedDict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
 
@@ -22,11 +23,13 @@ from wasp.retinaface.matching import decode
 from wasp.retinaface.metrics import recall_precision
 from wasp.retinaface.preprocess import Preproc
 
-TRAIN_IMAGE_PATH = Path(os.environ["TRAIN_IMAGE_PATH"])
-VAL_IMAGE_PATH = Path(os.environ["VAL_IMAGE_PATH"])
 
-TRAIN_LABEL_PATH = Path(os.environ["TRAIN_LABEL_PATH"])
-VAL_LABEL_PATH = Path(os.environ["VAL_LABEL_PATH"])
+@dataclass
+class Paths:
+    train: str = Path(os.environ["TRAIN_IMAGE_PATH"])
+    valid: str = Path(os.environ["VAL_IMAGE_PATH"])
+    train_label: str = Path(os.environ["TRAIN_LABEL_PATH"])
+    valid_label: str = Path(os.environ["VAL_LABEL_PATH"])
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
@@ -320,7 +323,7 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         return torch.from_numpy(np.array([lr]))[0].to(self.device)
 
 
-def main() -> None:
+def main(paths: Paths | None = None) -> None:
     args = get_args()
 
     with args.config_path.open() as f:
@@ -328,8 +331,8 @@ def main() -> None:
 
     pl.trainer.seed_everything(config.seed)
 
-    pipeline = RetinaFace(config)
-
+    paths = paths or Paths()
+    pipeline = RetinaFace(config, paths)
     Path(config.checkpoint_callback.filepath).mkdir(
         exist_ok=True,
         parents=True,
