@@ -2,6 +2,7 @@ import argparse
 import os
 import pydoc
 from collections import OrderedDict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
 
@@ -22,11 +23,13 @@ from wasp.retinaface.matching import decode
 from wasp.retinaface.metrics import recall_precision
 from wasp.retinaface.preprocess import Preproc
 
-TRAIN_IMAGE_PATH = Path(os.environ["TRAIN_IMAGE_PATH"])
-VAL_IMAGE_PATH = Path(os.environ["VAL_IMAGE_PATH"])
 
-TRAIN_LABEL_PATH = Path(os.environ["TRAIN_LABEL_PATH"])
-VAL_LABEL_PATH = Path(os.environ["VAL_LABEL_PATH"])
+@dataclass
+class Paths:
+    train: Path = Path(os.environ["TRAIN_IMAGE_PATH"])
+    valid: Path = Path(os.environ["VAL_IMAGE_PATH"])
+    train_label: Path = Path(os.environ["TRAIN_LABEL_PATH"])
+    valid_label: Path = Path(os.environ["VAL_LABEL_PATH"])
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
@@ -55,9 +58,10 @@ def get_args() -> Any:
 
 
 class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
-    def __init__(self, config: Adict[str, Any]) -> None:
+    def __init__(self, config: Adict[str, Any], paths: Paths) -> None:
         super().__init__()
         self.config = config
+        self.paths = paths
 
         self.prior_box = object_from_dict(
             self.config.prior_box, image_size=self.config.image_size
@@ -79,8 +83,8 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             FaceDetectionDataset(
-                label_path=TRAIN_LABEL_PATH,
-                image_path=TRAIN_IMAGE_PATH,
+                label_path=self.paths.train_label,
+                image_path=self.paths.train,
                 transform=from_dict(self.config.train_aug),
                 preproc=self.preproc,
                 rotate90=self.config.train_parameters.rotate90,
@@ -96,8 +100,8 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
     def val_dataloader(self) -> DataLoader:
         return DataLoader(
             FaceDetectionDataset(
-                label_path=VAL_LABEL_PATH,
-                image_path=VAL_IMAGE_PATH,
+                label_path=self.paths.valid_label,
+                image_path=self.paths.valid,
                 transform=from_dict(self.config.val_aug),
                 preproc=self.preproc,
                 rotate90=self.config.val_parameters.rotate90,
@@ -320,7 +324,7 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         return torch.from_numpy(np.array([lr]))[0].to(self.device)
 
 
-def main() -> None:
+def main(paths: Paths | None = None) -> None:
     args = get_args()
 
     with args.config_path.open() as f:
@@ -328,8 +332,8 @@ def main() -> None:
 
     pl.trainer.seed_everything(config.seed)
 
-    pipeline = RetinaFace(config)
-
+    paths = paths or Paths()
+    pipeline = RetinaFace(config, paths)
     Path(config.checkpoint_callback.filepath).mkdir(
         exist_ok=True,
         parents=True,
