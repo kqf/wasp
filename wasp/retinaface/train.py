@@ -1,4 +1,3 @@
-import argparse
 import os
 import pydoc
 from collections import OrderedDict
@@ -50,19 +49,6 @@ def object_from_dict(d, parent=None, **default_kwargs):
         return getattr(parent, object_type)(**kwargs)  # skipcq PTC-W0034
 
     return pydoc.locate(object_type)(**kwargs)
-
-
-def get_args() -> Any:
-    parser = argparse.ArgumentParser()
-    arg = parser.add_argument
-    arg(
-        "-c",
-        "--config_path",
-        type=Path,
-        help="Path to the config.",
-        required=True,
-    )
-    return parser.parse_args()
 
 
 class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
@@ -332,10 +318,11 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         return torch.from_numpy(np.array([lr]))[0].to(self.device)
 
 
-def main(paths: Paths | None = None) -> None:
-    args = get_args()
-
-    with args.config_path.open() as f:
+def main(
+    config="wasp/retinaface/configs/default.yaml",
+    paths: Paths | None = None,
+) -> None:
+    with open(config) as f:
         config = Adict(yaml.load(f, Loader=yaml.SafeLoader))
 
     pl.trainer.seed_everything(config.seed)
