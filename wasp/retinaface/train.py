@@ -2,7 +2,7 @@ import argparse
 import os
 import pydoc
 from collections import OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
 
@@ -26,10 +26,18 @@ from wasp.retinaface.preprocess import Preproc
 
 @dataclass
 class Paths:
-    train: Path = Path(os.environ["TRAIN_IMAGE_PATH"])
-    valid: Path = Path(os.environ["VAL_IMAGE_PATH"])
-    train_label: Path = Path(os.environ["TRAIN_LABEL_PATH"])
-    valid_label: Path = Path(os.environ["VAL_LABEL_PATH"])
+    train: Path = field(
+        default_factory=lambda: Path(os.environ["TRAIN_IMAGE_PATH"]),
+    )
+    valid: Path = field(
+        default_factory=lambda: Path(os.environ["VAL_IMAGE_PATH"]),
+    )
+    train_label: Path = field(
+        default_factory=lambda: Path(os.environ["TRAIN_LABEL_PATH"])
+    )
+    valid_label: Path = field(
+        default_factory=lambda: Path(os.environ["VAL_LABEL_PATH"])
+    )
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
