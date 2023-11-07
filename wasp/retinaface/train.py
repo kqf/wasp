@@ -318,7 +318,7 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         return torch.from_numpy(np.array([lr]))[0].to(self.device)
 
 
-def main(config="configs/basic.yml", paths: Paths | None = None) -> None:
+def main(config="configs/default.yml", paths: Paths | None = None) -> None:
     with open(config) as f:
         config = Adict(yaml.load(f, Loader=yaml.SafeLoader))
 
