@@ -23,20 +23,19 @@ from wasp.retinaface.metrics import recall_precision
 from wasp.retinaface.preprocess import Preproc
 
 
+def dpath(envv):
+    def f():
+        Path(os.environ[envv])
+
+    return f
+
+
 @dataclass
 class Paths:
-    train: Path = field(
-        default_factory=lambda: Path(os.environ["TRAIN_IMAGE_PATH"]),
-    )
-    valid: Path = field(
-        default_factory=lambda: Path(os.environ["VAL_IMAGE_PATH"]),
-    )
-    train_label: Path = field(
-        default_factory=lambda: Path(os.environ["TRAIN_LABEL_PATH"])
-    )
-    valid_label: Path = field(
-        default_factory=lambda: Path(os.environ["VAL_LABEL_PATH"])
-    )
+    train: Path = field(default_factory=dpath("TRAIN_IMAGE_PATH"))
+    valid: Path = field(default_factory=dpath("VAL_IMAGE_PATH"))
+    train_label: Path = field(default_factory=dpath("TRAIN_LABEL_PATH"))
+    valid_label: Path = field(default_factory=dpath("VAL_LABEL_PATH"))
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
