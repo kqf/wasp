@@ -282,6 +282,7 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
 
         return OrderedDict({"predictions": predictions_coco, "gt": gt_coco})
 
+    # TODO: Uncomment me
     # def validation_epoch_end(self, outputs: List) -> None:
     #     result_predictions: List[dict] = []
     #     result_gt: List[dict] = []
