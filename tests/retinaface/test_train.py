@@ -1,4 +1,5 @@
 import json
+import pathlib
 
 import pytest
 
@@ -6,7 +7,7 @@ from wasp.retinaface.train import Paths, main
 
 
 @pytest.fixture
-def annotations(tmp_path):
+def annotations(tmp_path) -> pathlib.Path:
     example = [
         {
             "file_name": "tests/assets/lenna.png",
@@ -30,12 +31,12 @@ def annotations(tmp_path):
     return ofile
 
 
-def test_main(tmp_path):
+def test_main(annotations):
     main(
         paths=Paths(
-            tmp_path,
-            tmp_path,
-            tmp_path,
-            tmp_path,
+            annotations,
+            annotations,
+            annotations,
+            annotations,
         )
     )
