@@ -19,7 +19,6 @@ from torchvision.ops import nms
 
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
-from wasp.retinaface.metrics import recall_precision
 from wasp.retinaface.preprocess import Preproc
 
 
@@ -283,34 +282,34 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
 
         return OrderedDict({"predictions": predictions_coco, "gt": gt_coco})
 
-    def validation_epoch_end(self, outputs: List) -> None:
-        result_predictions: List[dict] = []
-        result_gt: List[dict] = []
+    # def validation_epoch_end(self, outputs: List) -> None:
+    #     result_predictions: List[dict] = []
+    #     result_gt: List[dict] = []
 
-        for output in outputs:
-            result_predictions += output["predictions"]
-            result_gt += output["gt"]
+    #     for output in outputs:
+    #         result_predictions += output["predictions"]
+    #         result_gt += output["gt"]
 
-        _, _, average_precision = recall_precision(
-            result_gt,
-            result_predictions,
-            0.5,
-        )
+    #     _, _, average_precision = recall_precision(
+    #         result_gt,
+    #         result_predictions,
+    #         0.5,
+    #     )
 
-        self.log(
-            "epoch",
-            self.trainer.current_epoch,
-            on_step=False,
-            on_epoch=True,
-            logger=True,
-        )  # type: ignore
-        self.log(
-            "val_loss",
-            average_precision,
-            on_step=False,
-            on_epoch=True,
-            logger=True,
-        )
+    #     self.log(
+    #         "epoch",
+    #         self.trainer.current_epoch,
+    #         on_step=False,
+    #         on_epoch=True,
+    #         logger=True,
+    #     )  # type: ignore
+    #     self.log(
+    #         "val_loss",
+    #         average_precision,
+    #         on_step=False,
+    #         on_epoch=True,
+    #         logger=True,
+    #     )
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
         lr = [x["lr"] for x in self.optimizers[0].param_groups][0]  # type: ignore # noqa
@@ -328,14 +327,14 @@ def main(
 
     paths = paths or Paths()
     pipeline = RetinaFace(config, paths)
-    Path(config.checkpoint_callback.filepath).mkdir(
+    Path("./retinaface-results").mkdir(
         exist_ok=True,
         parents=True,
     )
 
     trainer = object_from_dict(
         config.trainer,
-        checkpoint_callback=object_from_dict(config.checkpoint_callback),
+        # checkpoint_callback=object_from_dict(config.checkpoint_callback),
     )
 
     trainer.fit(pipeline)
