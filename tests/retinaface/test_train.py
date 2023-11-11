@@ -31,6 +31,7 @@ def annotations(tmp_path) -> pathlib.Path:
     return ofile
 
 
+@pytest.mark.timeout(3)
 def test_main(annotations):
     main(
         paths=Paths(
