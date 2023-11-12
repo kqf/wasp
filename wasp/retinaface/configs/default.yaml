@@ -10,7 +10,7 @@ model:
   type: wasp.retinaface.model.RetinaFace
   name: Resnet50
   pretrained: True
-  return_layers: {"layer2": 1, "layer3": 2, "layer4": 3}
+  return_layers: { "layer2": 1, "layer3": 2, "layer4": 3 }
   in_channels: 256
   out_channels: 256
 
@@ -24,9 +24,9 @@ trainer:
   type: pytorch_lightning.Trainer
   # gpus: 4
   # amp_level: O1
-  max_epochs: 150
+  max_epochs: 1
   # distributed_backend: ddp
-  num_sanity_val_steps: 1
+  num_sanity_val_steps: 0
   # progress_bar_refresh_rate: 1
   benchmark: True
   precision: 16
@@ -38,7 +38,7 @@ scheduler:
   T_mult: 2
 
 train_parameters:
-  batch_size: 6
+  batch_size: 1
   rotate90: True
 
 checkpoint_callback:
@@ -72,7 +72,7 @@ prior_box:
   steps: [8, 16, 32]
   clip: False
 
-image_size: [1024, 1024]
+image_size: [256, 256]
 
 loss_weights:
   localization: 2
@@ -102,8 +102,8 @@ train_aug:
         gamma_limit: [80, 120]
         p: 0.5
       - __class_fullname__: albumentations.augmentations.transforms.Resize
-        height: 1024
-        width: 1024
+        height: 256
+        width: 256
         p: 1
       - __class_fullname__: albumentations.augmentations.transforms.Normalize
         always_apply: false
@@ -126,8 +126,8 @@ val_aug:
     p: 1
     transforms:
       - __class_fullname__: albumentations.augmentations.transforms.Resize
-        height: 1024
-        width: 1024
+        height: 256
+        width: 256
         p: 1
       - __class_fullname__: albumentations.augmentations.transforms.Normalize
         always_apply: false
