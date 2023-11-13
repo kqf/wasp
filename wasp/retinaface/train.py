@@ -20,6 +20,7 @@ from torchvision.ops import nms
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
 from wasp.retinaface.preprocess import Preproc
+from wasp.retinaface.priors import priorbox
 
 
 def dpath(envv):
@@ -54,10 +55,12 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
         super().__init__()
         self.config = config
         self.paths = paths
-
-        self.prior_box = object_from_dict(
-            self.config.prior_box, image_size=self.config.image_size
+        self.prior_box = priorbox(
+            min_sizes=[[16, 32], [64, 128], [256, 512]],
+            steps=[8, 16, 32],
+            clip=False,
         )
+
         self.model = object_from_dict(self.config.model)
 
         self.loss_weights = self.config.loss_weights
