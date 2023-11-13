@@ -333,9 +333,16 @@ def main(
         parents=True,
     )
 
-    trainer = object_from_dict(
-        config.trainer,
-        # checkpoint_callback=object_from_dict(config.checkpoint_callback),
+    trainer = pl.Trainer(
+        # gpus=4,
+        # amp_level=O1,
+        max_epochs=1,
+        # distributed_backend=ddp,
+        num_sanity_val_steps=0,
+        # progress_bar_refresh_rate=1,
+        benchmark=True,
+        precision=16,
+        sync_batchnorm=True,
     )
 
     trainer.fit(pipeline)
