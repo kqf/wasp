@@ -59,6 +59,7 @@ class RetinaFace(pl.LightningModule):  # pylint: disable=R0901
             min_sizes=[[16, 32], [64, 128], [256, 512]],
             steps=[8, 16, 32],
             clip=False,
+            image_size=self.config.image_size,
         )
 
         self.model = object_from_dict(self.config.model)
