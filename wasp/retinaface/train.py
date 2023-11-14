@@ -38,6 +38,7 @@ def main(
         paths,
         model=model,
         preprocessing=partial(Preproc, img_dim=resolution[0]),
+        resolution=resolution,
     )
 
     Path("./retinaface-results").mkdir(

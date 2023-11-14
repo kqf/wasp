@@ -55,6 +55,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         paths: Paths,
         model: torch.nn.Module,
         preprocessing,
+        resolution: tuple[int, int],
     ) -> None:
         super().__init__()
         self.config = config
@@ -63,7 +64,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             min_sizes=[[16, 32], [64, 128], [256, 512]],
             steps=[8, 16, 32],
             clip=False,
-            image_size=self.config.image_size,
+            image_size=resolution,
         )
         self.model = model
         self.loss_weights = self.config.loss_weights
