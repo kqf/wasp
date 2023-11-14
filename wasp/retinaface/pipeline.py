@@ -49,7 +49,7 @@ def object_from_dict(d, parent=None, **default_kwargs):
     return pydoc.locate(object_type)(**kwargs)
 
 
-class RetinaFaceTrainer(pl.LightningModule):  # pylint: disable=R0901
+class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def __init__(self, config: Adict[str, Any], paths: Paths) -> None:
         super().__init__()
         self.config = config
