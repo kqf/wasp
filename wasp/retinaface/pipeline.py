@@ -54,7 +54,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self,
         config: Adict[str, Any],
         paths: Paths,
-        pipeline: torch.nn.Module,
+        model: torch.nn.Module,
     ) -> None:
         super().__init__()
         self.config = config
@@ -65,7 +65,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             clip=False,
             image_size=self.config.image_size,
         )
-        self.model = pipeline
+        self.model = model
         self.loss_weights = self.config.loss_weights
         self.loss = object_from_dict(self.config.loss, priors=self.prior_box)
 
