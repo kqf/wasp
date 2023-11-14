@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 import yaml
 from addict import Dict as Adict
 
+from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import Paths, RetinaFacePipeline
 
 
@@ -17,7 +18,24 @@ def main(
     pl.trainer.seed_everything(config.seed)
 
     paths = paths or Paths()
-    pipeline = RetinaFacePipeline(config, paths)
+    model = RetinaFace(
+        name="Resnet50",
+        pretrained=True,
+        return_layers={
+            "layer2": 1,
+            "layer3": 2,
+            "layer4": 3,
+        },
+        in_channels=256,
+        out_channels=256,
+    )
+
+    pipeline = RetinaFacePipeline(
+        config,
+        paths,
+        model=model,
+    )
+
     Path("./retinaface-results").mkdir(
         exist_ok=True,
         parents=True,
