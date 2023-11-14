@@ -50,7 +50,12 @@ def object_from_dict(d, parent=None, **default_kwargs):
 
 
 class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
-    def __init__(self, config: Adict[str, Any], paths: Paths) -> None:
+    def __init__(
+        self,
+        config: Adict[str, Any],
+        paths: Paths,
+        pipeline: torch.nn.Module,
+    ) -> None:
         super().__init__()
         self.config = config
         self.paths = paths
@@ -60,11 +65,8 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             clip=False,
             image_size=self.config.image_size,
         )
-
-        self.model = object_from_dict(self.config.model)
-
+        self.model = pipeline
         self.loss_weights = self.config.loss_weights
-
         self.loss = object_from_dict(self.config.loss, priors=self.prior_box)
 
     def setup(self, stage=0) -> None:  # type: ignore
