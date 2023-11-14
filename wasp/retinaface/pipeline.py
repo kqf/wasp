@@ -18,7 +18,6 @@ from torchvision.ops import nms
 
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
-from wasp.retinaface.preprocess import Preproc
 from wasp.retinaface.priors import priorbox
 
 
@@ -72,7 +71,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.preprocessing = preprocessing
 
     def setup(self, stage=0) -> None:  # type: ignore
-        self.preproc = Preproc(img_dim=self.config.image_size[0])
         self.preproc = self.preprocessing()
 
     def forward(
