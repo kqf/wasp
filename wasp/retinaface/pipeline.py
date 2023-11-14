@@ -55,6 +55,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         config: Adict[str, Any],
         paths: Paths,
         model: torch.nn.Module,
+        preprocessing,
     ) -> None:
         super().__init__()
         self.config = config
@@ -68,9 +69,11 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.model = model
         self.loss_weights = self.config.loss_weights
         self.loss = object_from_dict(self.config.loss, priors=self.prior_box)
+        self.preprocessing = preprocessing
 
     def setup(self, stage=0) -> None:  # type: ignore
         self.preproc = Preproc(img_dim=self.config.image_size[0])
+        self.preproc = self.preprocessing()
 
     def forward(
         self, batch: torch.Tensor
