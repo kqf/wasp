@@ -18,6 +18,8 @@ from torchvision.ops import nms
 
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
+from wasp.retinaface.priors import priorbox
+
 
 
 def dpath(envv):
