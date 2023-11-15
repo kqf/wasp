@@ -39,5 +39,6 @@ def test_main(annotations):
             pathlib.Path("."),
             annotations,
             annotations,
-        )
+        ),
+        resolution=(256, 256),
     )
