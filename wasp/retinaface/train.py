@@ -8,6 +8,8 @@ from addict import Dict as Adict
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import Paths, RetinaFacePipeline
 from wasp.retinaface.preprocess import Preproc
+from wasp.retinaface.priors import priorbox
+
 
 
 def main(
@@ -38,7 +40,12 @@ def main(
         paths,
         model=model,
         preprocessing=partial(Preproc, img_dim=resolution[0]),
-        resolution=resolution,
+        priorbox=priorbox(
+            min_sizes=[[16, 32], [64, 128], [256, 512]],
+            steps=[8, 16, 32],
+            clip=False,
+            image_size=resolution,
+        ),
     )
 
     Path("./retinaface-results").mkdir(

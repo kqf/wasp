@@ -21,6 +21,7 @@ from wasp.retinaface.matching import decode
 from wasp.retinaface.priors import priorbox
 
 
+
 def dpath(envv):
     def f():
         Path(os.environ[envv])
@@ -55,18 +56,13 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         paths: Paths,
         model: torch.nn.Module,
         preprocessing,
-        resolution: tuple[int, int],
+        priorbox,
     ) -> None:
         super().__init__()
         self.config = config
         self.paths = paths
-        self.prior_box = priorbox(
-            min_sizes=[[16, 32], [64, 128], [256, 512]],
-            steps=[8, 16, 32],
-            clip=False,
-            image_size=resolution,
-        )
         self.model = model
+        self.prior_box = priorbox
         self.loss_weights = self.config.loss_weights
         self.loss = object_from_dict(self.config.loss, priors=self.prior_box)
         self.preprocessing = preprocessing
