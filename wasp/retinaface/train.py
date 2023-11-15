@@ -1,3 +1,4 @@
+from functools import partial
 from pathlib import Path
 
 import pytorch_lightning as pl
@@ -6,11 +7,13 @@ from addict import Dict as Adict
 
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import Paths, RetinaFacePipeline
+from wasp.retinaface.preprocess import Preproc
 
 
 def main(
     config="wasp/retinaface/configs/default.yaml",
     paths: Paths | None = None,
+    resolution: tuple[int, int] = (1024, 1024),
 ) -> None:
     with open(config) as f:
         config = Adict(yaml.load(f, Loader=yaml.SafeLoader))
@@ -34,6 +37,8 @@ def main(
         config,
         paths,
         model=model,
+        preprocessing=partial(Preproc, img_dim=resolution[0]),
+        resolution=resolution,
     )
 
     Path("./retinaface-results").mkdir(

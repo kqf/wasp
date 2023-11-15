@@ -18,7 +18,6 @@ from torchvision.ops import nms
 
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
-from wasp.retinaface.preprocess import Preproc
 from wasp.retinaface.priors import priorbox
 
 
@@ -54,7 +53,9 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self,
         config: Adict[str, Any],
         paths: Paths,
-        pipeline: torch.nn.Module,
+        model: torch.nn.Module,
+        preprocessing,
+        resolution: tuple[int, int],
     ) -> None:
         super().__init__()
         self.config = config
@@ -63,14 +64,15 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             min_sizes=[[16, 32], [64, 128], [256, 512]],
             steps=[8, 16, 32],
             clip=False,
-            image_size=self.config.image_size,
+            image_size=resolution,
         )
-        self.model = pipeline
+        self.model = model
         self.loss_weights = self.config.loss_weights
         self.loss = object_from_dict(self.config.loss, priors=self.prior_box)
+        self.preprocessing = preprocessing
 
     def setup(self, stage=0) -> None:  # type: ignore
-        self.preproc = Preproc(img_dim=self.config.image_size[0])
+        self.preproc = self.preprocessing()
 
     def forward(
         self, batch: torch.Tensor
