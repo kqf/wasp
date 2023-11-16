@@ -11,7 +11,6 @@ from wasp.retinaface.preprocess import Preproc
 from wasp.retinaface.priors import priorbox
 
 
-
 def main(
     config="wasp/retinaface/configs/default.yaml",
     paths: Paths | None = None,
