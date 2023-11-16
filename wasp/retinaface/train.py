@@ -2,6 +2,7 @@ from functools import partial
 from pathlib import Path
 
 import pytorch_lightning as pl
+import torch
 import yaml
 from addict import Dict as Adict
 
@@ -44,6 +45,12 @@ def main(
             steps=[8, 16, 32],
             clip=False,
             image_size=resolution,
+        ),
+        build_optimizer=partial(
+            torch.optim.SGD,
+            lr=0.001,
+            weight_decay=0.0001,
+            momentum=0.9,
         ),
     )
 
