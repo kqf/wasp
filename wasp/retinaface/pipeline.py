@@ -55,6 +55,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         model: torch.nn.Module,
         preprocessing,
         priorbox,
+        build_optimizer,
     ) -> None:
         super().__init__()
         self.config = config
@@ -64,6 +65,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.loss_weights = self.config.loss_weights
         self.loss = object_from_dict(self.config.loss, priors=self.prior_box)
         self.preprocessing = preprocessing
+        self.build_optimizer = build_optimizer
 
     def setup(self, stage=0) -> None:  # type: ignore
         self.preproc = self.preprocessing()
@@ -116,8 +118,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         ],
         List[Any],
     ]:
-        optimizer = object_from_dict(
-            self.config.optimizer,
+        optimizer = self.build_optimizer(
             params=[x for x in self.model.parameters() if x.requires_grad],
         )
 
