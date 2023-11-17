@@ -6,6 +6,7 @@ import torch
 import yaml
 from addict import Dict as Adict
 
+from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import Paths, RetinaFacePipeline
 from wasp.retinaface.preprocess import Preproc
@@ -56,6 +57,16 @@ def main(
             torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
             T_0=10,
             T_mult=2,
+        ),
+        loss=MultiBoxLoss(
+            num_classes=2,
+            overlap_thresh=0.35,
+            prior_for_matching=True,
+            bkg_label=0,
+            neg_mining=True,
+            neg_pos=7,
+            neg_overlap=0.35,
+            encode_target=False,
         ),
     )
 
