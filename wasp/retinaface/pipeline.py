@@ -68,7 +68,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.preprocessing = preprocessing
         self.build_optimizer = build_optimizer
         self.build_scheduler = build_scheduler
-  
+
     def setup(self, stage=0) -> None:  # type: ignore
         self.preproc = self.preprocessing()
 
