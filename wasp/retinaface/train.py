@@ -52,6 +52,11 @@ def main(
             weight_decay=0.0001,
             momentum=0.9,
         ),
+        build_scheduler=partial(
+            torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
+            T_0=10,
+            T_mult=2,
+        ),
     )
 
     Path("./retinaface-results").mkdir(
