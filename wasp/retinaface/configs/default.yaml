@@ -6,17 +6,6 @@ experiment_name: "2020-11-15"
 
 num_classes: 2
 
-optimizer:
-  type: torch.optim.SGD
-  lr: 0.001
-  weight_decay: 0.0001
-  momentum: 0.9
-
-scheduler:
-  type: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
-  T_0: 10
-  T_mult: 2
-
 train_parameters:
   batch_size: 1
   rotate90: True
