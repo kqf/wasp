@@ -24,17 +24,6 @@ val_parameters:
   rotate90: True
   box_min_size: 5
 
-loss:
-  type: wasp.retinaface.loss.MultiBoxLoss
-  num_classes: 2
-  overlap_thresh: 0.35
-  prior_for_matching: True
-  bkg_label: 0
-  neg_mining: True
-  neg_pos: 7
-  neg_overlap: 0.35
-  encode_target: False
-
 prior_box:
   type: wasp.retinaface.priors.priorbox
   min_sizes: [[16, 32], [64, 128], [256, 512]]
