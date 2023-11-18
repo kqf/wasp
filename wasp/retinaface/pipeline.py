@@ -57,6 +57,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         priorbox,
         build_optimizer,
         build_scheduler,
+        loss,
     ) -> None:
         super().__init__()
         self.config = config
@@ -64,7 +65,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.model = model
         self.prior_box = priorbox
         self.loss_weights = self.config.loss_weights
-        self.loss = object_from_dict(self.config.loss, priors=self.prior_box)
+        self.loss = loss
         self.preprocessing = preprocessing
         self.build_optimizer = build_optimizer
         self.build_scheduler = build_scheduler
