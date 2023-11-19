@@ -43,6 +43,12 @@ def main(
         image_size=resolution,
     )
 
+    loss_weights = {
+        "localization": 2,
+        "classification": 1,
+        "landmarks": 1,
+    }
+
     pipeline = RetinaFacePipeline(
         config,
         paths,
@@ -71,6 +77,7 @@ def main(
             encode_target=False,
             priors=priors,
         ),
+        loss_weights=loss_weights,
     )
 
     Path("./retinaface-results").mkdir(
