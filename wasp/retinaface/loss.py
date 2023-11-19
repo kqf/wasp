@@ -24,6 +24,7 @@ class MultiBoxLoss(nn.Module):
         neg_overlap: float,
         encode_target: bool,
         priors: torch.Tensor,
+        weights,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
@@ -36,6 +37,7 @@ class MultiBoxLoss(nn.Module):
         self.neg_overlap = neg_overlap
         self.variance = [0.1, 0.2]
         self.priors = priors
+        self.weights = weights
 
     def forward(
         self,
@@ -150,3 +152,21 @@ class MultiBoxLoss(nn.Module):
         n = max(num_pos.data.sum().float(), 1)  # type: ignore
 
         return loss_l / n, loss_c / n, loss_landm / n1
+
+    def full_forward(
+        self,
+        predictions: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        targets: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        localization, classification, landmarks = self(
+            predictions,
+            targets,
+        )
+
+        total = (
+            self.weights["localization"] * localization
+            + self.weights["classification"] * classification
+            + self.weights["landmarks"] * landmarks
+        )
+
+        return total, localization, classification, landmarks
