@@ -36,17 +36,19 @@ def main(
         out_channels=256,
     )
 
+    priors = priorbox(
+        min_sizes=[[16, 32], [64, 128], [256, 512]],
+        steps=[8, 16, 32],
+        clip=False,
+        image_size=resolution,
+    )
+
     pipeline = RetinaFacePipeline(
         config,
         paths,
         model=model,
         preprocessing=partial(Preproc, img_dim=resolution[0]),
-        priorbox=priorbox(
-            min_sizes=[[16, 32], [64, 128], [256, 512]],
-            steps=[8, 16, 32],
-            clip=False,
-            image_size=resolution,
-        ),
+        priorbox=priors,
         build_optimizer=partial(
             torch.optim.SGD,
             lr=0.001,
@@ -67,6 +69,7 @@ def main(
             neg_pos=7,
             neg_overlap=0.35,
             encode_target=False,
+            priors=priors,
         ),
     )
 
