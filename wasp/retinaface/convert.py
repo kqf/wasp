@@ -8,19 +8,19 @@ import numpy as np
 @click.command()
 @click.option(
     "--dataset",
-    click.Path(exists=True, path_type=Path),
+    type=click.Path(exists=True, path_type=Path),
     default=Path("./wider_face_split/wider_face_train_bbx_gt.txt."),
 )
 @click.option(
     "--ofile",
-    click.Path(exists=True, path_type=Path),
+    type=click.Path(exists=True, path_type=Path),
     default="wider.json",
 )
 def main(dataset, ofile):
     result = []
     temp = {}
 
-    valid_annotation_indices = np.array([0, 1, 3, 4, 6, 7, 9, 10, 12, 13])
+    valid_idx = np.array([0, 1, 3, 4, 6, 7, 9, 10, 12, 13])
     with open(dataset) as f:
         for line_id, line in enumerate(f.readlines()):
             if line[0] == "#":
@@ -49,11 +49,7 @@ def main(dataset, ofile):
                 landmarks = np.array([float(x) for x in points[4:]])
 
                 if landmarks.size > 0:
-                    landmarks = (
-                        landmarks[valid_annotation_indices]
-                        .reshape(-1, 2)
-                        .tolist()
-                    )
+                    landmarks = landmarks[valid_idx].reshape(-1, 2).tolist()
                 else:
                     landmarks = []
 
