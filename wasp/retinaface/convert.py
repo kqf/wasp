@@ -1,25 +1,27 @@
-import argparse
 import json
 from pathlib import Path
 
+import click
 import numpy as np
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input_path", type=Path, required=True)
-    parser.add_argument("-o", "--output_path", type=Path, required=True)
-    return parser.parse_args()
-
-
-def main():
-    args = parse_args()
-
+@click.command()
+@click.option(
+    "--dataset",
+    click.Path(exists=True, path_type=Path),
+    default=Path("./wider_face_split/wider_face_train_bbx_gt.txt."),
+)
+@click.option(
+    "--ofile",
+    click.Path(exists=True, path_type=Path),
+    default="wider.json",
+)
+def main(dataset, ofile):
     result = []
     temp = {}
 
     valid_annotation_indices = np.array([0, 1, 3, 4, 6, 7, 9, 10, 12, 13])
-    with open(args.input_path) as f:
+    with open(dataset) as f:
         for line_id, line in enumerate(f.readlines()):
             if line[0] == "#":
                 if line_id != 0:
@@ -64,7 +66,7 @@ def main():
 
         result += [temp]
 
-    with open(args.output_path, "w") as f:
+    with open(ofile, "w") as f:
         json.dump(result, f, indent=2)
 
 
