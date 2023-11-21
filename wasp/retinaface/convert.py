@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import click
 import numpy as np
@@ -7,12 +8,12 @@ import numpy as np
 @click.command()
 @click.option(
     "--dataset",
-    click.Path(exists=True),
-    default=".",
+    click.Path(exists=True, path_type=Path),
+    default=Path("./wider_face_split/wider_face_train_bbx_gt.txt."),
 )
 @click.option(
     "--ofile",
-    click.Path(exists=True),
+    click.Path(exists=True, path_type=Path),
     default="wider.json",
 )
 def main(dataset, ofile):
