@@ -9,7 +9,7 @@ import numpy as np
 @click.option(
     "--dataset",
     type=click.Path(exists=True, path_type=Path),
-    default=Path("./wider_face_split/wider_face_train_bbx_gt.txt"),
+    default=Path("retinaface_gt_v1.1/train/label.txt"),
 )
 @click.option(
     "--ofile",
@@ -23,16 +23,7 @@ def main(dataset, ofile):
     valid_idx = np.array([0, 1, 3, 4, 6, 7, 9, 10, 12, 13])
     with open(dataset) as f:
         for line_id, line in enumerate(f.readlines()):
-            if line[0] == "#":
-                if line_id != 0:
-                    result += [temp]
-
-                temp = {
-                    "file_name": line.replace("#", "").strip(),
-                    "annotations": [],
-                }
-
-            else:
+            try:
                 points = line.strip().split()
 
                 x_min = int(points[0])
@@ -59,6 +50,14 @@ def main(dataset, ofile):
                         "landmarks": landmarks,
                     }
                 ]
+            except ValueError:
+                if line_id != 0:
+                    result += [temp]
+
+                temp = {
+                    "file_name": line.strip(),
+                    "annotations": [],
+                }
 
         result += [temp]
 
