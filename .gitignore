@@ -3,6 +3,7 @@
 *.onnx
 *.mat
 *.txt
+*.json
 
 # Tools
 .git/
