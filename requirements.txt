@@ -11,3 +11,4 @@ types-PyYAML
 lightning
 albumentations
 addict
+dacite

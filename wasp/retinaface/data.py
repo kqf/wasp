@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -6,6 +7,7 @@ import albumentations as albu
 import cv2
 import numpy as np
 import torch
+from dacite import from_dict
 from torch.utils import data
 
 from wasp.retinaface.preprocess import Preproc
@@ -20,6 +22,24 @@ def load_rgb(image_path: Path | str) -> np.array:
     image = cv2.imread(str(image_path))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
+
+
+@dataclass
+class Annotation:
+    bbox: list[int, int, int, int]
+    landmarks: list
+
+
+@dataclass
+class Sample:
+    file_name: str
+    annotations: list[Annotation]
+
+
+def read_dataset(label_path: Path) -> list[Sample]:
+    with label_path.open() as f:
+        df = json.load(f)
+    return [from_dict(data_class=Sample, data=x) for x in df]
 
 
 class FaceDetectionDataset(data.Dataset):
@@ -37,14 +57,12 @@ class FaceDetectionDataset(data.Dataset):
 
         self.transform = transform
         self.rotate90 = rotate90
-
-        with label_path.open() as f:
-            labels = json.load(f)
+        self.labels = read_dataset(label_path)
 
         def exists(x):
             return (image_path / x["file_name"]).exists()
 
-        self.labels = [x for x in labels if exists(x)]
+        # self.labels = [x for x in labels if exists(x)]
 
     def __len__(self) -> int:
         return len(self.labels)
