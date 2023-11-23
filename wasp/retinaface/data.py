@@ -1,10 +1,12 @@
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import albumentations as albu
 import cv2
 import numpy as np
+import pandas as pd
 import torch
 from torch.utils import data
 
@@ -22,6 +24,29 @@ def load_rgb(image_path: Path | str) -> np.array:
     return image
 
 
+@dataclass
+class Annotation:
+    bbox: tuple[int, int, int, int]
+    landmarks: tuple[
+        tuple[int, int],
+        tuple[int, int],
+        tuple[int, int],
+        tuple[int, int],
+        tuple[int, int],
+    ]
+
+
+@dataclass
+class Sample:
+    file_name: str
+    annotations: list[Annotation]
+
+
+def read_dataset(label_path: Path) -> list[Sample]:
+    df = pd.read_json(label_path)
+    return df.apply(Sample, axis=1).tolist()
+
+
 class FaceDetectionDataset(data.Dataset):
     def __init__(
         self,
@@ -37,14 +62,12 @@ class FaceDetectionDataset(data.Dataset):
 
         self.transform = transform
         self.rotate90 = rotate90
-
-        with label_path.open() as f:
-            labels = json.load(f)
+        self.labels = read_dataset(label_path)
 
         def exists(x):
             return (image_path / x["file_name"]).exists()
 
-        self.labels = [x for x in labels if exists(x)]
+        # self.labels = [x for x in labels if exists(x)]
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -120,9 +143,7 @@ def random_rotate_90(
     transform = albu.Compose(
         [albu.RandomRotate90(p=1)],
         keypoint_params=albu.KeypointParams(format="xy"),
-        bbox_params=albu.BboxParams(
-            format="pascal_voc", label_fields=["category_ids"]
-        ),
+        bbox_params=albu.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
     )
     transformed = transform(
         image=image,
