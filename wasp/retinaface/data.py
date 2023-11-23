@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Tuple
 import albumentations as albu
 import cv2
 import numpy as np
-import pandas as pd
 import torch
+from dacite import from_dict
 from torch.utils import data
 
 from wasp.retinaface.preprocess import Preproc
@@ -26,14 +26,8 @@ def load_rgb(image_path: Path | str) -> np.array:
 
 @dataclass
 class Annotation:
-    bbox: tuple[int, int, int, int]
-    landmarks: tuple[
-        tuple[int, int],
-        tuple[int, int],
-        tuple[int, int],
-        tuple[int, int],
-        tuple[int, int],
-    ]
+    bbox: list[int, int, int, int]
+    landmarks: list
 
 
 @dataclass
@@ -43,8 +37,9 @@ class Sample:
 
 
 def read_dataset(label_path: Path) -> list[Sample]:
-    df = pd.read_json(label_path)
-    return df.apply(Sample, axis=1).tolist()
+    with label_path.open() as f:
+        df = json.load(f)
+    return [from_dict(data_class=Sample, data=x) for x in df]
 
 
 class FaceDetectionDataset(data.Dataset):
@@ -143,7 +138,9 @@ def random_rotate_90(
     transform = albu.Compose(
         [albu.RandomRotate90(p=1)],
         keypoint_params=albu.KeypointParams(format="xy"),
-        bbox_params=albu.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+        bbox_params=albu.BboxParams(
+            format="pascal_voc", label_fields=["category_ids"]
+        ),
     )
     transformed = transform(
         image=image,
