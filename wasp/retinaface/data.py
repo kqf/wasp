@@ -55,11 +55,7 @@ class FaceDetectionDataset(data.Dataset):
         self.transform = transform
         self.rotate90 = rotate90
         self.labels = read_dataset(label_path)
-
-        def exists(x, image_path):
-            return (image_path / x["file_name"]).exists()
-
-        # self.labels = [x for x in labels if exists(x)]
+        self.labels = [x for x in self.labels if x.file_name.exists()]
 
     def __len__(self) -> int:
         return len(self.labels)
