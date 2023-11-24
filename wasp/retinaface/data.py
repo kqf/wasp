@@ -51,12 +51,12 @@ class FaceDetectionDataset(data.Dataset):
         rotate90: bool = False,
     ) -> None:
         self.preproc = preproc
-        self.image_path = Path(image_path)
+        # self.image_path = Path(image_path)
         self.transform = transform
         self.rotate90 = rotate90
         self.labels = read_dataset(label_path)
 
-        def exists(x):
+        def exists(x, image_path):
             return (image_path / x["file_name"]).exists()
 
         # self.labels = [x for x in labels if exists(x)]
