@@ -26,7 +26,7 @@ def load_rgb(image_path: Path | str) -> np.array:
 
 @dataclass
 class Annotation:
-    bbox: list[int, int, int, int]
+    bbox: list[int]
     landmarks: list
 
 
@@ -52,9 +52,7 @@ class FaceDetectionDataset(data.Dataset):
         rotate90: bool = False,
     ) -> None:
         self.preproc = preproc
-
         self.image_path = Path(image_path)
-
         self.transform = transform
         self.rotate90 = rotate90
         self.labels = read_dataset(label_path)
@@ -68,11 +66,8 @@ class FaceDetectionDataset(data.Dataset):
         return len(self.labels)
 
     def __getitem__(self, index: int) -> Dict[str, Any]:
-        labels = self.labels[index]
-
-        file_name = labels["file_name"]
-
-        image = load_rgb(self.image_path / file_name)
+        sample = self.labels[index]
+        image = load_rgb(self.image_path / sample.file_name)
 
         image_height, image_width = image.shape[:2]
 
@@ -81,10 +76,10 @@ class FaceDetectionDataset(data.Dataset):
         num_annotations = 4 + 10 + 1
         annotations = np.zeros((0, num_annotations))
 
-        for label in labels["annotations"]:
+        for label in sample.annotations:
             annotation = np.zeros((1, num_annotations))
 
-            x_min, y_min, x_max, y_max = label["bbox"]
+            x_min, y_min, x_max, y_max = label.bbox
 
             x_min = np.clip(x_min, 0, image_width - 1)
             y_min = np.clip(y_min, 0, image_height - 1)
@@ -93,8 +88,8 @@ class FaceDetectionDataset(data.Dataset):
 
             annotation[0, :4] = x_min, y_min, x_max, y_max
 
-            if "landmarks" in label and label["landmarks"]:
-                landmarks = np.array(label["landmarks"])
+            if label.landmarks:
+                landmarks = np.array(label.landmarks)
                 # landmarks
                 annotation[0, 4:14] = landmarks.reshape(-1, 10)
                 annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
@@ -113,7 +108,7 @@ class FaceDetectionDataset(data.Dataset):
         return {
             "image": to_tensor(image),
             "annotation": annotations.astype(np.float32),
-            "file_name": file_name,
+            "file_name": sample.file_name,
         }
 
 
@@ -139,7 +134,8 @@ def random_rotate_90(
         [albu.RandomRotate90(p=1)],
         keypoint_params=albu.KeypointParams(format="xy"),
         bbox_params=albu.BboxParams(
-            format="pascal_voc", label_fields=["category_ids"]
+            format="pascal_voc",
+            label_fields=["category_ids"],
         ),
     )
     transformed = transform(
