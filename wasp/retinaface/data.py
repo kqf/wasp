@@ -46,7 +46,6 @@ class FaceDetectionDataset(data.Dataset):
     def __init__(
         self,
         label_path: Path,
-        image_path: Path,
         transform: albu.Compose,
         preproc: Preproc,
         rotate90: bool = False,
