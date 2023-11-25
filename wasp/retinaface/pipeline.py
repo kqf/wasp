@@ -29,10 +29,8 @@ def dpath(envv):
 
 @dataclass
 class Paths:
-    train: Path = field(default_factory=dpath("TRAIN_IMAGE_PATH"))
-    valid: Path = field(default_factory=dpath("VAL_IMAGE_PATH"))
-    train_label: Path = field(default_factory=dpath("TRAIN_LABEL_PATH"))
-    valid_label: Path = field(default_factory=dpath("VAL_LABEL_PATH"))
+    train: Path = field(default_factory=dpath("TRAIN_LABEL_PATH"))
+    valid: Path = field(default_factory=dpath("VAL_LABEL_PATH"))
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
