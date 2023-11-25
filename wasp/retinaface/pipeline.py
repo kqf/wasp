@@ -78,7 +78,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             FaceDetectionDataset(
-                label_path=self.paths.train_label,
+                label_path=self.paths.train,
                 transform=from_dict(self.config.train_aug),
                 preproc=self.preproc,
                 rotate90=self.config.train_parameters.rotate90,
@@ -94,7 +94,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def val_dataloader(self) -> DataLoader:
         return DataLoader(
             FaceDetectionDataset(
-                label_path=self.paths.valid_label,
+                label_path=self.paths.valid,
                 transform=from_dict(self.config.val_aug),
                 preproc=self.preproc,
                 rotate90=self.config.val_parameters.rotate90,
