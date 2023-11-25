@@ -35,8 +35,6 @@ def annotations(tmp_path) -> pathlib.Path:
 def test_main(annotations):
     main(
         paths=Paths(
-            pathlib.Path("."),
-            pathlib.Path("."),
             annotations,
             annotations,
         ),
