@@ -55,7 +55,7 @@ def main(dataset, ofile):
                     result += [temp]
 
                 temp = {
-                    "file_name": line.strip(),
+                    "file_name": f"/data/v0.0.1/wider/train/{line.strip()}",
                     "annotations": [],
                 }
 
