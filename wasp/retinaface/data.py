@@ -62,7 +62,7 @@ class FaceDetectionDataset(data.Dataset):
 
     def __getitem__(self, index: int) -> Dict[str, Any]:
         sample = self.labels[index]
-        image = load_rgb(self.image_path / sample.file_name)
+        image = load_rgb(sample.file_name)
 
         image_height, image_width = image.shape[:2]
 
