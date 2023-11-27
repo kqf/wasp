@@ -1,5 +1,6 @@
 import pytest
 import torch
+import torchvision
 
 from wasp.retinaface.model import RetinaFace
 
@@ -27,11 +28,13 @@ def test_retinaface(inputs, anchors):
 
 
 @pytest.mark.parametrize(
-    "inputs",
+    "image",
     [
         torch.randn(1, 3, 640, 480),
         torch.randn(1, 3, 1280, 720),
     ],
 )
-def test_backbone():
-    pass
+def test_backbone(image):
+    model = torchvision.models.resnet50(weights=None)
+    output = model(image)
+    print(output.shape)
