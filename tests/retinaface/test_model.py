@@ -22,18 +22,18 @@ def check_shapes(model, image):
     ],
 )
 @pytest.mark.parametrize(
-    "name, return_layers",
+    "name, return_layers, in_channels",
     [
-        ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}),
-        ("resnet18", {"layer2": 1, "layer3": 2, "layer4": 3}),
+        ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}, 256),
+        ("resnet18", {"layer2": 1, "layer3": 2, "layer4": 3}, 64),
     ],
 )
-def test_retinaface(inputs, anchors, name, return_layers):
+def test_retinaface(inputs, anchors, name, return_layers, in_channels):
     model = RetinaFace(
         name=name,
         pretrained=False,
         return_layers=return_layers,
-        in_channels=64 if name == "resnet18" else 256,
+        in_channels=in_channels,
         out_channels=256,
     )
 
