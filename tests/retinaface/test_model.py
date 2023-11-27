@@ -38,3 +38,16 @@ def test_backbone(image):
     model = torchvision.models.resnet50(weights=None)
     output = model(image)
     print(output.shape)
+
+    pyramid = torchvision.models._utils.IntermediateLayerGetter(
+        model,
+        {"layer2": 1, "layer3": 2, "layer4": 3},
+    )
+
+    poutput = pyramid(image)
+    # sourcery skip: no-loop-in-tests
+    for k, v in poutput.items():
+        print(k, v.shape())
+    # 1 torch.Size([1, 512, 80, 60])
+    # 2 torch.Size([1, 1024, 40, 30])
+    # 3 torch.Size([1, 2048, 20, 15])
