@@ -63,6 +63,7 @@ def test_backbone(image):
     # 3 torch.Size([1, 2048, 20, 15])
 
     print("---------------------------------")
-    test_outputs = check_shapes(model, image)
+    model2 = torchvision.models.resnet18(weights=None)
+    test_outputs = check_shapes(model2, image)
     for k, v in test_outputs.items():
         print(k, v.shape)
