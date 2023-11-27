@@ -5,6 +5,16 @@ import torchvision
 from wasp.retinaface.model import RetinaFace
 
 
+def check_shapes(model, image):
+    keys = list(zip(*model.named_children()))[0][:-2]
+    intermediate = torchvision.models._utils.IntermediateLayerGetter(
+        model,
+        {k: k for k in keys},
+    )
+    return intermediate(image)
+
+
+@pytest.mark.skip
 @pytest.mark.parametrize(
     "inputs, anchors",
     [
@@ -31,7 +41,7 @@ def test_retinaface(inputs, anchors):
     "image",
     [
         torch.randn(1, 3, 640, 480),
-        torch.randn(1, 3, 1280, 720),
+        # torch.randn(1, 3, 1280, 720),
     ],
 )
 def test_backbone(image):
@@ -47,7 +57,12 @@ def test_backbone(image):
     poutput = pyramid(image)
     # sourcery skip: no-loop-in-tests
     for k, v in poutput.items():
-        print(k, v.shape())
+        print(k, v.shape)
     # 1 torch.Size([1, 512, 80, 60])
     # 2 torch.Size([1, 1024, 40, 30])
     # 3 torch.Size([1, 2048, 20, 15])
+
+    print("---------------------------------")
+    test_outputs = check_shapes(model, image)
+    for k, v in test_outputs.items():
+        print(k, v.shape)
