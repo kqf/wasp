@@ -24,3 +24,14 @@ def test_retinaface(inputs, anchors):
     assert bboxes.shape == (inputs.shape[0], anchors, 4)
     assert classes.shape == (inputs.shape[0], anchors, 2)
     assert landmarks.shape == (inputs.shape[0], anchors, 10)
+
+
+@pytest.mark.parametrize(
+    "inputs",
+    [
+        torch.randn(1, 3, 640, 480),
+        torch.randn(1, 3, 1280, 720),
+    ],
+)
+def test_backbone():
+    pass
