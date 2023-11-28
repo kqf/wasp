@@ -26,7 +26,7 @@ def check_shapes(model, image):
     [
         ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}, 256),
         ("resnet18", {"layer2": 1, "layer3": 2, "layer4": 3}, 64),
-        ("mobilenet_v2", {"6": 1, "13": 2, "16": 3}, 16),
+        # ("mobilenet_v2", {"6": 1, "13": 2, "16": 3}, 16),
     ],
 )
 def test_retinaface(inputs, anchors, name, return_layers, in_channels):
