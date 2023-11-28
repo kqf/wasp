@@ -14,7 +14,6 @@ def check_shapes(model, image):
     return intermediate(image)
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     "inputs, anchors",
     [
