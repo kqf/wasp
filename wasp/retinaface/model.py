@@ -103,6 +103,8 @@ class RetinaFace(nn.Module):
             backbone = models.resnet50(pretrained=pretrained)
         elif name.lower() == "resnet18":
             backbone = models.resnet18(weights=None)
+        elif name.lower() == "mobilenet_v2":
+            backbone = models.mobilenet_v2(weights=None).features
         else:
             raise NotImplementedError(
                 f"Only Resnet50 backbone is supported but got {name}"
