@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import torch
 from torch import nn
@@ -93,9 +93,9 @@ class RetinaFace(nn.Module):
         self,
         name: str,
         pretrained: bool,
-        in_channels: int,
         return_layers: Dict[str, int],
         out_channels: int,
+        in_channels: Optional[list[int]] = None,
     ) -> None:
         super().__init__()
 
@@ -111,12 +111,16 @@ class RetinaFace(nn.Module):
             )
 
         self.body = _utils.IntermediateLayerGetter(backbone, return_layers)
-        in_channels_stage2 = in_channels
-        in_channels_list = [
-            in_channels_stage2 * 2,
-            in_channels_stage2 * 4,
-            in_channels_stage2 * 8,
-        ]
+
+        def build_channels(in_channels=256) -> list[int]:
+            in_channels_stage2 = in_channels
+            return [
+                in_channels_stage2 * 2,
+                in_channels_stage2 * 4,
+                in_channels_stage2 * 8,
+            ]
+
+        in_channels_list = in_channels or build_channels()
         self.fpn = FPN(in_channels_list, out_channels)
         self.ssh1 = SSH(out_channels, out_channels)
         self.ssh2 = SSH(out_channels, out_channels)
