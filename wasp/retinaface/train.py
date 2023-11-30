@@ -32,7 +32,6 @@ def main(
             "layer3": 2,
             "layer4": 3,
         },
-        in_channels=256,
         out_channels=256,
     )
 
