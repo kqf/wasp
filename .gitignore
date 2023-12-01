@@ -16,6 +16,7 @@
 *.egg*
 .coverage
 .env
+lightning_logs
 
 # Include
 !requirements.txt
