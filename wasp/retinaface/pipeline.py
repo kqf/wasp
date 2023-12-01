@@ -67,6 +67,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.preprocessing = preprocessing
         self.build_optimizer = build_optimizer
         self.build_scheduler = build_scheduler
+        self.validation_outputs: list[dict] = []
 
     def setup(self, stage=0) -> None:  # type: ignore
         self.preproc = self.preprocessing()
@@ -305,7 +306,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             on_epoch=True,
             logger=True,
         )
-        self.validation_outputs: list[dict] = []
+        self.validation_outputs = []
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
         lr = [x["lr"] for x in self.optimizers[0].param_groups][0]  # type: ignore # noqa
