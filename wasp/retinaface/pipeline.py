@@ -18,6 +18,7 @@ from torchvision.ops import nms
 
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
+from wasp.retinaface.metrics import recall_precision
 
 
 def dpath(envv):
@@ -272,37 +273,39 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                     }
                 ]
 
-        return OrderedDict({"predictions": predictions_coco, "gt": gt_coco})
+        outputs = OrderedDict({"predictions": predictions_coco, "gt": gt_coco})
+        self.validation_outputs.append(outputs)
+        return outputs
 
-    # TODO: Uncomment me
-    # def validation_epoch_end(self, outputs: List) -> None:
-    #     result_predictions: List[dict] = []
-    #     result_gt: List[dict] = []
+    def on_validation_epoch_end(self) -> None:
+        result_predictions: List[dict] = []
+        result_gt: List[dict] = []
 
-    #     for output in outputs:
-    #         result_predictions += output["predictions"]
-    #         result_gt += output["gt"]
+        for output in self.validation_outputs:
+            result_predictions += output["predictions"]
+            result_gt += output["gt"]
 
-    #     _, _, average_precision = recall_precision(
-    #         result_gt,
-    #         result_predictions,
-    #         0.5,
-    #     )
+        _, _, average_precision = recall_precision(
+            result_gt,
+            result_predictions,
+            0.5,
+        )
 
-    #     self.log(
-    #         "epoch",
-    #         self.trainer.current_epoch,
-    #         on_step=False,
-    #         on_epoch=True,
-    #         logger=True,
-    #     )  # type: ignore
-    #     self.log(
-    #         "val_loss",
-    #         average_precision,
-    #         on_step=False,
-    #         on_epoch=True,
-    #         logger=True,
-    #     )
+        self.log(
+            "epoch",
+            self.trainer.current_epoch,
+            on_step=False,
+            on_epoch=True,
+            logger=True,
+        )  # type: ignore
+        self.log(
+            "val_loss",
+            average_precision,
+            on_step=False,
+            on_epoch=True,
+            logger=True,
+        )
+        self.validation_outputs: list[dict] = []
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
         lr = [x["lr"] for x in self.optimizers[0].param_groups][0]  # type: ignore # noqa
