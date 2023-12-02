@@ -1,4 +1,5 @@
 import pytest
+import torch
 
 from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.priors import priorbox
@@ -34,5 +35,14 @@ def loss(anchors):
     )
 
 
-def test_loss(loss):
+@pytest.fixture
+def predictions():
+    return [
+        torch.zeros([1, 2688, 4]),
+        torch.zeros([1, 2688, 2]),
+        torch.zeros([1, 2688, 10]),
+    ]
+
+
+def test_loss(loss, predictions):
     pass
