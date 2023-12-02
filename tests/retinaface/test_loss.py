@@ -50,4 +50,5 @@ def targets():
 
 
 def test_loss(loss, predictions, targets):
-    pass
+    losses = loss.full_forward(predictions, targets)
+    assert len(losses) == 4
