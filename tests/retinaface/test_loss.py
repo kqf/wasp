@@ -44,5 +44,10 @@ def predictions():
     ]
 
 
-def test_loss(loss, predictions):
+@pytest.fixture
+def targets():
+    return [torch.zeros((1, 15))]
+
+
+def test_loss(loss, predictions, targets):
     pass
