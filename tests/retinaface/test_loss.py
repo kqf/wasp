@@ -43,6 +43,7 @@ def predictions():
         torch.zeros([1, 2688, 10]),
     ]
     x[0][0, 0] = 1.0
+    x[1][0, 0, 0] = 1.0
     return x
 
 
