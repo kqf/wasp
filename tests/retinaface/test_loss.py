@@ -52,5 +52,8 @@ def targets():
 
 
 def test_loss(loss, predictions, targets):
-    losses = loss.full_forward(predictions, targets)
-    assert len(losses) == 4
+    total, boxes, classes, landmarks = loss.full_forward(predictions, targets)
+    assert total == 0
+    assert boxes == 0
+    assert classes == 0
+    assert landmarks == 0
