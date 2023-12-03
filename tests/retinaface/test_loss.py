@@ -37,11 +37,13 @@ def loss(anchors):
 
 @pytest.fixture
 def predictions():
-    return [
+    x = [
         torch.zeros([1, 2688, 4]),
         torch.zeros([1, 2688, 2]),
         torch.zeros([1, 2688, 10]),
     ]
+    x[0][0, 0] = 1.0
+    return x
 
 
 @pytest.fixture
