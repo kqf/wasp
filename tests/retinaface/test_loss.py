@@ -49,7 +49,10 @@ def predictions():
 
 @pytest.fixture
 def targets():
-    return [torch.zeros((1, 15))]
+    x = torch.zeros((1, 15))
+    x[0, :4] = torch.Tensor([0.0020, 0.6445, 0.1230, 0.9980])
+    x[0, -1] = 1.0
+    return [x]
 
 
 def test_loss(loss, predictions, targets):
