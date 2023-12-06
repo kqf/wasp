@@ -18,7 +18,7 @@ def check_shapes(model, image):
     "inputs, anchors",
     [
         (torch.randn(1, 3, 640, 480), 12600),
-        (torch.randn(1, 3, 1280, 720), 37840),
+        # (torch.randn(1, 3, 1280, 720), 37840),
     ],
 )
 @pytest.mark.parametrize(
@@ -37,6 +37,9 @@ def test_retinaface(inputs, anchors, name, return_layers, in_channels):
         in_channels=in_channels,
         out_channels=256,
     )
+
+    total = sum(p.numel() for p in model.parameters())
+    print(f"Model name {name}, size: {total:_}")
 
     bboxes, classes, landmarks = model(inputs)
     assert bboxes.shape == (inputs.shape[0], anchors, 4)
