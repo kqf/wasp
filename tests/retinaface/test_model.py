@@ -17,8 +17,10 @@ def check_shapes(model, image):
 @pytest.mark.parametrize(
     "inputs, anchors",
     [
-        (torch.randn(1, 3, 640, 480), 12600),
+        # (torch.randn(1, 3, 640, 480), 12600),
         # (torch.randn(1, 3, 1280, 720), 37840),
+        (torch.randn(1, 3, 640, 480), 12000),
+        (torch.randn(1, 3, 1280, 720), 36000),
     ],
 )
 @pytest.mark.parametrize(

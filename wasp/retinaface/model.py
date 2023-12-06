@@ -128,9 +128,9 @@ class RetinaFace(nn.Module):
         self.ssh2 = SSH(out_channels, out_channels)
         self.ssh3 = SSH(out_channels, out_channels)
 
-        self.classes = _make_classes(fpn_num=3, in_channels=out_channels)
-        self.boxes = _make_bboxes(fpn_num=3, in_channels=out_channels)
-        self.keypoints = _make_landmarks(fpn_num=3, in_channels=out_channels)
+        self.classes = _make_classes(fpn_num=2, in_channels=out_channels)
+        self.boxes = _make_bboxes(fpn_num=2, in_channels=out_channels)
+        self.keypoints = _make_landmarks(fpn_num=2, in_channels=out_channels)
 
     def forward(
         self, inputs: torch.Tensor
@@ -143,8 +143,12 @@ class RetinaFace(nn.Module):
         # SSH
         feature1 = self.ssh1(fpn[0])
         feature2 = self.ssh2(fpn[1])
-        feature3 = self.ssh3(fpn[2])
-        features = [feature1, feature2, feature3]
+        # feature3 = self.ssh3(fpn[2])
+        features = [
+            feature1,
+            feature2,
+            # feature3,
+        ]
 
         bbox_regressions = torch.cat(
             [self.boxes[i](feature) for i, feature in enumerate(features)],
