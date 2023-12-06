@@ -51,7 +51,7 @@ def predictions():
 def targets():
     x = torch.zeros((1, 15))
     x[0, :4] = torch.Tensor([0.0020, 0.6445, 0.1230, 0.9980])
-    x[0, -1] = 1.0
+    x[0, -1] = 0.0
     return [x]
 
 
