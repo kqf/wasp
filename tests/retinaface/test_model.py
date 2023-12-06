@@ -27,6 +27,7 @@ def check_shapes(model, image):
         ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}, None),
         ("resnet18", {"layer2": 1, "layer3": 2, "layer4": 3}, [128, 256, 512]),
         ("mobilenet_v2", {"6": 1, "13": 2, "16": 3}, [32, 96, 160]),
+        ("mobilenet_v2_small", {"3": 1, "8": 2, "10": 3}, [24, 48, 96]),
     ],
 )
 def test_retinaface(inputs, anchors, name, return_layers, in_channels):
@@ -92,10 +93,21 @@ def test_backbone(image):
     # 15 torch.Size([1, 160, 20, 15])
     # 16 torch.Size([1, 160, 20, 15]) <<<<
 
-    # Mobilenet
+    # Mobilenet v3
+    # 0 torch.Size([1, 16, 320, 240])
+    # 1 torch.Size([1, 16, 160, 120])
+    # 2 torch.Size([1, 24, 80, 60])
+    # 3 torch.Size([1, 24, 80, 60])  <<<<<<<<
+    # 4 torch.Size([1, 40, 40, 30])
+    # 5 torch.Size([1, 40, 40, 30])
+    # 6 torch.Size([1, 40, 40, 30])
+    # 7 torch.Size([1, 48, 40, 30])
+    # 8 torch.Size([1, 48, 40, 30])  <<<<<<<<
+    # 9 torch.Size([1, 96, 20, 15])
+    # 10 torch.Size([1, 96, 20, 15]) <<<<<<<<
 
     print("---------------------------------")
-    model2 = torchvision.models.mobilenet_v2(weights=None)
+    model2 = torchvision.models.mobilenet_v3_small(weights=None)
     test_outputs = check_shapes(model2.features, image)
     for k, v in test_outputs.items():
         print(k, v.shape)
