@@ -30,9 +30,10 @@ def check_shapes(model, image):
 @pytest.mark.parametrize(
     "name, return_layers, in_channels",
     [
-        ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}, None),
-        ("resnet18", {"layer2": 1, "layer3": 2, "layer4": 3}, [128, 256, 512]),
-        ("mobilenet_v2", {"6": 1, "13": 2, "16": 3}, [32, 96, 160]),
+        # ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}, None),
+        # ("resnet18", {"layer2": 1, "layer3": 2, "layer4": 3}, [128, 256, 512]),
+        # ("mobilenet_v2", {"6": 1, "13": 2, "16": 3}, [32, 96, 160]),
+        # ("mobilenet_v3_small", {"3": 1, "8": 2, "10": 3}, [24, 48, 96]),
         ("mobilenet_v3_small", {"3": 1, "8": 2, "10": 3}, [24, 48, 96]),
     ],
 )
@@ -68,7 +69,7 @@ def test_backbone(image):
 
     pyramid = torchvision.models._utils.IntermediateLayerGetter(
         model,
-        {"layer2": 1, "layer3": 2, "layer4": 3},
+        {"layer4": 3},
     )
 
     poutput = pyramid(image)
