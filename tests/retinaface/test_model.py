@@ -20,8 +20,11 @@ def check_shapes(model, image):
         # (torch.randn(1, 3, 640, 480), 12600),
         # (torch.randn(1, 3, 1280, 720), 37840),
         # Only two layers
-        (torch.randn(1, 3, 640, 480), 600),
-        (torch.randn(1, 3, 1280, 720), 1840),
+        # (torch.randn(1, 3, 640, 480), 600),
+        # (torch.randn(1, 3, 1280, 720), 1840),
+        # Use the last layer
+        (torch.randn(1, 3, 640, 480), 12000),
+        (torch.randn(1, 3, 1280, 720), 36000),
     ],
 )
 @pytest.mark.parametrize(
