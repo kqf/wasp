@@ -124,8 +124,8 @@ class RetinaFace(nn.Module):
 
         in_channels_list = in_channels or build_channels()
         self.fpn = FPN(in_channels_list, out_channels)
-        self.ssh1 = SSH(out_channels, out_channels)
-        self.ssh2 = SSH(out_channels, out_channels)
+        # self.ssh1 = SSH(out_channels, out_channels)
+        # self.ssh2 = SSH(out_channels, out_channels)
         self.ssh3 = SSH(out_channels, out_channels)
 
         self.classes = _make_classes(fpn_num=2, in_channels=out_channels)
@@ -141,26 +141,28 @@ class RetinaFace(nn.Module):
         fpn = self.fpn(out)
 
         # SSH
-        feature1 = self.ssh1(fpn[0])
-        feature2 = self.ssh2(fpn[1])
-        # feature3 = self.ssh3(fpn[2])
-        features = [
-            feature1,
-            feature2,
-            # feature3,
-        ]
+        # feature1 = self.ssh1(fpn[0])
+        # feature2 = self.ssh2(fpn[1])
+        feature3 = self.ssh3(fpn[2])
+        # features = [
+        #     # feature1,
+        #     # feature2,
+        #     feature3,
+        # ]
+        # bbox_regressions = torch.cat(
+        #     [self.boxes[i](feature) for i, feature in enumerate(features)],
+        #     dim=1,
+        # )
+        # classifications = torch.cat(
+        #     [self.classes[i](feature) for i, feature in enumerate(features)],
+        #     dim=1,
+        # )
+        # ldm_regressions = torch.cat(
+        #     [self.keypoints[i](feature) for i, feature in enumerate(features)], # noqa
+        #     dim=1,
+        # )
 
-        bbox_regressions = torch.cat(
-            [self.boxes[i](feature) for i, feature in enumerate(features)],
-            dim=1,
-        )
-        classifications = torch.cat(
-            [self.classes[i](feature) for i, feature in enumerate(features)],
-            dim=1,
-        )
-        ldm_regressions = torch.cat(
-            [self.keypoints[i](feature) for i, feature in enumerate(features)],
-            dim=1,
-        )
-
+        bbox_regressions = self.boxes[0](feature3)
+        classifications = self.classes[0](feature3)
+        ldm_regressions = self.keypoints[0](feature3)
         return bbox_regressions, classifications, ldm_regressions

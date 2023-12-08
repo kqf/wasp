@@ -19,6 +19,10 @@ def check_shapes(model, image):
     [
         # (torch.randn(1, 3, 640, 480), 12600),
         # (torch.randn(1, 3, 1280, 720), 37840),
+        # Only two layers
+        # (torch.randn(1, 3, 640, 480), 600),
+        # (torch.randn(1, 3, 1280, 720), 1840),
+        # Use the last layer
         (torch.randn(1, 3, 640, 480), 12000),
         (torch.randn(1, 3, 1280, 720), 36000),
     ],
@@ -64,7 +68,7 @@ def test_backbone(image):
 
     pyramid = torchvision.models._utils.IntermediateLayerGetter(
         model,
-        {"layer2": 1, "layer3": 2, "layer4": 3},
+        {"layer4": 3},
     )
 
     poutput = pyramid(image)
