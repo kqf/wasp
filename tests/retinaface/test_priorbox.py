@@ -13,7 +13,11 @@ RESOLUTION = 480, 640
         ([[64, 128], [256, 512]], [16, 32]),
     ],
 )
-def test_anchors(min_sizes, steps, resolution=RESOLUTION):
+def test_anchors(
+    min_sizes: list[list[int]],
+    steps: list[int],
+    resolution=RESOLUTION,
+):
     """Check all anchors"""
     anchors = priorbox(
         min_sizes=min_sizes,
