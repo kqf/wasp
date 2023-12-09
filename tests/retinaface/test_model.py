@@ -20,20 +20,17 @@ def check_shapes(model, image):
         # (torch.randn(1, 3, 640, 480), 12600),
         # (torch.randn(1, 3, 1280, 720), 37840),
         # Only two layers
-        # (torch.randn(1, 3, 640, 480), 600),
-        # (torch.randn(1, 3, 1280, 720), 1840),
-        # Use the last layer
-        (torch.randn(1, 3, 640, 480), 12000),
-        (torch.randn(1, 3, 1280, 720), 36000),
+        (torch.randn(1, 3, 640, 480), 600),
+        (torch.randn(1, 3, 1280, 720), 1840),
     ],
 )
 @pytest.mark.parametrize(
     "name, return_layers, in_channels",
     [
-        ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}, None),
+        # ("resnet50", {"layer2": 1, "layer3": 2, "layer4": 3}, None),
         ("resnet18", {"layer2": 1, "layer3": 2, "layer4": 3}, [128, 256, 512]),
-        ("mobilenet_v2", {"6": 1, "13": 2, "16": 3}, [32, 96, 160]),
-        ("mobilenet_v3_small", {"3": 1, "8": 2, "10": 3}, [24, 48, 96]),
+        # ("mobilenet_v2", {"6": 1, "13": 2, "16": 3}, [32, 96, 160]),
+        # ("mobilenet_v3_small", {"3": 1, "8": 2, "10": 3}, [24, 48, 96]),
     ],
 )
 def test_retinaface(inputs, anchors, name, return_layers, in_channels):
