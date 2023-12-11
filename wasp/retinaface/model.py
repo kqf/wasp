@@ -124,8 +124,8 @@ class RetinaFace(nn.Module):
 
         in_channels_list = in_channels or build_channels()
         self.fpn = FPN(in_channels_list, out_channels)
-        self.ssh1 = SSH(out_channels, out_channels)
-        self.ssh2 = SSH(out_channels, out_channels)
+        # self.ssh1 = SSH(out_channels, out_channels)
+        # self.ssh2 = SSH(out_channels, out_channels)
         self.ssh3 = SSH(out_channels, out_channels)
 
         self.classes = _make_classes(fpn_num=2, in_channels=out_channels)
