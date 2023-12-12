@@ -128,9 +128,9 @@ class RetinaFace(nn.Module):
         self.ssh2 = SSH(out_channels, out_channels)
         self.ssh3 = SSH(out_channels, out_channels)
 
-        self.classes = _make_classes(fpn_num=2, in_channels=out_channels)
-        self.boxes = _make_bboxes(fpn_num=2, in_channels=out_channels)
-        self.keypoints = _make_landmarks(fpn_num=2, in_channels=out_channels)
+        self.classes = _make_classes(fpn_num=3, in_channels=out_channels)
+        self.boxes = _make_bboxes(fpn_num=3, in_channels=out_channels)
+        self.keypoints = _make_landmarks(fpn_num=3, in_channels=out_channels)
 
     def forward(
         self, inputs: torch.Tensor
