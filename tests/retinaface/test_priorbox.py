@@ -5,6 +5,7 @@ from wasp.retinaface.priors import priorbox
 
 RESOLUTION = 480, 640
 
+
 @pytest.mark.parametrize(
     "min_sizes, steps",
     [
