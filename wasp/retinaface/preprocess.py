@@ -114,7 +114,6 @@ def random_horizontal_flip(
     return image, boxes, landms
 
 
-# TODO Rename this here and in `random_horizontal_flip`
 def flip_landmark(landms, arg1, arg2):
     tmp = landms[:, arg1, :].copy()
     landms[:, arg1, :] = landms[:, arg2, :]
