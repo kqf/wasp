@@ -32,7 +32,7 @@ class MultiBoxLoss(nn.Module):
         neg_overlap: float,
         encode_target: bool,
         priors: torch.Tensor,
-        weights,
+        weights: LossWeights,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
@@ -172,9 +172,9 @@ class MultiBoxLoss(nn.Module):
         )
 
         total = (
-            self.weights["localization"] * localization
-            + self.weights["classification"] * classification
-            + self.weights["landmarks"] * landmarks
+            self.weights.localization * localization
+            + self.weights.classification * classification
+            + self.weights.landmarks * landmarks
         )
 
         return total, localization, classification, landmarks
