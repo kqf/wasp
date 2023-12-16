@@ -6,7 +6,7 @@ import torch
 import yaml
 from addict import Dict as Adict
 
-from wasp.retinaface.loss import MultiBoxLoss
+from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import Paths, RetinaFacePipeline
 from wasp.retinaface.preprocess import Preproc
@@ -69,11 +69,11 @@ def main(
             neg_overlap=0.35,
             encode_target=False,
             priors=priors,
-            weights={
-                "localization": 2,
-                "classification": 1,
-                "landmarks": 1,
-            },
+            weights=LossWeights(
+                localization=2,
+                classification=1,
+                landmarks=1,
+            ),
         ),
     )
 

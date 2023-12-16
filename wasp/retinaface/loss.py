@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 import torch
@@ -12,6 +13,13 @@ def log_sum_exp(x):
     return torch.log(torch.sum(torch.exp(x - x_max), 1, keepdim=True)) + x_max
 
 
+@dataclass
+class LossWeights:
+    localization: float
+    classification: float
+    landmarks: float
+
+
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
@@ -24,7 +32,7 @@ class MultiBoxLoss(nn.Module):
         neg_overlap: float,
         encode_target: bool,
         priors: torch.Tensor,
-        weights,
+        weights: LossWeights,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
@@ -164,9 +172,9 @@ class MultiBoxLoss(nn.Module):
         )
 
         total = (
-            self.weights["localization"] * localization
-            + self.weights["classification"] * classification
-            + self.weights["landmarks"] * landmarks
+            self.weights.localization * localization
+            + self.weights.classification * classification
+            + self.weights.landmarks * landmarks
         )
 
         return total, localization, classification, landmarks
