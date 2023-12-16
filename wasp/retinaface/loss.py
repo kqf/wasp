@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 import torch
@@ -10,6 +11,13 @@ from wasp.retinaface.matching import match
 def log_sum_exp(x):
     x_max = x.data.max()
     return torch.log(torch.sum(torch.exp(x - x_max), 1, keepdim=True)) + x_max
+
+
+@dataclass
+class LossWeights:
+    localization: float
+    classification: float
+    landmarks: float
 
 
 class MultiBoxLoss(nn.Module):
