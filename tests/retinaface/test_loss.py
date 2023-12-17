@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wasp.retinaface.loss import MultiBoxLoss
+from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.priors import priorbox
 
 
@@ -27,11 +27,11 @@ def loss(anchors):
         neg_overlap=0.35,
         encode_target=False,
         priors=anchors,
-        weights={
-            "localization": 2,
-            "classification": 1,
-            "landmarks": 1,
-        },
+        weights=LossWeights(
+            localization=2,
+            classification=1,
+            landmarks=1,
+        ),
     )
 
 
