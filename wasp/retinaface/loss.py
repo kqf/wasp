@@ -69,8 +69,8 @@ class MultiBoxLoss(nn.Module):
         priors = self.priors.to(targets[0].device)
         defaults = priors.data
 
-        num_predicted_boxes = locations_data.size(0)
-        num_priors = priors.size(0)
+        num_predicted_boxes = locations_data.shape[0]
+        num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
         boxes_t = torch.zeros(
@@ -143,7 +143,7 @@ class MultiBoxLoss(nn.Module):
         _, idx_rank = loss_idx.sort(1)
         num_pos = positive.long().sum(1, keepdim=True)
         num_neg = torch.clamp(
-            self.negpos_ratio * num_pos, max=positive.size(1) - 1
+            self.negpos_ratio * num_pos, max=positive.shape[1] - 1
         )
         neg = idx_rank < num_neg.expand_as(idx_rank)
 
