@@ -15,8 +15,8 @@ def intersect(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
     Return:
       intersection area, Shape: [A, B].
     """
-    a = box_a.size(0)
-    b = box_b.size(0)
+    a = box_a.shape[0]
+    b = box_b.shape[0]
     max_xy = torch.min(
         box_a[:, 2:].unsqueeze(1).expand(a, b, 2),
         box_b[:, 2:].unsqueeze(0).expand(a, b, 2),
@@ -40,7 +40,7 @@ def iou(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
         box_a: Ground truth bounding boxes, Shape: [num_objects,4]
         box_b: Prior boxes from priorbox layers, Shape: [num_priors,4]
     Return:
-        jaccard overlap: Shape: [box_a.size(0), box_b.size(0)]
+        jaccard overlap: Shape: [box_a.shape[0], box_b.shape[0]]
     """
     inter = intersect(box_a, box_b)
     area_a = (
@@ -132,7 +132,7 @@ def decode(
 
 
 def to_shape(x, matched) -> torch.Tensor:
-    return x.unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
+    return x.unsqueeze(1).expand(matched.shape[0], 5).unsqueeze(2)
 
 
 def encode_landm(
@@ -154,7 +154,7 @@ def encode_landm(
         encoded landmarks, Shape: [num_priors, 10]
     """
     # dist b/t match center and prior's center
-    matched = torch.reshape(matched, (matched.size(0), 5, 2))
+    matched = torch.reshape(matched, (matched.shape[0], 5, 2))
     priors_cx = to_shape(priors[:, 0], matched)
     priors_cy = to_shape(priors[:, 1], matched)
     priors_w = to_shape(priors[:, 2], matched)
@@ -164,7 +164,7 @@ def encode_landm(
     # encode variance
     g_cxcy /= variances[0] * priors[:, :, 2:]
     # return target for smooth_l1_loss
-    return g_cxcy.reshape(g_cxcy.size(0), -1)
+    return g_cxcy.reshape(g_cxcy.shape[0], -1)
 
 
 def match(
@@ -204,7 +204,7 @@ def match(
     best_truth_overlap.index_fill_(0, best_prior_idx_filter, 2)
 
     # ensure every gt matches with its prior of max overlap
-    for j in range(best_prior_idx.size(0)):
+    for j in range(best_prior_idx.shape[0]):
         best_truth_idx[best_prior_idx[j]] = j
 
     matches = box_gt[best_truth_idx]  # Shape: [num_priors, 4]
