@@ -129,13 +129,13 @@ class FPN(nn.Module):
         output3 = self.output3(y[2])
 
         up3 = F.interpolate(
-            output3, size=[output2.size(2), output2.size(3)], mode="nearest"
+            output3, size=[output2.shape[2], output2.shape[3]], mode="nearest"
         )
         output2 = output2 + up3
         output2 = self.merge2(output2)
 
         up2 = F.interpolate(
-            output2, size=[output1.size(2), output1.size(3)], mode="nearest"
+            output2, size=[output1.shape[2], output1.shape[3]], mode="nearest"
         )
         output1 = output1 + up2
         output1 = self.merge1(output1)
