@@ -5,6 +5,10 @@ import click
 import numpy as np
 
 
+def fname(line):
+    return line.split("#")[1].strip()
+
+
 @click.command()
 @click.option(
     "--dataset",
@@ -55,7 +59,7 @@ def main(dataset, ofile):
                     result += [temp]
 
                 temp = {
-                    "file_name": f"/data/v0.0.1/wider/train/{line.strip()}",
+                    "file_name": f"/data/v0.0.1/wider/train/{fname(line)}",
                     "annotations": [],
                 }
 
