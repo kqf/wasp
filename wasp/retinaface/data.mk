@@ -3,7 +3,7 @@ images: WIDER_train.zip
 labels: retinaface_gt_v1.1.zip
 
 wider/%.json: wider-labels
-	python /convert.py \
+	python wasp/retinaface/convert.py \
 		--dataset wider-labels/$*/label.txt \
 		--ofile $@
 
