@@ -128,7 +128,7 @@ def flip_landmark(landms, arg1, arg2):
     landms[:, arg2, :] = tmp
 
 
-def Preproc(
+def preprocess(
     img_dim: int,
     image: np.ndarray,
     targets: np.ndarray,

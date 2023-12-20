@@ -9,7 +9,7 @@ from addict import Dict as Adict
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import Paths, RetinaFacePipeline
-from wasp.retinaface.preprocess import Preproc
+from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.priors import priorbox
 
 
@@ -46,7 +46,7 @@ def main(
         config,
         paths,
         model=model,
-        preprocessing=partial(Preproc, img_dim=resolution[0]),
+        preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,
         build_optimizer=partial(
             torch.optim.SGD,
