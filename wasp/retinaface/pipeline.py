@@ -64,13 +64,10 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.model = model
         self.prior_box = priorbox
         self.loss = loss
-        self.preprocessing = preprocessing
+        self.preproc = preprocessing
         self.build_optimizer = build_optimizer
         self.build_scheduler = build_scheduler
         self.validation_outputs: list[dict] = []
-
-    def setup(self, stage=0) -> None:  # type: ignore
-        self.preproc = self.preprocessing()
 
     def forward(
         self, batch: torch.Tensor
