@@ -129,9 +129,9 @@ def flip_landmark(landms, arg1, arg2):
 
 
 def preprocess(
-    img_dim: int,
     image: np.ndarray,
     targets: np.ndarray,
+    img_dim: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     if targets.shape[0] == 0:
         raise ValueError("this image does not have gt")
