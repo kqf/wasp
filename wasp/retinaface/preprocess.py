@@ -122,10 +122,11 @@ def random_horizontal_flip(
     return image, boxes, landms
 
 
-def flip_landmark(landms, arg1, arg2):
+def flip_landmark(landms, arg1, arg2) -> np.ndarray:
     tmp = landms[:, arg1, :].copy()
     landms[:, arg1, :] = landms[:, arg2, :]
     landms[:, arg2, :] = tmp
+    return landms
 
 
 def preprocess(
