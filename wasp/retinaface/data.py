@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import albumentations as albu
 import cv2
@@ -9,8 +9,6 @@ import numpy as np
 import torch
 from dacite import from_dict
 from torch.utils import data
-
-from wasp.retinaface.preprocess import preprocess
 
 
 def to_tensor(image: np.ndarray) -> torch.Tensor:
@@ -47,7 +45,7 @@ class FaceDetectionDataset(data.Dataset):
         self,
         label_path: Path,
         transform: albu.Compose,
-        preproc: preprocess,
+        preproc: Callable,
         rotate90: bool = False,
     ) -> None:
         self.preproc = preproc
