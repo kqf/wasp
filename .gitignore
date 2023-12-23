@@ -4,6 +4,7 @@
 *.mat
 *.txt
 *.json
+wider
 
 # Tools
 .git/

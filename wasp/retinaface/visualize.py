@@ -52,11 +52,15 @@ def vis_annotations(
 
 
 @click.command()
-@click.option("--labels", click.Path(exists=True))
+@click.option(
+    "--labels",
+    type=click.Path(exists=True),
+    default="wider/train.json",
+)
 def main(labels):
     with open(labels) as f:
-        annotations = json.read(f)
-    print(annotations)
+        annotations = json.load(f)
+    print(annotations, "test")
 
 
 if __name__ == "__main__":
