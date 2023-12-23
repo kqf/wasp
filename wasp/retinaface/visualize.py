@@ -3,9 +3,12 @@ from typing import Any, Dict, List
 
 import click
 import cv2
-
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
+
+
+def to_local(filename):
+    return filename.replace("s3://leiaml-datasets/face-tracking/v0.0.1/", "")
 
 
 def vis_annotations(
@@ -60,7 +63,10 @@ def vis_annotations(
 def main(labels):
     with open(labels) as f:
         annotations = json.load(f)
-    print(annotations, "test")
+    for entry in annotations:
+        image = cv2.imread(to_local(entry["file_name"]))
+        plt.imshow(image)
+        plt.show()
 
 
 if __name__ == "__main__":
