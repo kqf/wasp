@@ -1,5 +1,7 @@
+import json
 from typing import Any, Dict, List
 
+import click
 import cv2
 
 # import matplotlib.pyplot as plt
@@ -49,8 +51,12 @@ def vis_annotations(
     return vis_image
 
 
-def main():
-    pass
+@click.command()
+@click.option("--labels", click.Path(exists=True))
+def main(labels):
+    with open(labels) as f:
+        annotations = json.read(f)
+    print(annotations)
 
 
 if __name__ == "__main__":
