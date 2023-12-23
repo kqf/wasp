@@ -50,7 +50,7 @@ def vis_annotations(
             color=(0, 255, 0),
             thickness=2,
         )
-        break
+        
     return vis_image
 
 
@@ -65,7 +65,7 @@ def main(labels):
         annotations = json.load(f)
     for entry in annotations:
         image = cv2.imread(to_local(entry["file_name"]))
-        plt.imshow(image)
+        plt.imshow(vis_annotations(image, annotations=entry["annotations"]))
         plt.show()
 
 
