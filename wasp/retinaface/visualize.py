@@ -11,7 +11,7 @@ def to_local(filename):
     return filename.replace("s3://leiaml-datasets/face-tracking/v0.0.1/", "")
 
 
-def vis_annotations(
+def plot(
     image: np.ndarray,
     annotations: List[Dict[str, Any]],
 ) -> np.ndarray:
@@ -65,7 +65,7 @@ def main(labels):
         annotations = json.load(f)
     for entry in annotations:
         image = cv2.imread(to_local(entry["file_name"]))
-        plt.imshow(vis_annotations(image, annotations=entry["annotations"]))
+        plt.imshow(plot(image, annotations=entry["annotations"]))
         plt.show()
 
 
