@@ -50,6 +50,10 @@ def vis_annotations(
             color=(0, 255, 0),
             thickness=2,
         )
+<<<<<<< HEAD
+=======
+        
+>>>>>>> main
     return vis_image
 
 
