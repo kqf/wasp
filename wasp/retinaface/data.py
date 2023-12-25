@@ -7,7 +7,7 @@ import albumentations as albu
 import cv2
 import numpy as np
 import torch
-from dacite import from_dict
+from dacite import Config, from_dict
 from torch.utils import data
 
 
@@ -22,9 +22,12 @@ def load_rgb(image_path: Path | str) -> np.array:
     return image
 
 
+AbsoluteXYXY = tuple[int, int, int, int]
+
+
 @dataclass
 class Annotation:
-    bbox: list[int]
+    bbox: AbsoluteXYXY
     landmarks: list
 
 
@@ -34,10 +37,18 @@ class Sample:
     annotations: list[Annotation]
 
 
+def to_sample(entry: dict[str, Any]) -> Sample:
+    return from_dict(
+        data_class=Sample,
+        data=entry,
+        config=Config(cast=[tuple]),
+    )
+
+
 def read_dataset(label_path: Path) -> list[Sample]:
     with label_path.open() as f:
         df = json.load(f)
-    return [from_dict(data_class=Sample, data=x) for x in df]
+    return [to_sample(x) for x in df]
 
 
 class FaceDetectionDataset(data.Dataset):
