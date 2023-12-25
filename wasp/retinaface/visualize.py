@@ -1,26 +1,23 @@
-import json
-from typing import Any, Dict, List
-
 import click
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+from wasp.retinaface.data import Annotation, read_dataset
+
 
 def to_local(filename):
-    return filename.replace("s3://leiaml-datasets/face-tracking/v0.0.1/", "")
+    return filename.replace("/v0.0.1/", "")
 
 
 def plot(
     image: np.ndarray,
-    annotations: List[Dict[str, Any]],
+    annotations: list[Annotation],
 ) -> np.ndarray:
     vis_image = image.copy()
     print(annotations)
 
-    for i, annotation in enumerate(annotations):
-        landmarks = annotation["landmarks"]
-
+    for annotation in annotations:
         colors = [
             (255, 0, 0),
             (128, 255, 0),
@@ -29,7 +26,7 @@ def plot(
             (0, 255, 255),
         ]
 
-        for landmark_id, (x, y) in enumerate(landmarks):
+        for landmark_id, (x, y) in enumerate(annotation.landmarks):
             vis_image = cv2.circle(
                 vis_image,
                 (int(x), int(y)),
@@ -38,8 +35,7 @@ def plot(
                 thickness=3,
             )
 
-        x_min, y_min, x_max, y_max = (int(tx) for tx in annotation["bbox"])
-
+        x_min, y_min, x_max, y_max = (int(tx) for tx in annotation.bbox)
         x_min = np.clip(x_min, 0, x_max - 1)
         y_min = np.clip(y_min, 0, y_max - 1)
 
@@ -61,11 +57,10 @@ def plot(
     default="wider/train.json",
 )
 def main(labels):
-    with open(labels) as f:
-        annotations = json.load(f)
-    for entry in annotations:
-        image = cv2.imread(to_local(entry["file_name"]))
-        plt.imshow(plot(image, annotations=entry["annotations"]))
+    dataset = read_dataset(labels)
+    for sample in dataset:
+        image = cv2.imread(to_local(sample.file_name))
+        plt.imshow(plot(image, annotations=sample.annotations))
         plt.show()
 
 
