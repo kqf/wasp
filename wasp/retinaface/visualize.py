@@ -11,6 +11,8 @@ from wasp.retinaface.data import Annotation, read_dataset
 env = Env()
 env.read_env()
 
+from wasp.retinaface.data import Annotation, read_dataset
+
 
 def to_local(filename):
     return filename.replace(env.str("PRIVATE_STORAGE_LOCATION"), "")
