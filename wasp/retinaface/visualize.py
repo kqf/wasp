@@ -9,7 +9,8 @@ from wasp.retinaface.data import Annotation, read_dataset
 
 
 def to_local(filename):
-    return filename.replace("s3://v0.0.1/", "")
+    return filename.replace("/v0.0.1/", "")
+
 
 
 def plot(
