@@ -1,3 +1,5 @@
+import pathlib
+
 import click
 import cv2
 import matplotlib.pyplot as plt
@@ -8,6 +10,7 @@ from wasp.retinaface.data import Annotation, read_dataset
 
 def to_local(filename):
     return filename.replace("/v0.0.1/", "")
+
 
 
 def plot(
@@ -52,13 +55,16 @@ def plot(
 
 @click.command()
 @click.option(
-    "--labels",
-    type=click.Path(exists=True),
-    default="wider/train.json",
+    "--dataset",
+    type=click.Path(
+        exists=True,
+        path_type=pathlib.Path,
+    ),
+    default="wider/test.json",
 )
-def main(labels):
-    dataset = read_dataset(labels)
-    for sample in dataset:
+def main(dataset):
+    labels = read_dataset(dataset)
+    for sample in labels:
         image = cv2.imread(to_local(sample.file_name))
         plt.imshow(plot(image, annotations=sample.annotations))
         plt.show()
