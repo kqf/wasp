@@ -2,9 +2,9 @@ import pathlib
 
 import click
 import cv2
-import environs as Env
 import matplotlib.pyplot as plt
 import numpy as np
+from environs import Env
 
 from wasp.retinaface.data import Annotation, read_dataset
 
