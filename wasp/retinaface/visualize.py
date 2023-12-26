@@ -4,13 +4,18 @@ import click
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from environs import Env
+
+from wasp.retinaface.data import Annotation, read_dataset
+
+env = Env()
+env.read_env()
 
 from wasp.retinaface.data import Annotation, read_dataset
 
 
 def to_local(filename):
-    return filename.replace("/v0.0.1/", "")
-
+    return filename.replace(env.str("PRIVATE_STORAGE_LOCATION"), "")
 
 
 def plot(
