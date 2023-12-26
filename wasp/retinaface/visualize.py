@@ -2,14 +2,18 @@ import pathlib
 
 import click
 import cv2
+import environs as Env
 import matplotlib.pyplot as plt
 import numpy as np
 
 from wasp.retinaface.data import Annotation, read_dataset
 
+env = Env()
+env.read_env()
+
 
 def to_local(filename):
-    return filename.replace("s3://v0.0.1/", "")
+    return filename.replace(env.str("PRIVATE_STORAGE_LOCATION"), "")
 
 
 def plot(
