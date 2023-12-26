@@ -51,6 +51,21 @@ def read_dataset(label_path: Path) -> list[Sample]:
     return [to_sample(x) for x in df]
 
 
+def trimm_boxes(
+    bbox: AbsoluteXYXY,
+    image_width: int,
+    image_height: int,
+) -> AbsoluteXYXY:
+    x_min, y_min, x_max, y_max = bbox
+
+    x_min = np.clip(x_min, 0, image_width - 1)
+    y_min = np.clip(y_min, 0, image_height - 1)
+    x_max = np.clip(x_max, x_min + 1, image_width - 1)
+    y_max = np.clip(y_max, y_min, image_height - 1)
+
+    return x_min, y_min, x_max, y_max
+
+
 class FaceDetectionDataset(data.Dataset):
     def __init__(
         self,
@@ -84,14 +99,11 @@ class FaceDetectionDataset(data.Dataset):
         for label in sample.annotations:
             annotation = np.zeros((1, num_annotations))
 
-            x_min, y_min, x_max, y_max = label.bbox
-
-            x_min = np.clip(x_min, 0, image_width - 1)
-            y_min = np.clip(y_min, 0, image_height - 1)
-            x_max = np.clip(x_max, x_min + 1, image_width - 1)
-            y_max = np.clip(y_max, y_min, image_height - 1)
-
-            annotation[0, :4] = x_min, y_min, x_max, y_max
+            annotation[0, :4] = trimm_boxes(
+                label.bbox,
+                image_width=image_width,
+                image_height=image_height,
+            )
 
             if label.landmarks:
                 landmarks = np.array(label.landmarks)
