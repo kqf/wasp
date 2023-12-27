@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 import torch
 import yaml
 from addict import Dict as Adict
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
@@ -92,6 +93,14 @@ def main(
         benchmark=True,
         precision=16,
         sync_batchnorm=True,
+        callbacks=[
+            ModelCheckpoint(
+                monitor="val_loss",
+                verbose=True,
+                mode="max",
+                save_top_k=-1,
+            )
+        ],
     )
 
     trainer.fit(pipeline)
