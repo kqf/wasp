@@ -213,7 +213,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             boxes = decode(
                 location.data[batch_id],
                 self.prior_box.to(images.device),
-                self.config.test_parameters.variance,
+                [0.1, 0.2],
             )
             scores = confidence[batch_id][:, 1]
 
@@ -224,7 +224,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             boxes *= scale
 
             # do NMS
-            keep = nms(boxes, scores, self.config.val_parameters.iou_threshold)
+            keep = nms(boxes, scores, 0.4)
             boxes = boxes[keep, :].cpu().numpy()
 
             if boxes.shape[0] == 0:
