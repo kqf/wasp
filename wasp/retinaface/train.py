@@ -99,6 +99,7 @@ def main(
                 verbose=True,
                 mode="max",
                 save_top_k=-1,
+                save_weights_only=True,
             )
         ],
     )
