@@ -16,6 +16,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchvision.ops import nms
 
+import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
 from wasp.retinaface.metrics import recall_precision
@@ -78,7 +79,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.paths.train,
-                transform=from_dict(self.config.train_aug),
+                transform=augs.train,
                 preproc=self.preproc,
                 rotate90=True,
             ),
