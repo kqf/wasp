@@ -50,3 +50,20 @@ def valid() -> Compose:
             ),
         ],
     )
+
+
+def test() -> Compose:
+    return Compose(
+        bbox_params=None,
+        keypoint_params=None,
+        p=1,
+        transforms=[
+            Normalize(
+                always_apply=False,
+                max_pixel_value=255.0,
+                mean=[0.485, 0.456, 0.406],
+                p=1,
+                std=[0.229, 0.224, 0.225],
+            )
+        ],
+    )
