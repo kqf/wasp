@@ -10,7 +10,6 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from addict import Dict as Adict
-from albumentations.core.serialization import from_dict
 from pytorch_lightning.core.optimizer import LightningOptimizer
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -95,7 +94,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.paths.valid,
-                transform=from_dict(self.config.val_aug),
+                transform=augs.valid(),
                 preproc=self.preproc,
                 rotate90=True,
             ),
