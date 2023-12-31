@@ -3,8 +3,6 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
-import yaml
-from addict import Dict as Adict
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
@@ -19,11 +17,7 @@ def main(
     paths: Paths | None = None,
     resolution: tuple[int, int] = (1024, 1024),
 ) -> None:
-    with open(config) as f:
-        config = Adict(yaml.load(f, Loader=yaml.SafeLoader))
-
-    pl.trainer.seed_everything(config.seed)
-
+    pl.trainer.seed_everything(137)
     paths = paths or Paths()
     model = RetinaFace(
         name="Resnet50",
