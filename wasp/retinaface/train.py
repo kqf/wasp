@@ -44,7 +44,6 @@ def main(
     )
 
     pipeline = RetinaFacePipeline(
-        config,
         paths,
         model=model,
         preprocessing=partial(preprocess, img_dim=resolution[0]),

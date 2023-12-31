@@ -9,7 +9,6 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from addict import Dict as Adict
 from pytorch_lightning.core.optimizer import LightningOptimizer
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -49,7 +48,6 @@ def object_from_dict(d, parent=None, **default_kwargs):
 class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def __init__(
         self,
-        config: Adict[str, Any],
         paths: Paths,
         model: torch.nn.Module,
         preprocessing,
@@ -59,7 +57,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         loss,
     ) -> None:
         super().__init__()
-        self.config = config
         self.paths = paths
         self.model = model
         self.prior_box = priorbox
