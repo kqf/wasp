@@ -1,5 +1,4 @@
 import os
-import pydoc
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -31,18 +30,6 @@ def dpath(envv):
 class Paths:
     train: Path = field(default_factory=dpath("TRAIN_LABEL_PATH"))
     valid: Path = field(default_factory=dpath("VAL_LABEL_PATH"))
-
-
-def object_from_dict(d, parent=None, **default_kwargs):
-    kwargs = d.copy()
-    object_type = kwargs.pop("type")
-    for name, value in default_kwargs.items():
-        kwargs.setdefault(name, value)
-
-    if parent is not None:
-        return getattr(parent, object_type)(**kwargs)  # skipcq PTC-W0034
-
-    return pydoc.locate(object_type)(**kwargs)
 
 
 class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
