@@ -4,6 +4,7 @@ import click
 import cv2
 import matplotlib.pyplot as plt
 
+from wasp.retinaface.augmentations import train
 from wasp.retinaface.data import read_dataset
 from wasp.retinaface.visualize.plot import plot, to_local
 
@@ -21,7 +22,11 @@ def main(dataset):
     labels = read_dataset(dataset)
     for sample in labels:
         image = cv2.imread(to_local(sample.file_name))
-        plt.imshow(plot(image, annotations=sample.annotations))
+        transofrm = train()
+        sample = transofrm(image=image, keypoint_params=sample.annotations)
+        image = sample["image"]
+        annotations = sample["annotations"]
+        plt.imshow(plot(image, annotations=annotations))
         plt.show()
 
 
