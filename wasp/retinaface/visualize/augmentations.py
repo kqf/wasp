@@ -5,7 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 from wasp.retinaface.data import read_dataset
-from wasp.retinaface.visualize import plot, to_local
+from wasp.retinaface.visualize.plot import plot, to_local
 
 
 @click.command()
