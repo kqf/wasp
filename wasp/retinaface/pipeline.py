@@ -1,5 +1,4 @@
 import os
-from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
@@ -8,6 +7,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from mean_average_precision import MetricBuilder
 from pytorch_lightning.core.optimizer import LightningOptimizer
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -16,7 +16,6 @@ from torchvision.ops import nms
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
-from wasp.retinaface.metrics import recall_precision
 
 
 def dpath(envv):
@@ -37,23 +36,19 @@ def prepare_outputs(
     out,
     targets,
     prior_box,
-    file_names,
-):
+) -> list[tuple[np.ndarray, np.ndarray]]:
     image_height = images.shape[2]
     image_width = images.shape[3]
 
     location, confidence, _ = out
 
     confidence = F.softmax(confidence, dim=-1)
-    batch_size = location.shape[0]
-
-    predictions_coco: List[Dict[str, Any]] = []
-
     scale = torch.from_numpy(np.tile([image_width, image_height], 2)).to(
         location.device
     )
 
-    for batch_id in range(batch_size):
+    total = []
+    for batch_id, target in enumerate(targets):
         boxes = decode(
             location.data[batch_id],
             prior_box.to(images.device),
@@ -70,52 +65,20 @@ def prepare_outputs(
         # do NMS
         keep = nms(boxes, scores, 0.4)
         boxes = boxes[keep, :].cpu().numpy()
-
-        if boxes.shape[0] == 0:
-            continue
-
         scores = scores[keep].cpu().numpy()
+        candidates = np.concatenate(
+            (boxes, scores.reshape(-1, 1), scores.reshape(-1, 1)),
+            axis=1,
+        )
+        candidates[:, -2] = 0
 
-        file_name = file_names[batch_id]
+        tt = target.cpu().numpy()
+        gts = np.zeros((target.shape[0], 7), dtype=np.float32)
+        gts[:, :4] = tt[:, :4] * scale[None, :].cpu().numpy()
+        gts[:, 4] = np.where(tt[:, -1] > 0, 0, 1)
+        total.append((candidates, gts))
 
-        for box_id, bbox in enumerate(boxes):
-            x_min, y_min, x_max, y_max = bbox
-
-            x_min = np.clip(x_min, 0, x_max - 1)
-            y_min = np.clip(y_min, 0, y_max - 1)
-
-            predictions_coco += [
-                {
-                    "id": str(hash(f"{file_name}_{box_id}")),
-                    "image_id": file_name,
-                    "category_id": 1,
-                    "bbox": [x_min, y_min, x_max - x_min, y_max - y_min],
-                    "score": scores[box_id],
-                }
-            ]
-
-    gt_coco: List[Dict[str, Any]] = []
-
-    for batch_id, annotation_list in enumerate(targets):
-        for annotation in annotation_list:
-            x_min, y_min, x_max, y_max = annotation[:4]
-            file_name = file_names[batch_id]
-
-            gt_coco += [
-                {
-                    "id": str(hash(f"{file_name}_{batch_id}")),
-                    "image_id": file_name,
-                    "category_id": 1,
-                    "bbox": [
-                        x_min.item() * image_width,
-                        y_min.item() * image_height,
-                        (x_max - x_min).item() * image_width,
-                        (y_max - y_min).item() * image_height,
-                    ],
-                }
-            ]
-
-    return OrderedDict({"predictions": predictions_coco, "gt": gt_coco})
+    return total
 
 
 class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
@@ -137,7 +100,11 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.preproc = preprocessing
         self.build_optimizer = build_optimizer
         self.build_scheduler = build_scheduler
-        self.validation_outputs: list[dict] = []
+        self.metric_fn = MetricBuilder.build_evaluation_metric(
+            "map_2d",
+            async_mode=False,
+            num_classes=1,
+        )
 
     def forward(
         self, batch: torch.Tensor
@@ -259,35 +226,21 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         batch_idx: int,
     ):  # type: ignore
         images = batch["image"]
-
-        annotations = batch["annotation"]
-        file_names = batch["file_name"]
-
         out = self.forward(images)
 
         outputs = prepare_outputs(
             images=images,
             out=out,
-            targets=annotations,
+            targets=batch["annotation"],
             prior_box=self.prior_box,
-            file_names=file_names,
         )
-        self.validation_outputs.append(outputs)
-        return outputs
+        for perimage in outputs:
+            self.metric_fn.add(*perimage)
+        return batch
 
     def on_validation_epoch_end(self) -> None:
-        result_predictions: List[dict] = []
-        result_gt: List[dict] = []
-
-        for output in self.validation_outputs:
-            result_predictions += output["predictions"]
-            result_gt += output["gt"]
-
-        _, _, average_precision = recall_precision(
-            result_gt,
-            result_predictions,
-            0.5,
-        )
+        average_precision = self.metric_fn.value(iou_thresholds=0.5)["mAP"]
+        self.metric_fn.reseet()
 
         self.log(
             "epoch",
@@ -303,7 +256,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             on_epoch=True,
             logger=True,
         )
-        self.validation_outputs = []
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
         lr = [x["lr"] for x in self.optimizers[0].param_groups][0]  # type: ignore # noqa
