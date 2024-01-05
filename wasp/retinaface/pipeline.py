@@ -263,7 +263,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         annotations = batch["annotation"]
         file_names = batch["file_name"]
 
-        out = self.fo0ward(images)
+        out = self.forward(images)
 
         outputs = prepare_outputs(
             images=images,
