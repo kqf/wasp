@@ -23,7 +23,7 @@ def main(dataset):
     for sample in labels:
         image = cv2.imread(to_local(sample.file_name))
         transofrm = train()
-        sample = transofrm(image=image, keypoint_params=sample.annotations)
+        sample = transofrm(image=image, keypoints=sample.annotations)
         image = sample["image"]
         annotations = sample["annotations"]
         plt.imshow(plot(image, annotations=annotations))
