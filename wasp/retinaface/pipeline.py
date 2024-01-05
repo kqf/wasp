@@ -32,6 +32,92 @@ class Paths:
     valid: Path = field(default_factory=dpath("VAL_LABEL_PATH"))
 
 
+def prepare_outputs(
+    images,
+    out,
+    targets,
+    prior_box,
+    file_names,
+):
+    image_height = images.shape[2]
+    image_width = images.shape[3]
+
+    location, confidence, _ = out
+
+    confidence = F.softmax(confidence, dim=-1)
+    batch_size = location.shape[0]
+
+    predictions_coco: List[Dict[str, Any]] = []
+
+    scale = torch.from_numpy(np.tile([image_width, image_height], 2)).to(
+        location.device
+    )
+
+    for batch_id in range(batch_size):
+        boxes = decode(
+            location.data[batch_id],
+            prior_box.to(images.device),
+            [0.1, 0.2],
+        )
+        scores = confidence[batch_id][:, 1]
+
+        valid_index = torch.where(scores > 0.1)[0]
+        boxes = boxes[valid_index]
+        scores = scores[valid_index]
+
+        boxes *= scale
+
+        # do NMS
+        keep = nms(boxes, scores, 0.4)
+        boxes = boxes[keep, :].cpu().numpy()
+
+        if boxes.shape[0] == 0:
+            continue
+
+        scores = scores[keep].cpu().numpy()
+
+        file_name = file_names[batch_id]
+
+        for box_id, bbox in enumerate(boxes):
+            x_min, y_min, x_max, y_max = bbox
+
+            x_min = np.clip(x_min, 0, x_max - 1)
+            y_min = np.clip(y_min, 0, y_max - 1)
+
+            predictions_coco += [
+                {
+                    "id": str(hash(f"{file_name}_{box_id}")),
+                    "image_id": file_name,
+                    "category_id": 1,
+                    "bbox": [x_min, y_min, x_max - x_min, y_max - y_min],
+                    "score": scores[box_id],
+                }
+            ]
+
+    gt_coco: List[Dict[str, Any]] = []
+
+    for batch_id, annotation_list in enumerate(targets):
+        for annotation in annotation_list:
+            x_min, y_min, x_max, y_max = annotation[:4]
+            file_name = file_names[batch_id]
+
+            gt_coco += [
+                {
+                    "id": str(hash(f"{file_name}_{batch_id}")),
+                    "image_id": file_name,
+                    "category_id": 1,
+                    "bbox": [
+                        x_min.item() * image_width,
+                        y_min.item() * image_height,
+                        (x_max - x_min).item() * image_width,
+                        (y_max - y_min).item() * image_height,
+                    ],
+                }
+            ]
+
+    return OrderedDict({"predictions": predictions_coco, "gt": gt_coco})
+
+
 class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def __init__(
         self,
@@ -174,88 +260,18 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     ):  # type: ignore
         images = batch["image"]
 
-        image_height = images.shape[2]
-        image_width = images.shape[3]
-
         annotations = batch["annotation"]
         file_names = batch["file_name"]
 
-        out = self.forward(images)
+        out = self.fo0ward(images)
 
-        location, confidence, _ = out
-
-        confidence = F.softmax(confidence, dim=-1)
-        batch_size = location.shape[0]
-
-        predictions_coco: List[Dict[str, Any]] = []
-
-        scale = torch.from_numpy(np.tile([image_width, image_height], 2)).to(
-            location.device
+        outputs = prepare_outputs(
+            images=images,
+            out=out,
+            targets=annotations,
+            prior_box=self.prior_box,
+            file_names=file_names,
         )
-
-        for batch_id in range(batch_size):
-            boxes = decode(
-                location.data[batch_id],
-                self.prior_box.to(images.device),
-                [0.1, 0.2],
-            )
-            scores = confidence[batch_id][:, 1]
-
-            valid_index = torch.where(scores > 0.1)[0]
-            boxes = boxes[valid_index]
-            scores = scores[valid_index]
-
-            boxes *= scale
-
-            # do NMS
-            keep = nms(boxes, scores, 0.4)
-            boxes = boxes[keep, :].cpu().numpy()
-
-            if boxes.shape[0] == 0:
-                continue
-
-            scores = scores[keep].cpu().numpy()
-
-            file_name = file_names[batch_id]
-
-            for box_id, bbox in enumerate(boxes):
-                x_min, y_min, x_max, y_max = bbox
-
-                x_min = np.clip(x_min, 0, x_max - 1)
-                y_min = np.clip(y_min, 0, y_max - 1)
-
-                predictions_coco += [
-                    {
-                        "id": str(hash(f"{file_name}_{box_id}")),
-                        "image_id": file_name,
-                        "category_id": 1,
-                        "bbox": [x_min, y_min, x_max - x_min, y_max - y_min],
-                        "score": scores[box_id],
-                    }
-                ]
-
-        gt_coco: List[Dict[str, Any]] = []
-
-        for batch_id, annotation_list in enumerate(annotations):
-            for annotation in annotation_list:
-                x_min, y_min, x_max, y_max = annotation[:4]
-                file_name = file_names[batch_id]
-
-                gt_coco += [
-                    {
-                        "id": str(hash(f"{file_name}_{batch_id}")),
-                        "image_id": file_name,
-                        "category_id": 1,
-                        "bbox": [
-                            x_min.item() * image_width,
-                            y_min.item() * image_height,
-                            (x_max - x_min).item() * image_width,
-                            (y_max - y_min).item() * image_height,
-                        ],
-                    }
-                ]
-
-        outputs = OrderedDict({"predictions": predictions_coco, "gt": gt_coco})
         self.validation_outputs.append(outputs)
         return outputs
 
