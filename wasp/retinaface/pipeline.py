@@ -7,6 +7,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from mean_average_precision import MetricBuilder
 from pytorch_lightning.core.optimizer import LightningOptimizer
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -15,7 +16,6 @@ from torchvision.ops import nms
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
-from wasp.retinaface.metrics import recall_precision
 
 
 def dpath(envv):
@@ -100,7 +100,11 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.preproc = preprocessing
         self.build_optimizer = build_optimizer
         self.build_scheduler = build_scheduler
-        self.validation_outputs: list[dict] = []
+        self.metric_fn = MetricBuilder.build_evaluation_metric(
+            "map_2d",
+            async_mode=False,
+            num_classes=1,
+        )
 
     def forward(
         self, batch: torch.Tensor
@@ -230,22 +234,13 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             targets=batch["annotation"],
             prior_box=self.prior_box,
         )
-        self.validation_outputs.append(outputs)
-        return outputs
+        for perimage in outputs:
+            self.metric_fn.add(*perimage)
+        return batch
 
     def on_validation_epoch_end(self) -> None:
-        result_predictions: List[dict] = []
-        result_gt: List[dict] = []
-
-        for output in self.validation_outputs:
-            result_predictions += output["predictions"]
-            result_gt += output["gt"]
-
-        _, _, average_precision = recall_precision(
-            result_gt,
-            result_predictions,
-            0.5,
-        )
+        average_precision = self.metric_fn.value(iou_thresholds=0.5)["mAP"]
+        self.metric_fn.reseet()
 
         self.log(
             "epoch",
@@ -261,7 +256,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             on_epoch=True,
             logger=True,
         )
-        self.validation_outputs = []
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
         lr = [x["lr"] for x in self.optimizers[0].param_groups][0]  # type: ignore # noqa
