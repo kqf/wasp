@@ -36,6 +36,9 @@ class Sample:
     file_name: str
     annotations: list[Annotation]
 
+    def flatten(self) -> tuple:
+        return tuple(zip(*[(a.bbox, a.landmarks) for a in self.annotations]))
+
 
 def to_sample(entry: dict[str, Any]) -> Sample:
     return from_dict(
