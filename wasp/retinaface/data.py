@@ -10,6 +10,8 @@ import torch
 from dacite import Config, from_dict
 from torch.utils import data
 
+from wasp.retinaface.preprocess import preprocess
+
 
 def to_tensor(image: np.ndarray) -> torch.Tensor:
     image = np.ascontiguousarray(np.transpose(image, (2, 0, 1)))
@@ -74,7 +76,7 @@ class FaceDetectionDataset(data.Dataset):
         self,
         label_path: Path,
         transform: albu.Compose,
-        preproc: Callable,
+        preproc: preprocess,
         rotate90: bool = False,
     ) -> None:
         self.preproc = preproc
