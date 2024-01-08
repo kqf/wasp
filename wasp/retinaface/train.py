@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
-import yaml
-from addict import Dict as Adict
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
@@ -14,15 +13,10 @@ from wasp.retinaface.priors import priorbox
 
 
 def main(
-    config="wasp/retinaface/configs/default.yaml",
     paths: Paths | None = None,
     resolution: tuple[int, int] = (1024, 1024),
 ) -> None:
-    with open(config) as f:
-        config = Adict(yaml.load(f, Loader=yaml.SafeLoader))
-
-    pl.trainer.seed_everything(config.seed)
-
+    pl.trainer.seed_everything(137)
     paths = paths or Paths()
     model = RetinaFace(
         name="Resnet50",
@@ -43,7 +37,6 @@ def main(
     )
 
     pipeline = RetinaFacePipeline(
-        config,
         paths,
         model=model,
         preprocessing=partial(preprocess, img_dim=resolution[0]),
@@ -92,6 +85,15 @@ def main(
         benchmark=True,
         precision=16,
         sync_batchnorm=True,
+        callbacks=[
+            ModelCheckpoint(
+                monitor="val_loss",
+                verbose=True,
+                mode="max",
+                save_top_k=-1,
+                save_weights_only=True,
+            )
+        ],
     )
 
     trainer.fit(pipeline)

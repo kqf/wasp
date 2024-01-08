@@ -1,13 +1,13 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import albumentations as albu
 import cv2
 import numpy as np
 import torch
-from dacite import from_dict
+from dacite import Config, from_dict
 from torch.utils import data
 
 from wasp.retinaface.preprocess import preprocess
@@ -24,9 +24,12 @@ def load_rgb(image_path: Path | str) -> np.array:
     return image
 
 
+AbsoluteXYXY = tuple[int, int, int, int]
+
+
 @dataclass
 class Annotation:
-    bbox: list[int]
+    bbox: AbsoluteXYXY
     landmarks: list
 
 
@@ -35,11 +38,37 @@ class Sample:
     file_name: str
     annotations: list[Annotation]
 
+    def flatten(self) -> tuple:
+        return tuple(zip(*[(a.bbox, a.landmarks) for a in self.annotations]))
+
+
+def to_sample(entry: dict[str, Any]) -> Sample:
+    return from_dict(
+        data_class=Sample,
+        data=entry,
+        config=Config(cast=[tuple]),
+    )
+
 
 def read_dataset(label_path: Path) -> list[Sample]:
     with label_path.open() as f:
         df = json.load(f)
-    return [from_dict(data_class=Sample, data=x) for x in df]
+    return [to_sample(x) for x in df]
+
+
+def trimm_boxes(
+    bbox: AbsoluteXYXY,
+    image_width: int,
+    image_height: int,
+) -> AbsoluteXYXY:
+    x_min, y_min, x_max, y_max = bbox
+
+    x_min = np.clip(x_min, 0, image_width - 1)
+    y_min = np.clip(y_min, 0, image_height - 1)
+    x_max = np.clip(x_max, x_min + 1, image_width - 1)
+    y_max = np.clip(y_max, y_min, image_height - 1)
+
+    return x_min, y_min, x_max, y_max
 
 
 class FaceDetectionDataset(data.Dataset):
@@ -55,7 +84,8 @@ class FaceDetectionDataset(data.Dataset):
         self.transform = transform
         self.rotate90 = rotate90
         self.labels = read_dataset(label_path)
-        self.labels = [x for x in self.labels if Path(x.file_name).exists()]
+        # TODO: Try without filtering
+        # self.labels = [x for x in self.labels if Path(x.file_name).exists()]
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -74,14 +104,11 @@ class FaceDetectionDataset(data.Dataset):
         for label in sample.annotations:
             annotation = np.zeros((1, num_annotations))
 
-            x_min, y_min, x_max, y_max = label.bbox
-
-            x_min = np.clip(x_min, 0, image_width - 1)
-            y_min = np.clip(y_min, 0, image_height - 1)
-            x_max = np.clip(x_max, x_min + 1, image_width - 1)
-            y_max = np.clip(y_max, y_min, image_height - 1)
-
-            annotation[0, :4] = x_min, y_min, x_max, y_max
+            annotation[0, :4] = trimm_boxes(
+                label.bbox,
+                image_width=image_width,
+                image_height=image_height,
+            )
 
             if label.landmarks:
                 landmarks = np.array(label.landmarks)
