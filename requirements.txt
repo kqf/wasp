@@ -13,4 +13,4 @@ albumentations
 addict
 dacite
 environs
-git+https://github.com/bes-dev/mean_average_precision.git
+mean-average-precision
