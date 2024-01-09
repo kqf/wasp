@@ -1,13 +1,15 @@
-import click
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
+from environs import Env
 
-from wasp.retinaface.data import Annotation, read_dataset
+from wasp.retinaface.data import Annotation
+
+env = Env()
+env.read_env()
 
 
 def to_local(filename):
-    return filename.replace("/v0.0.1/", "")
+    return filename.replace(env.str("PRIVATE_STORAGE_LOCATION"), "")
 
 
 def plot(
@@ -48,21 +50,3 @@ def plot(
         )
 
     return vis_image
-
-
-@click.command()
-@click.option(
-    "--labels",
-    type=click.Path(exists=True),
-    default="wider/train.json",
-)
-def main(labels):
-    dataset = read_dataset(labels)
-    for sample in dataset:
-        image = cv2.imread(to_local(sample.file_name))
-        plt.imshow(plot(image, annotations=sample.annotations))
-        plt.show()
-
-
-if __name__ == "__main__":
-    main()

@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import albumentations as albu
 import cv2
@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from dacite import Config, from_dict
 from torch.utils import data
+
+from wasp.retinaface.preprocess import preprocess
 
 
 def to_tensor(image: np.ndarray) -> torch.Tensor:
@@ -36,6 +38,9 @@ class Sample:
     file_name: str
     annotations: list[Annotation]
 
+    def flatten(self) -> tuple:
+        return tuple(zip(*[(a.bbox, a.landmarks) for a in self.annotations]))
+
 
 def to_sample(entry: dict[str, Any]) -> Sample:
     return from_dict(
@@ -51,12 +56,27 @@ def read_dataset(label_path: Path) -> list[Sample]:
     return [to_sample(x) for x in df]
 
 
+def trimm_boxes(
+    bbox: AbsoluteXYXY,
+    image_width: int,
+    image_height: int,
+) -> AbsoluteXYXY:
+    x_min, y_min, x_max, y_max = bbox
+
+    x_min = np.clip(x_min, 0, image_width - 1)
+    y_min = np.clip(y_min, 0, image_height - 1)
+    x_max = np.clip(x_max, x_min + 1, image_width - 1)
+    y_max = np.clip(y_max, y_min, image_height - 1)
+
+    return x_min, y_min, x_max, y_max
+
+
 class FaceDetectionDataset(data.Dataset):
     def __init__(
         self,
         label_path: Path,
         transform: albu.Compose,
-        preproc: Callable,
+        preproc: preprocess,
         rotate90: bool = False,
     ) -> None:
         self.preproc = preproc
@@ -84,14 +104,11 @@ class FaceDetectionDataset(data.Dataset):
         for label in sample.annotations:
             annotation = np.zeros((1, num_annotations))
 
-            x_min, y_min, x_max, y_max = label.bbox
-
-            x_min = np.clip(x_min, 0, image_width - 1)
-            y_min = np.clip(y_min, 0, image_height - 1)
-            x_max = np.clip(x_max, x_min + 1, image_width - 1)
-            y_max = np.clip(y_max, y_min, image_height - 1)
-
-            annotation[0, :4] = x_min, y_min, x_max, y_max
+            annotation[0, :4] = trimm_boxes(
+                label.bbox,
+                image_width=image_width,
+                image_height=image_height,
+            )
 
             if label.landmarks:
                 landmarks = np.array(label.landmarks)
