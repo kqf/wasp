@@ -76,7 +76,7 @@ class FaceDetectionDataset(data.Dataset):
         self,
         label_path: Path,
         transform: albu.Compose,
-        preproc: preprocess,
+        preproc: Callable = preprocess,
         rotate90: bool = False,
     ) -> None:
         self.preproc = preproc
