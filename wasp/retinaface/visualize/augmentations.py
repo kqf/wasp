@@ -25,7 +25,7 @@ def main(dataset):
         image = cv2.imread(to_local(sample.file_name))
         transofrm = train()
         boxes, keypoints = sample.flatten()
-        sample = transofrm(
+        sample = dict(
             image=image,
             bbox=np.asarray(boxes),
             keypoints=np.asarray(keypoints),
