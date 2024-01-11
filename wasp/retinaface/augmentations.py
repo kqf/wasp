@@ -1,4 +1,5 @@
 from albumentations import (
+    BboxParams,
     Compose,
     HueSaturationValue,
     Normalize,
@@ -11,6 +12,10 @@ from albumentations import (
 def train() -> Compose:
     return Compose(
         # bbox_params=None,
+        bbox_params=BboxParams(
+            format="pascal_voc",
+            label_fields=["category_ids"],
+        ),
         # keypoint_params=None,
         p=1,
         transforms=[

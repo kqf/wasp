@@ -27,11 +27,12 @@ def main(dataset):
         boxes, keypoints = sample.flatten()
         sample = transform(
             image=image,
-            # bbox=np.asarray(boxes),
+            bboxes=np.asarray(boxes),
+            category_ids=np.ones((len(boxes)))
             # keypoints=np.asarray(keypoints),
         )
         image = sample["image"]
-        # boxes = sample["bbox"]
+        boxes = sample["bboxes"]
         # keypoints = sample["keypoints"]
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
