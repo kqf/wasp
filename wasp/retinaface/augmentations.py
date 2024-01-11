@@ -2,6 +2,7 @@ from albumentations import (
     BboxParams,
     Compose,
     HueSaturationValue,
+    KeypointParams,
     Normalize,
     RandomBrightnessContrast,
     RandomGamma,
@@ -16,7 +17,10 @@ def train() -> Compose:
             format="pascal_voc",
             label_fields=["category_ids"],
         ),
-        # keypoint_params=None,
+        keypoint_params=KeypointParams(
+            format="xy",
+            label_fields=["category_ids"],
+        ),
         p=1,
         transforms=[
             RandomBrightnessContrast(
