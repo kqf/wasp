@@ -25,11 +25,13 @@ def main(dataset):
         image = cv2.imread(to_local(sample.file_name))
         transform = train()
         boxes, keypoints = sample.flatten()
+        # print(np.asarray(keypoints))
+        keypoints_list = [{"keypoints": k} for k in keypoints]
         sample = transform(
             image=image,
             bboxes=np.asarray(boxes),
-            category_ids=np.ones((len(boxes)))
-            # keypoints=np.asarray(keypoints),
+            category_ids=np.ones((len(boxes))),
+            keypoints=keypoints_list,
         )
         image = sample["image"]
         boxes = sample["bboxes"]
