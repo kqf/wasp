@@ -31,7 +31,7 @@ def train() -> Compose:
             ),
             HueSaturationValue(hue_shift_limit=20, val_shift_limit=20, p=0.5),
             RandomGamma(gamma_limit=[80, 120], p=0.5),
-            Resize(height=256, width=256, p=1),
+            # Resize(height=256, width=256, p=1),
             Normalize(
                 always_apply=False,
                 max_pixel_value=255.0,
