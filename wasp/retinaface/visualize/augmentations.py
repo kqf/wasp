@@ -33,7 +33,7 @@ def main(dataset):
             image=image,
             bboxes=np.asarray(boxes),
             category_ids=np.ones(len(boxes)),
-            keypoints=np.asarray(keypoints).reshape(-1, 2),
+            keypoints=np.asarray(keypoints).reshape(-1, 2).clip(0, 1024),
         )
         image = sample["image"]
         boxes = sample["bboxes"]
