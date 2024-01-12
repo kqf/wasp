@@ -21,25 +21,28 @@ from wasp.retinaface.visualize.plot import plot, to_local
 )
 def main(dataset):
     labels = read_dataset(dataset)
-    for sample in labels:
+    for i, sample in enumerate(labels):
+        if i < 2:
+            continue
         image = cv2.imread(to_local(sample.file_name))
         transform = train()
         boxes, keypoints = sample.flatten()
-        # print(np.asarray(keypoints))
-        keypoints_list = [{"keypoints": k} for k in keypoints]
+        print(np.asarray(keypoints), np.ones((len(boxes))))
+        print(np.asarray(keypoints).reshape(-1, 2))
         sample = transform(
             image=image,
             bboxes=np.asarray(boxes),
-            category_ids=np.ones((len(boxes))),
-            keypoints=keypoints_list,
+            category_ids=np.ones(len(boxes)),
+            keypoints=np.asarray(keypoints).reshape(-1, 2),
         )
         image = sample["image"]
         boxes = sample["bboxes"]
-        # keypoints = sample["keypoints"]
+        keypoints = np.asarray(sample["keypoints"]).reshape(-1, 5, 2)
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
         plt.imshow(plot(image, annotations=transformed))
         plt.show()
+        break
 
 
 if __name__ == "__main__":
