@@ -19,7 +19,6 @@ def train() -> Compose:
         ),
         keypoint_params=KeypointParams(
             format="xy",
-            # label_fields=["category_ids"],
         ),
         p=1,
         transforms=[
