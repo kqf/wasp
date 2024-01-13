@@ -22,8 +22,7 @@ from wasp.retinaface.visualize.plot import plot, to_local
 def main(dataset):
     labels = read_dataset(dataset)
     for i, sample in enumerate(labels):
-        if i < 2:
-            continue
+        print(i)
         image = cv2.imread(to_local(sample.file_name))
         transform = train()
         boxes, keypoints = sample.flatten()
