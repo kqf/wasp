@@ -42,7 +42,9 @@ def main(dataset):
         )
         image = sample["image"]
         boxes = sample["bboxes"]
-        keypoints = np.asarray(sample["keypoints"]).reshape(-1, 5, 2)
+        transofrmed_keypoints = np.asarray(sample["keypoints"])
+        transofrmed_keypoints[masks] = -1
+        keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
         plt.imshow(plot(image, annotations=transformed))
