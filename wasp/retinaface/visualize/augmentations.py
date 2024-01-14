@@ -10,6 +10,11 @@ from wasp.retinaface.data import Annotation, read_dataset
 from wasp.retinaface.visualize.plot import plot, to_local
 
 
+def with_masks(keypoints):
+    mask = keypoints < 0
+    return mask, keypoints.clip(0, 1024)
+
+
 @click.command()
 @click.option(
     "--dataset",
@@ -28,11 +33,12 @@ def main(dataset):
         boxes, keypoints = sample.flatten()
         print(np.asarray(keypoints), np.ones((len(boxes))))
         print(np.asarray(keypoints).reshape(-1, 2))
+        masks, clipped = with_masks(np.asarray(keypoints).reshape(-1, 2))
         sample = transform(
             image=image,
             bboxes=np.asarray(boxes),
             category_ids=np.ones(len(boxes)),
-            keypoints=np.asarray(keypoints).reshape(-1, 2).clip(0, 1024),
+            keypoints=clipped,
         )
         image = sample["image"]
         boxes = sample["bboxes"]
