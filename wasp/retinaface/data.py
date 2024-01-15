@@ -125,7 +125,10 @@ class FaceDetectionDataset(data.Dataset):
 
         image, annotations = self.preproc(image, annotations)
 
-        image = self.transform(image=image)["image"]
+        image = self.transform(
+            image=image,
+            category_ids=np.ones(len(annotations)),
+        )["image"]
 
         return {
             "image": to_tensor(image),
