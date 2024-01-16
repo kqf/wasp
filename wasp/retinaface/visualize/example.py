@@ -46,7 +46,6 @@ def main(dataset):
     for i, sample in enumerate(labels):
         if i != 100:
             continue
-
         print(sample.file_name)
         image = cv2.cvtColor(
             cv2.imread(to_local(sample.file_name)),
