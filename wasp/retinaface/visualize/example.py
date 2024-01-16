@@ -7,12 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from wasp.retinaface.data import Annotation, read_dataset
-from wasp.retinaface.visualize.plot import plot, to_local
+from wasp.retinaface.visualize.plot import plot
 
 
 def train() -> alb.Compose:
     return alb.Compose(
-        # bbox_params=None,
         bbox_params=alb.BboxParams(
             format="pascal_voc",
             label_fields=["category_ids"],
@@ -46,9 +45,8 @@ def main(dataset):
     for i, sample in enumerate(labels):
         if i != 100:
             continue
-        print(sample.file_name)
         image = cv2.cvtColor(
-            cv2.imread(to_local(sample.file_name)),
+            cv2.imread("couple.jpg"),
             cv2.COLOR_BGR2RGB,
         )
 
