@@ -5,6 +5,7 @@
 *.txt
 *.json
 wider
+*.jpg
 
 # Tools
 .git/
