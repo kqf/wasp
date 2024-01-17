@@ -31,15 +31,6 @@ def with_masks(keypoints):
     return mask, keypoints.clip(0, 1024)
 
 
-@click.command()
-@click.option(
-    "--dataset",
-    type=click.Path(
-        exists=True,
-        path_type=pathlib.Path,
-    ),
-    default="wider/train.json",
-)
 def main(dataset):
     labels = read_dataset(dataset)
     for i, sample in enumerate(labels):
