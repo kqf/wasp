@@ -1,12 +1,9 @@
-import pathlib
-
 import albumentations as alb
-import click
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from wasp.retinaface.data import Annotation, read_dataset
+from wasp.retinaface.data import Annotation
 from wasp.retinaface.visualize.plot import plot
 
 
@@ -31,36 +28,50 @@ def with_masks(keypoints):
     return mask, keypoints.clip(0, 1024)
 
 
-def main(dataset):
-    labels = read_dataset(dataset)
-    for i, sample in enumerate(labels):
-        if i != 100:
-            continue
-        image = cv2.cvtColor(
-            cv2.imread("couple.jpg"),
-            cv2.COLOR_BGR2RGB,
-        )
+def main():
+    image = cv2.cvtColor(
+        cv2.imread("couple.jpg"),
+        cv2.COLOR_BGR2RGB,
+    )
 
-        transform = train()
-        boxes, keypoints = sample.flatten()
-        print(np.asarray(keypoints), np.ones((len(boxes))))
-        print(np.asarray(keypoints).reshape(-1, 2))
-        masks, clipped = with_masks(np.asarray(keypoints).reshape(-1, 2))
-        sample = transform(
-            image=image,
-            bboxes=np.asarray(boxes),
-            category_ids=np.ones(len(boxes)),
-            keypoints=clipped,
-        )
-        image = sample["image"]
-        boxes = sample["bboxes"]
-        transofrmed_keypoints = np.asarray(sample["keypoints"])
-        transofrmed_keypoints[masks] = -1
-        keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
-        transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
+    boxes = (
+        (332, 128, 542, 424),
+        (542, 232, 726, 498),
+    )
+    keypoints = (
+        [
+            [410.562, 223.625],
+            [482.817, 268.089],
+            [436.5, 286.616],
+            [364.246, 301.438],
+            [443.911, 344.049],
+        ],
+        [
+            [590.205, 329.531],
+            [676.795, 337.857],
+            [633.5, 381.152],
+            [580.214, 417.786],
+            [668.469, 429.442],
+        ],
+    )
 
-        plt.imshow(plot(image, annotations=transformed))
-        plt.show()
+    transform = train()
+    masks, clipped = with_masks(np.asarray(keypoints).reshape(-1, 2))
+    sample = transform(
+        image=image,
+        bboxes=np.asarray(boxes),
+        category_ids=np.ones(len(boxes)),
+        keypoints=clipped,
+    )
+    image = sample["image"]
+    boxes = sample["bboxes"]
+    transofrmed_keypoints = np.asarray(sample["keypoints"])
+    transofrmed_keypoints[masks] = -1
+    keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
+    transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
+
+    plt.imshow(plot(image, annotations=transformed))
+    plt.show()
 
 
 if __name__ == "__main__":
