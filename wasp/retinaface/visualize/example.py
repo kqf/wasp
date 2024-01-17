@@ -23,11 +23,6 @@ def train() -> alb.Compose:
     )
 
 
-def with_masks(keypoints):
-    mask = keypoints < 0
-    return mask, keypoints.clip(0, 1024)
-
-
 def main():
     image = cv2.cvtColor(
         cv2.imread("couple.jpg"),
@@ -56,17 +51,15 @@ def main():
     )
 
     transform = train()
-    masks, clipped = with_masks(np.asarray(keypoints).reshape(-1, 2))
     sample = transform(
         image=image,
         bboxes=np.asarray(boxes),
         category_ids=np.ones(len(boxes)),
-        keypoints=clipped,
+        keypoints=np.asarray(keypoints).reshape(-1, 2),
     )
     image = sample["image"]
     boxes = sample["bboxes"]
     transofrmed_keypoints = np.asarray(sample["keypoints"])
-    transofrmed_keypoints[masks] = -1
     keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
     transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
