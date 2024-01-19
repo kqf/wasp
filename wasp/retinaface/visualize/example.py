@@ -7,22 +7,6 @@ from wasp.retinaface.data import Annotation
 from wasp.retinaface.visualize.plot import plot
 
 
-def train() -> alb.Compose:
-    return alb.Compose(
-        bbox_params=alb.BboxParams(
-            format="pascal_voc",
-            label_fields=["category_ids"],
-        ),
-        keypoint_params=alb.KeypointParams(
-            format="xy",
-        ),
-        p=1,
-        transforms=[
-            alb.Resize(height=1024, width=1024, p=1),
-        ],
-    )
-
-
 def works():
     image = cv2.cvtColor(
         cv2.imread("couple.jpg"),
