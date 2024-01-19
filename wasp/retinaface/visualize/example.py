@@ -110,13 +110,17 @@ def main():
         image=image,
         bboxes=boxes,
         category_ids=np.ones(len(boxes)),
-        keypoints=keypoints,
+        keypoints=keypoints[0],
+        keypoints1111=keypoints[1],
     )
 
     image = sample["image"]
     boxes = sample["bboxes"]
     transofrmed_keypoints = np.asarray(sample["keypoints"])
-    keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
+    keypoints = [
+        transofrmed_keypoints,
+        sample["keypoints1111"],
+    ]
     transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
     plt.imshow(plot(image, annotations=transformed))
