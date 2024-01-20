@@ -65,7 +65,7 @@ def works():
     plt.show()
 
 
-def works():
+def main():
     image = cv2.cvtColor(
         cv2.imread("couple.jpg"),
         cv2.COLOR_BGR2RGB,
