@@ -43,6 +43,7 @@ def main(dataset):
         )
         image = sample["image"]
         boxes = sample["bboxes"]
+        images, boxes = preprocess(imags, boxes)
         transofrmed_keypoints = np.asarray(sample["keypoints"])
         transofrmed_keypoints[masks] = -1
         keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
