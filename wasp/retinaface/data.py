@@ -84,8 +84,6 @@ class FaceDetectionDataset(data.Dataset):
         self.transform = transform
         self.rotate90 = rotate90
         self.labels = read_dataset(label_path)
-        # TODO: Try without filtering
-        # self.labels = [x for x in self.labels if Path(x.file_name).exists()]
 
     def __len__(self) -> int:
         return len(self.labels)
