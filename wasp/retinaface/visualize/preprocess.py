@@ -2,13 +2,11 @@ import pathlib
 
 import click
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 
-from wasp.retinaface.augmentations import train
-from wasp.retinaface.data import AbsoluteXYXY, Annotation, Sample, read_dataset
+from wasp.retinaface.data import AbsoluteXYXY, Sample, read_dataset
 from wasp.retinaface.preprocess import preprocess
-from wasp.retinaface.visualize.plot import plot, to_local
+from wasp.retinaface.visualize.plot import to_local
 
 
 def with_masks(keypoints):
