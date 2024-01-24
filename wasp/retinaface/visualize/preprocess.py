@@ -9,11 +9,12 @@ from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.visualize.plot import to_local
 
 
+
 def with_masks(keypoints):
     mask = keypoints < 0
     return mask, keypoints.clip(0, 1024)
 
-
+  
 def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
     num_annotations = 4 + 10 + 1
     annotations = np.zeros((0, num_annotations))
