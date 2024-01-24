@@ -53,12 +53,11 @@ def main(dataset):
         w, h, _ = image.shape
         print(w, h)
         annotations = to_annotations(sample, w, h)
-        image = sample["image"]
-        images, boxes = preprocess(image, annotations)
+        images, boxes = preprocess(image, annotations, w)
+        print(boxes.shape)
         # transofrmed_keypoints = np.asarray(sample["keypoints"])
         # keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
         # transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
-
         # plt.imshow(plot(image, annotations=transformed))
         # plt.show()
         # break
