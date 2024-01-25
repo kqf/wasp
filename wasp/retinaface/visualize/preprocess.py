@@ -2,7 +2,10 @@ import pathlib
 
 import click
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.text import Annotation
+from sympy import plot
 
 from wasp.retinaface.data import Sample, read_dataset, trimm_boxes
 from wasp.retinaface.preprocess import preprocess
@@ -53,14 +56,12 @@ def main(dataset):
         w, h, _ = image.shape
         print(w, h)
         annotations = to_annotations(sample, w, h)
-        images, boxes = preprocess(image, annotations, w)
-        print(boxes.shape)
-        # transofrmed_keypoints = np.asarray(sample["keypoints"])
-        # keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
-        # transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
-        # plt.imshow(plot(image, annotations=transformed))
-        # plt.show()
-        # break
+        images, annotations = preprocess(image, annotations, w)
+        boxes, keypoints = annotations[:, :4], annotations[:, 4:10]
+        transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
+        plt.imshow(plot(image, annotations=transformed))
+        plt.show()
+        break
 
 
 if __name__ == "__main__":
