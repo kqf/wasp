@@ -4,9 +4,8 @@ import click
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.text import Annotation
 
-from wasp.retinaface.data import Sample, read_dataset, trimm_boxes
+from wasp.retinaface.data import Annotation, Sample, read_dataset, trimm_boxes
 from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.visualize.plot import plot, to_local
 
