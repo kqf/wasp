@@ -5,11 +5,10 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.text import Annotation
-from sympy import plot
 
 from wasp.retinaface.data import Sample, read_dataset, trimm_boxes
 from wasp.retinaface.preprocess import preprocess
-from wasp.retinaface.visualize.plot import to_local
+from wasp.retinaface.visualize.plot import plot, to_local
 
 
 def with_masks(keypoints):
@@ -57,8 +56,10 @@ def main(dataset):
         print(w, h)
         annotations = to_annotations(sample, w, h)
         images, annotations = preprocess(image, annotations, w)
-        boxes, keypoints = annotations[:, :4], annotations[:, 4:10]
+        boxes = annotations[:, :4].tolist()
+        keypoints = annotations[:, 4:10].tolist()
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
+
         plt.imshow(plot(image, annotations=transformed))
         plt.show()
         break
