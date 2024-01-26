@@ -10,7 +10,6 @@ from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.visualize.plot import plot, to_local
 
 
-
 def with_masks(keypoints):
     mask = keypoints < 0
     return mask, keypoints.clip(0, 1024)
@@ -55,11 +54,12 @@ def main(dataset):
         w, h, _ = image.shape
         print(w, h)
         annotations = to_annotations(sample, w, h)
-        images, annotations = preprocess(image, annotations, w)
+        timage, annotations = preprocess(image, annotations, w)
         boxes = annotations[:, :4].tolist()
-        keypoints = annotations[:, 4:10].tolist()
+        keypoints = annotations[:, 4:14].tolist()
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
-        plt.imshow(plot(image, annotations=transformed))
+
+        plt.imshow(plot(timage, annotations=transformed))
         plt.show()
         break
 
