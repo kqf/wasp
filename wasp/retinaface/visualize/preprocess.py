@@ -56,7 +56,7 @@ def main(dataset):
         annotations = to_annotations(sample, w, h)
         timage, annotations = preprocess(image, annotations, w)
         boxes = annotations[:, :4].tolist()
-        keypoints = annotations[:, 4:14].tolist()
+        keypoints = annotations[:, 4:14].reshape(-1, 5, 2).tolist()
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
         plt.imshow(plot(timage, annotations=transformed))
