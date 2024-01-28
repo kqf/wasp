@@ -54,7 +54,7 @@ def main(dataset):
         w, h, _ = image.shape
         annotations = to_annotations(sample, w, h)
         timage, annotations = preprocess(image, annotations, h)
-        annotations = annotations * h
+        annotations = annotations * timage.shape[0]
         boxes = annotations[:, :4].tolist()
         keypoints = annotations[:, 4:14].reshape(-1, 5, 2).tolist()
         print(boxes)
