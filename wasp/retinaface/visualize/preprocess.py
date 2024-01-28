@@ -52,11 +52,12 @@ def main(dataset):
         print(i)
         image = cv2.imread(to_local(sample.file_name))
         w, h, _ = image.shape
-        print(w, h)
         annotations = to_annotations(sample, w, h)
         timage, annotations = preprocess(image, annotations, h)
+        annotations = annotations * h
         boxes = annotations[:, :4].tolist()
         keypoints = annotations[:, 4:14].reshape(-1, 5, 2).tolist()
+        print(boxes)
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
         plt.imshow(plot(timage, annotations=transformed))
