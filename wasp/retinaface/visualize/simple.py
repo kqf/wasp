@@ -15,7 +15,7 @@ from wasp.retinaface.visualize.plot import plot, to_local
         exists=True,
         path_type=pathlib.Path,
     ),
-    default="wider/test.json",
+    default="wider/train.json",
 )
 def main(dataset):
     labels = read_dataset(dataset)
@@ -23,6 +23,7 @@ def main(dataset):
         image = cv2.imread(to_local(sample.file_name))
         plt.imshow(plot(image, annotations=sample.annotations))
         plt.show()
+        break
 
 
 if __name__ == "__main__":
