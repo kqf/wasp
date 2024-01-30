@@ -49,7 +49,8 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 def main(dataset):
     labels = read_dataset(dataset)
     for i, sample in enumerate(labels):
-        print(i)
+        if i > 10:
+            break
         image = cv2.imread(to_local(sample.file_name))
         w, h, _ = image.shape
         annotations = to_annotations(sample, w, h)
@@ -57,12 +58,10 @@ def main(dataset):
         annotations = annotations * timage.shape[0]
         boxes = annotations[:, :4].tolist()
         keypoints = annotations[:, 4:14].reshape(-1, 5, 2).tolist()
-        print(boxes)
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
         plt.imshow(plot(timage, annotations=transformed))
         plt.show()
-        break
 
 
 if __name__ == "__main__":
