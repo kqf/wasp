@@ -21,11 +21,11 @@ def plot(
 
     for annotation in annotations:
         colors = [
-            (255, 0, 0),
-            (128, 255, 0),
-            (255, 178, 102),
-            (102, 128, 255),
-            (0, 255, 255),
+            (0, 0, 255),  # left eye
+            (0, 255, 0),  # right eye
+            (255, 0, 0),  # nose
+            (0, 128, 255),  # left mouth
+            (255, 255, 128),  # right mouth
         ]
 
         for landmark_id, (x, y) in enumerate(annotation.landmarks):
