@@ -4,13 +4,7 @@ import click
 import cv2
 import matplotlib.pyplot as plt
 
-from wasp.retinaface.data import (
-    Annotation,
-    Sample,
-    read_dataset,
-    to_annotations,
-    trimm_boxes,
-)
+from wasp.retinaface.data import Annotation, read_dataset, to_annotations
 from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.visualize.plot import plot, to_local
 
