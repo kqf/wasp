@@ -3,7 +3,6 @@ import pathlib
 import click
 import cv2
 import matplotlib.pyplot as plt
-import numpy as np
 
 from wasp.retinaface.data import (
     Annotation,
