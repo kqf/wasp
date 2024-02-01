@@ -10,12 +10,18 @@ from wasp.retinaface.data import Annotation, read_dataset
 from wasp.retinaface.visualize.plot import plot, to_local
 
 
-def train() -> alb.Compose:
+def train(height, width) -> alb.Compose:
     return alb.Compose(
-        bbox_params=None,
-        keypoint_params=None,
+        bbox_params=alb.BboxParams(
+            format="pascal_voc",
+            label_fields=["category_ids"],
+        ),
+        keypoint_params=alb.KeypointParams(
+            format="xy",
+        ),
         p=1,
         transforms=[
+            alb.RandomCrop(height, width, p=1.0),
             alb.RandomBrightnessContrast(
                 always_apply=False,
                 brightness_limit=0.2,
@@ -59,7 +65,8 @@ def main(dataset):
     for i, sample in enumerate(labels):
         print(i)
         image = cv2.imread(to_local(sample.file_name))
-        transform = train()
+        h, w = image.shape[:2]
+        transform = train(h, w)
         boxes, keypoints = sample.flatten()
         print(np.asarray(keypoints), np.ones((len(boxes))))
         print(np.asarray(keypoints).reshape(-1, 2))
