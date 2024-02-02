@@ -22,6 +22,7 @@ def train(height, width) -> alb.Compose:
         p=1,
         transforms=[
             alb.RandomCrop(height, width, p=1.0),
+            alb.HorizontalFlip(p=1.0),
             alb.RandomBrightnessContrast(
                 always_apply=False,
                 brightness_limit=0.2,
@@ -70,6 +71,7 @@ def main(dataset):
         boxes, keypoints = sample.flatten()
         print(np.asarray(keypoints), np.ones((len(boxes))))
         print(np.asarray(keypoints).reshape(-1, 2))
+        print()
         masks, clipped = with_masks(np.asarray(keypoints).reshape(-1, 2))
         sample = transform(
             image=image,
