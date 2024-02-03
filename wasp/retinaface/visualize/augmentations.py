@@ -21,9 +21,9 @@ def train(height, width) -> alb.Compose:
         ),
         p=1,
         transforms=[
-            alb.RandomRotate90(p=1.0),
+            # alb.RandomRotate90(p=1.0),
             # alb.RandomCrop(height, width, p=1.0),
-            # alb.HorizontalFlip(p=1.0),
+            alb.HorizontalFlip(p=1.0),
             # alb.RandomBrightnessContrast(
             #     always_apply=False,
             #     brightness_limit=0.2,
