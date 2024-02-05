@@ -22,9 +22,10 @@ def train(height, width) -> alb.Compose:
         p=1,
         transforms=[
             alb.RandomRotate90(p=1.0),
-            # alb.RandomCrop(height, width, p=1.0),
             alb.HorizontalFlip(p=1.0),
             alb.VerticalFlip(p=1.0),
+            alb.RandomCrop(256, 256, p=1),
+            # alb.RandomSizedCrop([256, 1024], height, width, p=1.0),
             # alb.RandomBrightnessContrast(
             #     always_apply=False,
             #     brightness_limit=0.2,
@@ -84,8 +85,8 @@ def main(dataset):
         image = sample["image"]
         boxes = sample["bboxes"]
         transofrmed_keypoints = np.asarray(sample["keypoints"])
-        transofrmed_keypoints[masks] = -1
         keypoints = transofrmed_keypoints.reshape(-1, 5, 2)
+        # transofrmed_keypoints[masks] = -1
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
 
         plt.imshow(plot(image, annotations=transformed))
