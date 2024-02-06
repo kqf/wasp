@@ -21,7 +21,7 @@ def to_local(filename, local=""):
     return filename.replace(env.str("PRIVATE_STORAGE_LOCATION"), local)
 
 
-LOCAL_STORAGE_LOCATION = env.str("PRIVATE_STORAGE_LOCATION")
+LOCAL_STORAGE_LOCATION = env.str("LOCAL_STORAGE_LOCATION")
 
 
 def to_tensor(image: np.ndarray) -> torch.Tensor:
