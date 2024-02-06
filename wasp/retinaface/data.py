@@ -8,9 +8,20 @@ import cv2
 import numpy as np
 import torch
 from dacite import Config, from_dict
+from environs import Env
 from torch.utils import data
 
 from wasp.retinaface.preprocess import preprocess
+
+env = Env()
+env.read_env()
+
+
+def to_local(filename, local=""):
+    return filename.replace(env.str("PRIVATE_STORAGE_LOCATION"), local)
+
+
+LOCAL_STORAGE_LOCATION = env.str("PRIVATE_STORAGE_LOCATION")
 
 
 def to_tensor(image: np.ndarray) -> torch.Tensor:
@@ -113,7 +124,7 @@ class FaceDetectionDataset(data.Dataset):
 
     def __getitem__(self, index: int) -> Dict[str, Any]:
         sample = self.labels[index]
-        image = load_rgb(sample.file_name)
+        image = load_rgb(to_local(sample.file_name, LOCAL_STORAGE_LOCATION))
 
         image_height, image_width = image.shape[:2]
         annotations = to_annotations(sample, image_width, image_height)
