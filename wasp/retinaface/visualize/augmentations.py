@@ -6,8 +6,8 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from wasp.retinaface.data import Annotation, read_dataset
-from wasp.retinaface.visualize.plot import plot, to_local
+from wasp.retinaface.data import Annotation, read_dataset, to_local
+from wasp.retinaface.visualize.plot import plot
 
 
 def train(height, width) -> alb.Compose:
