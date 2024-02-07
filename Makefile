@@ -3,4 +3,4 @@ train: BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 train: COMMIT = $(shell git rev-parse HEAD)
 train: model = resnet50/retinaface
 train:
-	python letracking/train.py
+	python wasp/retinaface/train.py
