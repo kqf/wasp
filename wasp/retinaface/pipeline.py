@@ -28,7 +28,7 @@ def dpath(envv):
 @dataclass
 class Paths:
     train: Path = field(default_factory=dpath("TRAIN_LABEL_PATH"))
-    valid: Path = field(default_factory=dpath("VAL_LABEL_PATH"))
+    valid: Path = field(default_factory=dpath("VALID_LABEL_PATH"))
 
 
 def prepare_outputs(

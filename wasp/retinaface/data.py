@@ -17,8 +17,8 @@ env = Env()
 env.read_env()
 
 
-def to_local(filename, local=""):
-    return filename.replace(env.str("PRIVATE_STORAGE_LOCATION"), local)
+def to_local(filename: Path | str, local: str = "") -> str:
+    return str(filename).replace(env.str("PRIVATE_STORAGE_LOCATION"), local)
 
 
 LOCAL_STORAGE_LOCATION = env.str("LOCAL_STORAGE_LOCATION")
@@ -61,8 +61,8 @@ def to_sample(entry: dict[str, Any]) -> Sample:
     )
 
 
-def read_dataset(label_path: Path) -> list[Sample]:
-    with label_path.open() as f:
+def read_dataset(path: Path | str) -> list[Sample]:
+    with open(path) as f:
         df = json.load(f)
     return [to_sample(x) for x in df]
 
@@ -117,7 +117,7 @@ class FaceDetectionDataset(data.Dataset):
         # self.image_path = Path(image_path)
         self.transform = transform
         self.rotate90 = rotate90
-        self.labels = read_dataset(label_path)
+        self.labels = read_dataset(to_local(label_path))
 
     def __len__(self) -> int:
         return len(self.labels)
