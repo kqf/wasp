@@ -29,6 +29,7 @@ jobs:
           pytest --cov=wasp --cov-report term-missing tests/
         env:
           LOCAL_STORAGE_LOCATION: ""
+          PRIVATE_STORAGE_LOCATION: ""
 
       - name: Run pre-commit checks
         uses: pre-commit/action@v3.0.0
