@@ -20,7 +20,7 @@ from wasp.retinaface.matching import decode
 
 def dpath(envv):
     def f():
-        Path(os.environ[envv])
+        return Path(os.environ[envv])
 
     return f
 
