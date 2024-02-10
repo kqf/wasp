@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import numpy as np
@@ -20,15 +19,15 @@ from wasp.retinaface.matching import decode
 
 def dpath(envv):
     def f():
-        return Path(os.environ[envv])
+        return os.environ[envv]
 
     return f
 
 
 @dataclass
 class Paths:
-    train: Path = field(default_factory=dpath("TRAIN_LABEL_PATH"))
-    valid: Path = field(default_factory=dpath("VALID_LABEL_PATH"))
+    train: str = field(default_factory=dpath("TRAIN_LABEL_PATH"))
+    valid: str = field(default_factory=dpath("VALID_LABEL_PATH"))
 
 
 def prepare_outputs(

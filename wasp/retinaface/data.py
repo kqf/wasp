@@ -109,7 +109,7 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 class FaceDetectionDataset(data.Dataset):
     def __init__(
         self,
-        label_path: Path,
+        label_path: Path | str,
         transform: albu.Compose,
         preproc: Callable = preprocess,
         rotate90: bool = False,
