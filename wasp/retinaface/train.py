@@ -3,21 +3,25 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
+from environs import Env
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
-from wasp.retinaface.pipeline import Paths, RetinaFacePipeline
+from wasp.retinaface.pipeline import RetinaFacePipeline
 from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.priors import priorbox
 
+env = Env()
+env.read_env()
+
 
 def main(
-    paths: Paths | None = None,
+    train_labels: str = None,
+    valid_labels: str = None,
     resolution: tuple[int, int] = (1024, 1024),
 ) -> None:
     pl.trainer.seed_everything(137)
-    paths = paths or Paths()
     model = RetinaFace(
         name="Resnet50",
         pretrained=True,
@@ -37,7 +41,8 @@ def main(
     )
 
     pipeline = RetinaFacePipeline(
-        paths,
+        train_labels=train_labels or env.str("TRAIN_LABEL_PATH"),
+        valid_labels=valid_labels or env.str("VALID_LABEL_PATH"),
         model=model,
         preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,

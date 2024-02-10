@@ -3,7 +3,7 @@ import pathlib
 
 import pytest
 
-from wasp.retinaface.train import Paths, main
+from wasp.retinaface.train import main
 
 
 @pytest.fixture
@@ -34,9 +34,7 @@ def annotations(tmp_path) -> pathlib.Path:
 @pytest.mark.timeout(3600)
 def test_main(annotations):
     main(
-        paths=Paths(
-            annotations,
-            annotations,
-        ),
+        train_labels=str(annotations),
+        valid_labels=str(annotations),
         resolution=(256, 256),
     )

@@ -1,5 +1,3 @@
-import os
-from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import numpy as np
@@ -15,19 +13,6 @@ from torchvision.ops import nms
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
-
-
-def dpath(envv):
-    def f():
-        return os.environ[envv]
-
-    return f
-
-
-@dataclass
-class Paths:
-    train: str = field(default_factory=dpath("TRAIN_LABEL_PATH"))
-    valid: str = field(default_factory=dpath("VALID_LABEL_PATH"))
 
 
 def prepare_outputs(
@@ -83,7 +68,8 @@ def prepare_outputs(
 class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def __init__(
         self,
-        paths: Paths,
+        train_labels: str,
+        valid_labels: str,
         model: torch.nn.Module,
         preprocessing,
         priorbox,
@@ -92,7 +78,8 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         loss,
     ) -> None:
         super().__init__()
-        self.paths = paths
+        self.train_labels = train_labels
+        self.valid_labels = valid_labels
         self.model = model
         self.prior_box = priorbox
         self.loss = loss
@@ -113,7 +100,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             FaceDetectionDataset(
-                label_path=self.paths.train,
+                label_path=self.train_labels,
                 transform=augs.train(),
                 preproc=self.preproc,
                 rotate90=True,
@@ -129,7 +116,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     def val_dataloader(self) -> DataLoader:
         return DataLoader(
             FaceDetectionDataset(
-                label_path=self.paths.valid,
+                label_path=self.valid_labels,
                 transform=augs.valid(),
                 preproc=self.preproc,
                 rotate90=True,
