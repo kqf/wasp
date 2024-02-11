@@ -117,7 +117,9 @@ class FaceDetectionDataset(data.Dataset):
         # self.image_path = Path(image_path)
         self.transform = transform
         self.rotate90 = rotate90
-        self.labels = read_dataset(to_local(label_path))
+        self.labels = read_dataset(
+            to_local(label_path, LOCAL_STORAGE_LOCATION),
+        )
 
     def __len__(self) -> int:
         return len(self.labels)
