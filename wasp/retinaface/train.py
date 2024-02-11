@@ -6,6 +6,7 @@ import torch
 from environs import Env
 from pytorch_lightning.callbacks import ModelCheckpoint
 
+from wasp.retinaface.logger import build_mlflow
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import RetinaFacePipeline
@@ -80,6 +81,7 @@ def main(
         parents=True,
     )
 
+    logger = build_mlflow("test", "test", "test", "Resnet50")
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
@@ -90,6 +92,7 @@ def main(
         benchmark=True,
         precision=16,
         sync_batchnorm=True,
+        logger=logger,
         callbacks=[
             ModelCheckpoint(
                 monitor="val_loss",
