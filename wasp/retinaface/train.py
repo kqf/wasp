@@ -81,6 +81,7 @@ def main(
         parents=True,
     )
 
+    logger = build_mlflow("test", "test", "test", "Resnet50")
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
