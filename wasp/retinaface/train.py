@@ -81,7 +81,6 @@ def main(
         parents=True,
     )
 
-    logger = build_mlflow("test", "test", "test", "Resnet50")
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
@@ -92,7 +91,7 @@ def main(
         benchmark=True,
         precision=16,
         sync_batchnorm=True,
-        logger=logger,
+        logger=build_mlflow(),
         callbacks=[
             ModelCheckpoint(
                 monitor="val_loss",
