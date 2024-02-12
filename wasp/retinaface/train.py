@@ -92,7 +92,7 @@ def main(
         benchmark=True,
         precision=16,
         sync_batchnorm=True,
-        logger=logger,
+        logger=build_mlflow(),
         callbacks=[
             ModelCheckpoint(
                 monitor="val_loss",
