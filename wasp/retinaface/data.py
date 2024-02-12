@@ -18,6 +18,7 @@ env.read_env()
 
 
 def to_local(filename: Path | str, local: str = "") -> str:
+    print(filename)
     return str(filename).replace(env.str("PRIVATE_STORAGE_LOCATION"), local)
 
 
