@@ -71,6 +71,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         train_labels: str,
         valid_labels: str,
         model: torch.nn.Module,
+        resolution: tuple[int, int],
         preprocessing,
         priorbox,
         build_optimizer,
@@ -81,6 +82,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.train_labels = train_labels
         self.valid_labels = valid_labels
         self.model = model
+        self.resolution = resolution
         self.prior_box = priorbox
         self.loss = loss
         self.preproc = preprocessing
@@ -101,7 +103,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.train_labels,
-                transform=augs.train(),
+                transform=augs.train(self.resolution),
                 preproc=self.preproc,
                 rotate90=True,
             ),
@@ -117,7 +119,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.valid_labels,
-                transform=augs.valid(),
+                transform=augs.valid(self.resolution),
                 preproc=self.preproc,
                 rotate90=True,
             ),

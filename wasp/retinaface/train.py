@@ -20,7 +20,7 @@ env.read_env()
 def main(
     train_labels: str = None,
     valid_labels: str = None,
-    resolution: tuple[int, int] = (1024, 1024),
+    resolution: tuple[int, int] = (840, 840),
 ) -> None:
     pl.trainer.seed_everything(137)
     model = RetinaFace(
@@ -45,6 +45,7 @@ def main(
         train_labels=train_labels or env.str("TRAIN_LABEL_PATH"),
         valid_labels=valid_labels or env.str("VALID_LABEL_PATH"),
         model=model,
+        resolution=resolution,
         preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,
         build_optimizer=partial(
@@ -81,7 +82,6 @@ def main(
         parents=True,
     )
 
-    logger = build_mlflow("test", "test", "test", "Resnet50")
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
