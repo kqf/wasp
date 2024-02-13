@@ -21,6 +21,7 @@ def main(
     train_labels: str = None,
     valid_labels: str = None,
     resolution: tuple[int, int] = (840, 840),
+    epochs: int = 80,
 ) -> None:
     pl.trainer.seed_everything(137)
     model = RetinaFace(
@@ -85,7 +86,7 @@ def main(
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
-        max_epochs=1,
+        max_epochs=epochs,
         # distributed_backend=ddp,
         num_sanity_val_steps=0,
         # progress_bar_refresh_rate=1,
