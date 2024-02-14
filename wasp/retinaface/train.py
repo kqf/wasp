@@ -4,8 +4,8 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
-from pytorch_lightning.callbacks import ModelCheckpoint
 
+from wasp.retinaface.checkpoint import BestModelCheckpoint
 from wasp.retinaface.logger import build_mlflow
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
@@ -95,8 +95,8 @@ def main(
         sync_batchnorm=True,
         logger=build_mlflow(),
         callbacks=[
-            ModelCheckpoint(
-                monitor="val_loss",
+            BestModelCheckpoint(
+                monitor="mAP",
                 verbose=True,
                 mode="max",
                 save_top_k=-1,
