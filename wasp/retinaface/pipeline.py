@@ -237,7 +237,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             logger=True,
         )  # type: ignore
         self.log(
-            "val_loss",
+            "mAP",
             average_precision,
             on_step=False,
             on_epoch=True,
