@@ -228,8 +228,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
     def on_validation_epoch_end(self) -> None:
         average_precision = self.metric_fn.value(iou_thresholds=0.5)["mAP"]
-        self.metric_fn.reseet()
-
+        self.metric_fn.reset()
         self.log(
             "epoch",
             self.trainer.current_epoch,
