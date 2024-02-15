@@ -71,6 +71,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         train_labels: str,
         valid_labels: str,
         model: torch.nn.Module,
+        resolution: tuple[int, int],
         preprocessing,
         priorbox,
         build_optimizer,
@@ -81,6 +82,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.train_labels = train_labels
         self.valid_labels = valid_labels
         self.model = model
+        self.resolution = resolution
         self.prior_box = priorbox
         self.loss = loss
         self.preproc = preprocessing
@@ -101,9 +103,9 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.train_labels,
-                transform=augs.train(),
+                transform=augs.train(self.resolution),
                 preproc=self.preproc,
-                rotate90=True,
+                rotate90=False,
             ),
             batch_size=8,
             num_workers=4,
@@ -117,9 +119,9 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.valid_labels,
-                transform=augs.valid(),
+                transform=augs.valid(self.resolution),
                 preproc=self.preproc,
-                rotate90=True,
+                rotate90=False,
             ),
             batch_size=10,
             num_workers=4,
@@ -212,7 +214,43 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         batch_idx: int,
     ):  # type: ignore
         images = batch["image"]
+        targets = batch["annotation"]
+
         out = self.forward(images)
+
+        total_loss, loss_loc, loss_clf, loss_lmrks = self.loss.full_forward(
+            out,
+            targets,
+        )
+
+        self.log(
+            "valid_classification",
+            loss_clf,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+        )
+        self.log(
+            "valid_localization",
+            loss_loc,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+        )
+        self.log(
+            "valid_landmarks",
+            loss_lmrks,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+        )
+        self.log(
+            "valid_loss",
+            total_loss,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+        )
 
         outputs = prepare_outputs(
             images=images,
@@ -226,8 +264,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
     def on_validation_epoch_end(self) -> None:
         average_precision = self.metric_fn.value(iou_thresholds=0.5)["mAP"]
-        self.metric_fn.reseet()
-
+        self.metric_fn.reset()
         self.log(
             "epoch",
             self.trainer.current_epoch,
@@ -236,7 +273,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             logger=True,
         )  # type: ignore
         self.log(
-            "val_loss",
+            "mAP",
             average_precision,
             on_step=False,
             on_epoch=True,
