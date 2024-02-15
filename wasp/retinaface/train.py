@@ -4,8 +4,9 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
-from pytorch_lightning.callbacks import ModelCheckpoint
 
+from wasp.retinaface.checkpoint import BestModelCheckpoint
+from wasp.retinaface.logger import build_mlflow
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import RetinaFacePipeline
@@ -19,7 +20,8 @@ env.read_env()
 def main(
     train_labels: str = None,
     valid_labels: str = None,
-    resolution: tuple[int, int] = (1024, 1024),
+    resolution: tuple[int, int] = (840, 840),
+    epochs: int = 80,
 ) -> None:
     pl.trainer.seed_everything(137)
     model = RetinaFace(
@@ -44,6 +46,7 @@ def main(
         train_labels=train_labels or env.str("TRAIN_LABEL_PATH"),
         valid_labels=valid_labels or env.str("VALID_LABEL_PATH"),
         model=model,
+        resolution=resolution,
         preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,
         build_optimizer=partial(
@@ -83,16 +86,17 @@ def main(
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
-        max_epochs=1,
+        max_epochs=epochs,
         # distributed_backend=ddp,
         num_sanity_val_steps=0,
         # progress_bar_refresh_rate=1,
         benchmark=True,
         precision=16,
         sync_batchnorm=True,
+        logger=build_mlflow(),
         callbacks=[
-            ModelCheckpoint(
-                monitor="val_loss",
+            BestModelCheckpoint(
+                monitor="mAP",
                 verbose=True,
                 mode="max",
                 save_top_k=-1,

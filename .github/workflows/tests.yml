@@ -30,6 +30,12 @@ jobs:
         env:
           LOCAL_STORAGE_LOCATION: ""
           PRIVATE_STORAGE_LOCATION: ""
+          MLFLOW_TRACKING_URI: "123"
+          MLFLOW_EXPERIMENT_NAME: "test"
+          EXPERIMENT_LABEL: "experiment"
+          BRANCH: "my-test-branch"
+          COMMIT: "1235"
+          MODEL: "resnet"
 
       - name: Run pre-commit checks
         uses: pre-commit/action@v3.0.0
