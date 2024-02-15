@@ -218,34 +218,28 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
         out = self.forward(images)
 
-        loss_localization, loss_classification, loss_landmarks = self.loss(
+        total_loss, loss_loc, loss_clf, loss_lmrks = self.loss.full_forward(
             out,
             targets,
         )
 
-        total_loss = (
-            self.loss_weights["localization"] * loss_localization
-            + self.loss_weights["classification"] * loss_classification
-            + self.loss_weights["landmarks"] * loss_landmarks
-        )
-
         self.log(
             "valid_classification",
-            loss_classification,
+            loss_clf,
             on_step=True,
             on_epoch=True,
             logger=True,
         )
         self.log(
             "valid_localization",
-            loss_localization,
+            loss_loc,
             on_step=True,
             on_epoch=True,
             logger=True,
         )
         self.log(
             "valid_landmarks",
-            loss_landmarks,
+            loss_lmrks,
             on_step=True,
             on_epoch=True,
             logger=True,
