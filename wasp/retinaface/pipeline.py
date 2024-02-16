@@ -127,7 +127,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             num_workers=4,
             shuffle=False,
             pin_memory=True,
-            drop_last=True,
+            drop_last=False,
             collate_fn=detection_collate,
         )
 
