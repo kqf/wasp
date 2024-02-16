@@ -21,7 +21,7 @@ def main(
     train_labels: str = None,
     valid_labels: str = None,
     resolution: tuple[int, int] = (840, 840),
-    epochs: int = 80,
+    epochs: int = 5,
 ) -> None:
     pl.trainer.seed_everything(137)
     model = RetinaFace(
