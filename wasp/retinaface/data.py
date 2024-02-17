@@ -100,7 +100,8 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
             landmarks = np.array(label.landmarks)
             # landmarks
             annotation[0, 4:14] = landmarks.reshape(-1, 10)
-            annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
+
+        annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
         annotations = np.append(annotations, annotation, axis=0)
 
     return annotations
