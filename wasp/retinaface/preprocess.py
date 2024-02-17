@@ -149,14 +149,30 @@ def preprocess(
     image_t, boxes_t, landmarks_t = random_horizontal_flip(
         image_t, boxes_t, landmarks_t
     )
-    height, width = image_t.shape[:2]
-
-    boxes_t[:, 0::2] = boxes_t[:, 0::2] / width
-    boxes_t[:, 1::2] = boxes_t[:, 1::2] / height
-
-    landmarks_t[:, 0::2] = landmarks_t[:, 0::2] / width
-    landmarks_t[:, 1::2] = landmarks_t[:, 1::2] / height
 
     targets_t = np.hstack((boxes_t, landmarks_t, labels_t))
-
     return image_t, targets_t
+
+
+def normalize(
+    image: np.ndarray,
+    targets: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    if targets.shape[0] == 0:
+        raise ValueError("this image does not have gt")
+
+    boxes = targets[:, :4].copy()
+    landmarks = targets[:, 4:-1].copy()
+    labels = targets[:, -1:].copy()
+
+    height, width = image.shape[:2]
+
+    boxes[:, 0::2] = boxes[:, 0::2] / width
+    boxes[:, 1::2] = boxes[:, 1::2] / height
+
+    landmarks[:, 0::2] = landmarks[:, 0::2] / width
+    landmarks[:, 1::2] = landmarks[:, 1::2] / height
+
+    targets_t = np.hstack((boxes, landmarks, labels))
+
+    return image, targets_t
