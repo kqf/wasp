@@ -41,8 +41,9 @@ def prepare_outputs(
         scores = confidence[batch_id][:, 1]
 
         valid_index = torch.where(scores > 0.1)[0]
-        boxes = boxes[valid_index]
-        scores = scores[valid_index]
+        # NMS doesn't accept fp16 inputs
+        boxes = boxes[valid_index].float()
+        scores = scores[valid_index].float()
 
         boxes *= scale
 
