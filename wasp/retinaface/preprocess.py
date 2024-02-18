@@ -175,7 +175,6 @@ def normalize(
     labels = targets[:, -1:].copy()
 
     height, width = image.shape[:2]
-    print("Normalizing to ", image.shape)
 
     boxes[:, 0::2] = boxes[:, 0::2] / height
     boxes[:, 1::2] = boxes[:, 1::2] / height
