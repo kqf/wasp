@@ -129,6 +129,15 @@ def flip_landmark(landms, arg1, arg2) -> np.ndarray:
     return landms
 
 
+def compose(*funcs):
+    def composed(*args):
+        for f in funcs[::-1]:
+            args = f(*args)
+        return args
+
+    return composed
+
+
 def preprocess(
     image: np.ndarray,
     targets: np.ndarray,
@@ -166,11 +175,12 @@ def normalize(
     labels = targets[:, -1:].copy()
 
     height, width = image.shape[:2]
+    print("Normalizing to ", image.shape)
 
-    boxes[:, 0::2] = boxes[:, 0::2] / width
+    boxes[:, 0::2] = boxes[:, 0::2] / height
     boxes[:, 1::2] = boxes[:, 1::2] / height
 
-    landmarks[:, 0::2] = landmarks[:, 0::2] / width
+    landmarks[:, 0::2] = landmarks[:, 0::2] / height
     landmarks[:, 1::2] = landmarks[:, 1::2] / height
 
     targets_t = np.hstack((boxes, landmarks, labels))

@@ -17,8 +17,6 @@ def plot(
     annotations: list[Annotation],
 ) -> np.ndarray:
     vis_image = image.copy()
-    print(annotations)
-
     for annotation in annotations:
         colors = [
             (0, 0, 255),  # left eye
