@@ -35,12 +35,10 @@ def main():
     )
 
     transform = alb.Compose(
+        keypoint_params=alb.KeypointParams(format="xy"),
         bbox_params=alb.BboxParams(
             format="pascal_voc",
             label_fields=["category_ids"],
-        ),
-        keypoint_params=alb.KeypointParams(
-            format="xy",
         ),
         p=1,
         transforms=[
@@ -48,10 +46,11 @@ def main():
         ],
     )
 
+    category_ids = list(range(boxes.shape[0]))
     sample = transform(
         image=image,
         bboxes=boxes,
-        category_ids=np.ones(len(boxes)),
+        category_ids=category_ids,
         keypoints=np.asarray(keypoints).reshape(-1, 2),
     )
 
