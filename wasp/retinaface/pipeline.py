@@ -1,5 +1,4 @@
 from typing import Any, Callable, Dict, List, Tuple, Union
-from unicodedata import normalize
 
 import numpy as np
 import pytorch_lightning as pl
