@@ -1,5 +1,4 @@
 from typing import Any, Callable, Dict, List, Tuple, Union
-from unicodedata import normalize
 
 import numpy as np
 import pytorch_lightning as pl
@@ -14,7 +13,7 @@ from torchvision.ops import nms
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.matching import decode
-from wasp.retinaface.preprocess import compose
+from wasp.retinaface.preprocess import compose, normalize
 
 
 def prepare_outputs(
