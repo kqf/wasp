@@ -28,7 +28,9 @@ def main(dataset):
         annotations = to_annotations(sample, h, w)
         augment = compose(normalize, preprocess)
         timage, annotations = augment(image, annotations, h)
-        annotations = annotations * timage.shape[0]
+        th, tw, _ = timage.shape
+        annotations[:, 0::2] = annotations[:, 0::2] * th
+        annotations[:, 1::2] = annotations[:, 1::2] * tw
         boxes = annotations[:, :4].tolist()
         keypoints = annotations[:, 4:14].reshape(-1, 5, 2).tolist()
         transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]

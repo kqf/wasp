@@ -176,10 +176,10 @@ def normalize(
 
     height, width = image.shape[:2]
 
-    boxes[:, 0::2] = boxes[:, 0::2] / height
+    boxes[:, 0::2] = boxes[:, 0::2] / width
     boxes[:, 1::2] = boxes[:, 1::2] / height
 
-    landmarks[:, 0::2] = landmarks[:, 0::2] / height
+    landmarks[:, 0::2] = landmarks[:, 0::2] / width
     landmarks[:, 1::2] = landmarks[:, 1::2] / height
 
     targets_t = np.hstack((boxes, landmarks, labels))
