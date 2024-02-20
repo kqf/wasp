@@ -1,4 +1,5 @@
 import random
+from functools import partial
 
 import numpy as np
 
@@ -129,13 +130,14 @@ def flip_landmark(landms, arg1, arg2) -> np.ndarray:
     return landms
 
 
-def compose(*funcs):
-    def composed(*args):
-        for f in funcs[::-1]:
-            args = f(*args)
-        return args
+def _composed(*args, funcs):
+    for f in funcs[::-1]:
+        args = f(*args)
+    return args
 
-    return composed
+
+def compose(*funcs):
+    return partial(_composed, funcs=funcs)
 
 
 def preprocess(
