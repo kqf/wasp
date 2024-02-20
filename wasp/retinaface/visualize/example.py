@@ -42,7 +42,7 @@ def main():
         ),
         p=1,
         transforms=[
-            # alb.Resize(height=1024, width=1024, p=1),
+            alb.Resize(height=1024, width=1024, p=1),
         ],
     )
 
