@@ -91,9 +91,9 @@ class MultiBoxLoss(nn.Module):
         )
 
         for box_index in range(num_predicted_boxes):
-            box_gt = targets[box_index][:, :4].data
-            landmarks_gt = targets[box_index][:, 4:14].data
-            labels_gt = targets[box_index][:, 14].data
+            box_gt = targets[box_index]["boxes"].data
+            landmarks_gt = targets[box_index]["keypoints"].data
+            labels_gt = targets[box_index]["labels"].data
 
             match(
                 self.threshold,
