@@ -113,13 +113,22 @@ class MultiBoxLoss(nn.Module):
         num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
         n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
         pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
-            landmark_data
+            landmark_data,
         )
         landmarks_p = landmark_data[pos_idx1].view(-1, 10)
         landmarks_t = landmarks_t[pos_idx1].view(-1, 10)
+
+        mask = ~torch.isnan(landmarks_t)
+        landmarks_p_masked = landmarks_p[mask]
+        landmarks_t_masked = landmarks_t[mask]
+
         loss_landm = F.smooth_l1_loss(
-            landmarks_p, landmarks_t, reduction="sum"
+            landmarks_p_masked,
+            landmarks_t_masked,
+            reduction="sum",
         )
+        if landmarks_t_masked.numel() == 0:
+            loss_landm = torch.nan_to_num(loss_landm, 0)
 
         positive = conf_t != torch.zeros_like(conf_t)
         conf_t[positive] = 1
