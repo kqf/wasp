@@ -225,7 +225,15 @@ def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     for sample in batch:
         images.append(sample["image"])
-        annotation.append(torch.from_numpy(sample["annotation"]).float())
+        annotations = {
+            "boxes": torch.from_numpy(sample["annotation"]["boxes"]).float(),
+            "keypoints": torch.from_numpy(
+                sample["annotation"]["keypoints"]
+            ).float(),  # noqa
+            "labels": torch.from_numpy(sample["annotation"]["labels"]).float(),
+        }
+
+        annotation.append(annotations)
         file_names.append(sample["file_name"])
 
     return {
