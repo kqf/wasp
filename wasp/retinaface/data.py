@@ -88,7 +88,7 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
     annotations = np.zeros((0, num_annotations))
 
     for label in sample.annotations:
-        annotation = np.zeros((1, num_annotations))
+        annotation = np.empty((1, num_annotations))
 
         annotation[0, :4] = trimm_boxes(
             label.bbox,
