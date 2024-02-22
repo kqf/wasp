@@ -58,10 +58,11 @@ def prepare_outputs(
         )
         candidates[:, -2] = 0
 
-        tt = target.cpu().numpy()
+        boxes_gt = target["boxes"].cpu().numpy()
+        labels_gt = target["labels"].cpu().numpy()
         gts = np.zeros((target.shape[0], 7), dtype=np.float32)
-        gts[:, :4] = tt[:, :4] * scale[None, :].cpu().numpy()
-        gts[:, 4] = np.where(tt[:, -1] > 0, 0, 1)
+        gts[:, :4] = boxes_gt[:, :4] * scale[None, :].cpu().numpy()
+        gts[:, 4] = np.where(labels_gt[:, -1] > 0, 0, 1)
         total.append((candidates, gts))
 
     return total
