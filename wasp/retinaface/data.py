@@ -111,7 +111,7 @@ def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
     return {
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
-        "labels": annotations[:, 14],
+        "labels": annotations[:, [14]],
     }
 
 
