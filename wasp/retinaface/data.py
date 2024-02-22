@@ -111,7 +111,7 @@ def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
     return {
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
-        "labels": annotations[:, 14],
+        "labels": annotations[:, [14]],
     }
 
 
@@ -156,7 +156,7 @@ class FaceDetectionDataset(data.Dataset):
 
         return {
             "image": to_tensor(image),
-            "annotation": annotations.astype(np.float32),
+            "annotation": to_dicts(annotations.astype(np.float32)),
             "file_name": sample.file_name,
         }
 
