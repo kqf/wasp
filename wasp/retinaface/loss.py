@@ -65,35 +65,34 @@ class MultiBoxLoss(nn.Module):
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
         locations_data, confidence_data, landmark_data = predictions
+        device = targets[0]["boxes"].device
 
-        priors = self.priors.to(targets[0].device)
+        priors = self.priors.to(device)
         defaults = priors.data
 
-        num_predicted_boxes = locations_data.shape[0]
+        num_pred_boxes = locations_data.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
         boxes_t = torch.zeros(
-            num_predicted_boxes,
+            num_pred_boxes,
             num_priors,
             4,
-        ).to(targets[0].device)
-        landmarks_t = torch.zeros(num_predicted_boxes, num_priors, 10).to(
-            targets[0].device
-        )
+        ).to(device)
+        landmarks_t = torch.zeros(num_pred_boxes, num_priors, 10).to(device)
         conf_t = (
             torch.zeros(
-                num_predicted_boxes,
+                num_pred_boxes,
                 num_priors,
             )
-            .to(targets[0].device)
+            .to(device)
             .long()
         )
 
-        for box_index in range(num_predicted_boxes):
+        for box_index in range(num_pred_boxes):
             box_gt = targets[box_index]["boxes"].data
             landmarks_gt = targets[box_index]["keypoints"].data
-            labels_gt = targets[box_index]["labels"].data
+            labels_gt = targets[box_index]["labels"].reshape(-1).data
 
             match(
                 self.threshold,
@@ -147,7 +146,7 @@ class MultiBoxLoss(nn.Module):
 
         # Hard Negative Mining
         loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
-        loss_c = loss_c.view(num_predicted_boxes, -1)
+        loss_c = loss_c.view(num_pred_boxes, -1)
         _, loss_idx = loss_c.sort(1, descending=True)
         _, idx_rank = loss_idx.sort(1)
         num_pos = positive.long().sum(1, keepdim=True)
