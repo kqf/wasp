@@ -156,7 +156,7 @@ class FaceDetectionDataset(data.Dataset):
 
         return {
             "image": to_tensor(image),
-            "annotation": annotations.astype(np.float32),
+            "annotation": to_dicts(annotations.astype(np.float32)),
             "file_name": sample.file_name,
         }
 
