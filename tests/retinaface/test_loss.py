@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from wasp.retinaface.data import to_dicts
 from wasp.retinaface.loss import LossWeights, MultiBoxLoss
 from wasp.retinaface.priors import priorbox
 
@@ -52,7 +53,7 @@ def targets():
     x = torch.zeros((1, 15))
     x[0, :4] = torch.Tensor([0.0020, 0.6445, 0.1230, 0.9980])
     x[0, -2] = 1.0
-    return [x]
+    return [to_dicts(x)]
 
 
 def test_loss(loss, predictions, targets):
