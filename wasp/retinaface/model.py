@@ -88,6 +88,17 @@ def _make_landmarks(
     return landmarkhead
 
 
+def _make_depths(
+    fpn_num: int = 3,
+    in_channels: int = 64,
+    anchor_num: int = 2,
+) -> nn.ModuleList:
+    landmarkhead = nn.ModuleList()
+    for _ in range(fpn_num):
+        landmarkhead.append(LandmarkHead(in_channels, anchor_num))
+    return landmarkhead
+
+
 class RetinaFace(nn.Module):
     def __init__(
         self,
@@ -131,6 +142,7 @@ class RetinaFace(nn.Module):
         self.classes = _make_classes(fpn_num=3, in_channels=out_channels)
         self.boxes = _make_bboxes(fpn_num=3, in_channels=out_channels)
         self.keypoints = _make_landmarks(fpn_num=3, in_channels=out_channels)
+        self.keypoints = _make_depths(fpn_num=3, in_channels=out_channels)
 
     def forward(
         self, inputs: torch.Tensor
