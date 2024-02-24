@@ -75,7 +75,6 @@ class DepthsHead(nn.Module):
         out = out.permute(0, 2, 3, 1).contiguous()
         return out.view(out.shape[0], -1, 1)
 
-
 def _make_classes(
     fpn_num: int = 3, in_channels: int = 64, anchor_num: int = 2
 ) -> nn.ModuleList:
