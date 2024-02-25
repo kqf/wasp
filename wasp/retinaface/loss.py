@@ -137,7 +137,7 @@ class MultiBoxLoss(nn.Module):
         batch_conf = confidence_data.view(-1, self.num_classes)
         loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
             1, label_t.view(-1, 1)
-        )
+        )  # noqa
 
         # Hard Negative Mining
         loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
@@ -147,7 +147,7 @@ class MultiBoxLoss(nn.Module):
         num_pos = positive.long().sum(1, keepdim=True)
         num_neg = torch.clamp(
             self.negpos_ratio * num_pos, max=positive.shape[1] - 1
-        )
+        )  # noqa
         neg = idx_rank < num_neg.expand_as(idx_rank)
 
         # Confidence Loss Including Positive and Negative Examples
@@ -155,7 +155,7 @@ class MultiBoxLoss(nn.Module):
         neg_idx = neg.unsqueeze(2).expand_as(confidence_data)
         conf_p = confidence_data[(pos_idx + neg_idx).gt(0)].view(
             -1, self.num_classes
-        )
+        )  # noqa
         targets_weighted = label_t[(positive + neg).gt(0)]
         loss_c = F.cross_entropy(conf_p, targets_weighted, reduction="sum")
 
