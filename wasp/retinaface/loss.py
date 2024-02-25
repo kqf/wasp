@@ -71,15 +71,15 @@ class MultiBoxLoss(nn.Module):
 
         priors = self.priors.to(device)
 
-        num_pred_boxes = locations_data.shape[0]
+        n_predictions = locations_data.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
-        label_t = torch.zeros(num_pred_boxes, num_priors).to(device)
-        boxes_t = torch.zeros(num_pred_boxes, num_priors, 4).to(device)
-        kypts_t = torch.zeros(num_pred_boxes, num_priors, 10).to(device)
+        label_t = torch.zeros(n_predictions, num_priors).to(device)
+        boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
+        kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
 
-        for i in range(num_pred_boxes):
+        for i in range(n_predictions):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
             labels_gt = targets[i]["labels"].reshape(-1).data
@@ -141,7 +141,7 @@ class MultiBoxLoss(nn.Module):
 
         # Hard Negative Mining
         loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
-        loss_c = loss_c.view(num_pred_boxes, -1)
+        loss_c = loss_c.view(n_predictions, -1)
         _, loss_idx = loss_c.sort(1, descending=True)
         _, idx_rank = loss_idx.sort(1)
         num_pos = positive.long().sum(1, keepdim=True)
