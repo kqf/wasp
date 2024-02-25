@@ -12,7 +12,7 @@ from torchvision.ops import nms
 
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
-from wasp.retinaface.matching import decode
+from wasp.retinaface.encode import decode
 from wasp.retinaface.preprocess import compose, normalize
 
 
