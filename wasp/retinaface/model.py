@@ -64,7 +64,7 @@ class DepthsHead(nn.Module):
         super().__init__()
         self.conv1x1 = nn.Conv2d(
             in_channels,
-            num_anchors * 10,
+            num_anchors * 1,
             kernel_size=(1, 1),
             stride=1,
             padding=0,
@@ -73,7 +73,7 @@ class DepthsHead(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.conv1x1(x)
         out = out.permute(0, 2, 3, 1).contiguous()
-        return out.view(out.shape[0], -1, 10)
+        return out.view(out.shape[0], -1, 1)
 
 
 def _make_classes(
@@ -159,7 +159,7 @@ class RetinaFace(nn.Module):
         self.classes = _make_classes(fpn_num=3, in_channels=out_channels)
         self.boxes = _make_bboxes(fpn_num=3, in_channels=out_channels)
         self.keypoints = _make_landmarks(fpn_num=3, in_channels=out_channels)
-        self.keypoints = _make_depths(fpn_num=3, in_channels=out_channels)
+        self.depths = _make_depths(fpn_num=3, in_channels=out_channels)
 
     def forward(
         self, inputs: torch.Tensor
