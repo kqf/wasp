@@ -5,6 +5,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from wasp.retinaface.encode import encode
+from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import match
 
 
@@ -68,58 +70,51 @@ class MultiBoxLoss(nn.Module):
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
-        defaults = priors.data
 
         num_pred_boxes = locations_data.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
-        boxes_t = torch.zeros(
-            num_pred_boxes,
-            num_priors,
-            4,
-        ).to(device)
-        landmarks_t = torch.zeros(num_pred_boxes, num_priors, 10).to(device)
-        conf_t = (
-            torch.zeros(
-                num_pred_boxes,
-                num_priors,
-            )
-            .to(device)
-            .long()
-        )
+        label_t = torch.zeros(num_pred_boxes, num_priors).to(device)
+        boxes_t = torch.zeros(num_pred_boxes, num_priors, 4).to(device)
+        kypts_t = torch.zeros(num_pred_boxes, num_priors, 10).to(device)
 
-        for box_index in range(num_pred_boxes):
-            box_gt = targets[box_index]["boxes"].data
-            landmarks_gt = targets[box_index]["keypoints"].data
-            labels_gt = targets[box_index]["labels"].reshape(-1).data
+        for i in range(num_pred_boxes):
+            box_gt = targets[i]["boxes"].data
+            landmarks_gt = targets[i]["keypoints"].data
+            labels_gt = targets[i]["labels"].reshape(-1).data
 
-            match(
-                self.threshold,
-                box_gt,
-                defaults,
-                self.variance,
+            # matched gt index
+            matched, labels = match(
                 labels_gt,
-                landmarks_gt,
-                boxes_t,
-                conf_t,
-                landmarks_t,
-                box_index,
+                box_gt,
+                priors.data,
+                self.threshold,
             )
+
+            if matched is None:
+                label_t[i] = 0
+                boxes_t[i] = 0
+                kypts_t[i] = 0
+                continue
+
+            label_t[i] = labels  # [num_priors] top class label prior
+            boxes_t[i] = encode(box_gt[matched], priors, self.variance)
+            kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
 
         # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
-        positive_1 = conf_t > torch.zeros_like(conf_t)
+        positive_1 = label_t > torch.zeros_like(label_t)
         num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
         n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
         pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
             landmark_data,
         )
         landmarks_p = landmark_data[pos_idx1].view(-1, 10)
-        landmarks_t = landmarks_t[pos_idx1].view(-1, 10)
+        kypts_t = kypts_t[pos_idx1].view(-1, 10)
 
-        mask = ~torch.isnan(landmarks_t)
+        mask = ~torch.isnan(kypts_t)
         landmarks_p_masked = landmarks_p[mask]
-        landmarks_t_masked = landmarks_t[mask]
+        landmarks_t_masked = kypts_t[mask]
 
         loss_landm = F.smooth_l1_loss(
             landmarks_p_masked,
@@ -129,8 +124,8 @@ class MultiBoxLoss(nn.Module):
         if landmarks_t_masked.numel() == 0:
             loss_landm = torch.nan_to_num(loss_landm, 0)
 
-        positive = conf_t != torch.zeros_like(conf_t)
-        conf_t[positive] = 1
+        positive = label_t != torch.zeros_like(label_t)
+        label_t[positive] = 1
 
         # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
         pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
@@ -141,7 +136,7 @@ class MultiBoxLoss(nn.Module):
         # Compute max conf across batch for hard negative mining
         batch_conf = confidence_data.view(-1, self.num_classes)
         loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
-            1, conf_t.view(-1, 1)
+            1, label_t.view(-1, 1)
         )
 
         # Hard Negative Mining
@@ -161,7 +156,7 @@ class MultiBoxLoss(nn.Module):
         conf_p = confidence_data[(pos_idx + neg_idx).gt(0)].view(
             -1, self.num_classes
         )
-        targets_weighted = conf_t[(positive + neg).gt(0)]
+        targets_weighted = label_t[(positive + neg).gt(0)]
         loss_c = F.cross_entropy(conf_p, targets_weighted, reduction="sum")
 
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
