@@ -75,7 +75,7 @@ class MultiBoxLoss(nn.Module):
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
-        label_t = torch.zeros(n_predictions, num_priors).to(device)
+        label_t = torch.zeros(n_predictions, num_priors).to(device).long()
         boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
         kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
 

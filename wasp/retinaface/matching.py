@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import torch
 
 from wasp.retinaface.encode import point_form
@@ -64,7 +62,7 @@ def match(
     boxes: torch.Tensor,
     priors: torch.Tensor,
     threshold: float,
-) -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
+) -> tuple[torch.Tensor, torch.Tensor] | tuple[None, None]:
     # Compute iou between gt and priors
     overlaps = iou(boxes, point_form(priors))
     # (Bipartite Matching)
