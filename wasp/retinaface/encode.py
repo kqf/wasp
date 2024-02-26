@@ -111,3 +111,39 @@ def encode_landm(
     g_cxcy /= variances[0] * priors[:, :, 2:]
     # return target for smooth_l1_loss
     return g_cxcy.reshape(g_cxcy.shape[0], -1)
+
+
+def decode_landm(
+    loc_landm: torch.Tensor,
+    priors: torch.Tensor,
+    variances: Union[List[float], Tuple[float, float]],
+) -> torch.Tensor:
+    """Decodes landmark locations from predictions using priors to decode
+    Args:
+        loc_landm: Landmark location predictions for landmark layers,
+            Shape: [num_priors, 10]
+        priors: Prior boxes in center-offset form.
+            Shape: [num_priors, 4].
+        variances: Variances of priorboxes
+    Return:
+        decoded landmark predictions
+    """
+    # Reshape loc_landm to [num_priors, 5, 2]
+    loc_landm = loc_landm.reshape(loc_landm.shape[0], 5, 2)
+
+    # Compute priors centers and sizes
+    priors_cx = priors[:, 0].unsqueeze(1).expand_as(loc_landm[:, :, 0])
+    priors_cy = priors[:, 1].unsqueeze(1).expand_as(loc_landm[:, :, 1])
+    priors_w = priors[:, 2].unsqueeze(1).expand_as(loc_landm[:, :, 0])
+    priors_h = priors[:, 3].unsqueeze(1).expand_as(loc_landm[:, :, 1])
+
+    priors_centers = torch.stack([priors_cx, priors_cy], dim=2)
+    priors_sizes = torch.stack([priors_w, priors_h], dim=2)
+
+    # Decode landmark locations
+    decoded_landm = loc_landm * variances[0] * priors_sizes + priors_centers
+
+    # Reshape to [num_priors, 10]
+    decoded_landm = decoded_landm.view(decoded_landm.size(0), -1)
+
+    return decoded_landm
