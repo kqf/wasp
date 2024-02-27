@@ -123,6 +123,7 @@ class MultiBoxLoss(nn.Module):
         )
         if landmarks_t_masked.numel() == 0:
             loss_landm = torch.nan_to_num(loss_landm, 0)
+        n1 = max(landmarks_p_masked.shape[0], 1)
 
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
