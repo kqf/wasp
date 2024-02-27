@@ -23,17 +23,23 @@ def variances():
 
 
 @pytest.fixture
-def encoded(matched, priors, variances):
+def encoded(encode, matched, priors, variances):
     # Call the encode function
     return encode(matched, priors, variances)
 
 
 @pytest.fixture
-def decoded(encoded, priors, variances):
+def decoded(decode, encoded, priors, variances):
     # Call the decode function
     return decode(encoded, priors, variances)
 
 
+@pytest.mark.parametrize(
+    "encode, decode",
+    [
+        (encode, decode),
+    ],
+)
 def test_encodes_decodes(decoded, matched):
     # Assert the decoded matches the original matched data
     assert torch.allclose(decoded, matched, atol=1e-4)
