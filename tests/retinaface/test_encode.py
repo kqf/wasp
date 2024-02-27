@@ -1,19 +1,23 @@
 import pytest
 import torch
 
-from wasp.retinaface.encode import decode, encode
+from wasp.retinaface.encode import decode, decode_landm, encode, encode_landm
 
 
 @pytest.fixture
-def matched():
+def matched(encode):
+    if encode == encode_landm:
+        return 0
     # Define matched data
-    return torch.tensor([[1, 1, 3, 3], [2, 2, 4, 4]], dtype=torch.float32)
+    return torch.tensor([[1, 1, 3, 3], [2, 2, 4, 4.0]])
 
 
 @pytest.fixture
-def priors():
+def priors(encode):
+    if encode == encode_landm:
+        return 0
     # Define priors data
-    return torch.tensor([[0, 0, 2, 2], [1, 1, 3, 3]], dtype=torch.float32)
+    return torch.tensor([[0, 0, 2, 2], [1, 1, 3, 3.0]])
 
 
 @pytest.fixture
@@ -38,6 +42,7 @@ def decoded(decode, encoded, priors, variances):
     "encode, decode",
     [
         (encode, decode),
+        # (encode_landm, decode_landm),
     ],
 )
 def test_encodes_decodes(decoded, matched):
