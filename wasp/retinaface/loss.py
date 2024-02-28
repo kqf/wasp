@@ -130,13 +130,11 @@ class MultiBoxLoss(nn.Module):
         pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
             landmark_data,
         )
-        landmarks_p = landmark_data[pos_idx1].view(-1, 10)
-        kypts_t = kypts_t[pos_idx1].view(-1, 10)
 
         loss_landm, n1 = masked_loss(
             partial(F.smooth_l1_loss, reduction="sum"),
-            data=kypts_t,
-            pred=landmarks_p,
+            data=kypts_t[pos_idx1].view(-1, 10),
+            pred=landmark_data[pos_idx1].view(-1, 10),
         )
 
         positive = label_t != torch.zeros_like(label_t)
