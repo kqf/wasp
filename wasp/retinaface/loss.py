@@ -22,6 +22,26 @@ class LossWeights:
     landmarks: float
 
 
+def masked_loss(
+    loss_function,
+    data: torch.Tensor,
+    pred: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    mask = ~torch.isnan(data)
+
+    data_masked = data[mask]
+    pred_masked = pred[mask]
+
+    loss = loss_function(
+        data_masked,
+        pred_masked,
+    )
+    if data_masked.numel() == 0:
+        loss = torch.nan_to_num(loss, 0)
+
+    return loss, max(data_masked.shape[0], 1)
+
+
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
