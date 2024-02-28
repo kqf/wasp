@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import partial
 from typing import Tuple
 
 import torch
@@ -129,21 +130,12 @@ class MultiBoxLoss(nn.Module):
         pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
             landmark_data,
         )
-        landmarks_p = landmark_data[pos_idx1].view(-1, 10)
-        kypts_t = kypts_t[pos_idx1].view(-1, 10)
 
-        mask = ~torch.isnan(kypts_t)
-        landmarks_p_masked = landmarks_p[mask]
-        landmarks_t_masked = kypts_t[mask]
-
-        loss_landm = F.smooth_l1_loss(
-            landmarks_p_masked,
-            landmarks_t_masked,
-            reduction="sum",
+        loss_landm, n1 = masked_loss(
+            partial(F.smooth_l1_loss, reduction="sum"),
+            data=kypts_t[pos_idx1].view(-1, 10),
+            pred=landmark_data[pos_idx1].view(-1, 10),
         )
-        if landmarks_t_masked.numel() == 0:
-            loss_landm = torch.nan_to_num(loss_landm, 0)
-        n1 = max(landmarks_p_masked.shape[0], 1)
 
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
