@@ -84,7 +84,7 @@ def trimm_boxes(
 
 
 def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
-    num_annotations = 4 + 10 + 1
+    num_annotations = 4 + 10 + 1 + 2
     annotations = np.zeros((0, num_annotations))
 
     for label in sample.annotations:
@@ -105,6 +105,7 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 
         annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
         annotations = np.append(annotations, annotation, axis=0)
+        annotations[0, 14:16] = np.nan
 
     return annotations
 
