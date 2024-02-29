@@ -105,7 +105,7 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 
         annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
         annotations = np.append(annotations, annotation, axis=0)
-        annotations[0, 14:16] = np.nan
+        annotations[0, 15:] = np.nan
 
     return annotations
 
@@ -115,6 +115,7 @@ def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
         "labels": annotations[:, [14]],
+        "depths": annotations[:, 15:],
     }
 
 
