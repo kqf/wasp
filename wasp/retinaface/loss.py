@@ -104,6 +104,8 @@ class MultiBoxLoss(nn.Module):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
             labels_gt = targets[i]["labels"].reshape(-1).data
+            depths = targets[i]["depths"].data
+            print(depths.shape)
 
             # matched gt index
             matched, labels = match(
