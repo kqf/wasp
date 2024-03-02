@@ -84,7 +84,7 @@ def trimm_boxes(
 
 
 def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
-    num_annotations = 4 + 10 + 1
+    num_annotations = 4 + 10 + 1 + 2
     annotations = np.zeros((0, num_annotations))
 
     for label in sample.annotations:
@@ -100,9 +100,12 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
             landmarks = np.array(label.landmarks)
             # landmarks
             annotation[0, 4:14] = landmarks.reshape(-1, 10)
+        else:
+            annotation[0, 4:14] = np.nan
 
         annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
         annotations = np.append(annotations, annotation, axis=0)
+        annotations[0, 15:] = np.nan
 
     return annotations
 
@@ -112,6 +115,7 @@ def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
         "labels": annotations[:, [14]],
+        "depths": annotations[:, 15:],
     }
 
 
@@ -141,6 +145,7 @@ class FaceDetectionDataset(data.Dataset):
         image_height, image_width = image.shape[:2]
         annotations = to_annotations(sample, image_width, image_height)
 
+        print(">>>> before", annotations)
         if self.rotate90:
             image, annotations = random_rotate_90(
                 image,
@@ -148,6 +153,7 @@ class FaceDetectionDataset(data.Dataset):
             )
 
         image, annotations = self.preproc(image, annotations)
+        print(">>>> after", annotations)
 
         image = self.transform(
             image=image,
@@ -231,6 +237,8 @@ def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
                 sample["annotation"]["keypoints"]
             ).float(),  # noqa
             "labels": torch.from_numpy(sample["annotation"]["labels"]).float(),
+            "depths": torch.from_numpy(sample["annotation"]["depths"]).float(),
+
         }
 
         annotation.append(annotations)
