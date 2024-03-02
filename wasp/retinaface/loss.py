@@ -98,7 +98,6 @@ class MultiBoxLoss(nn.Module):
         label_t = torch.zeros(n_predictions, num_priors).to(device).long()
         boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
         kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
-
         for i in range(n_predictions):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
@@ -113,6 +112,16 @@ class MultiBoxLoss(nn.Module):
                 priors.data,
                 self.threshold,
             )
+
+            if matched is None:
+                label_t[i] = 0
+                boxes_t[i] = 0
+                kypts_t[i] = 0
+                continue
+
+            label_t[i] = labels  # [num_priors] top class label prior
+            boxes_t[i] = encode(box_gt[matched], priors, self.variance)
+            kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
 
             if matched is None:
                 label_t[i] = 0
