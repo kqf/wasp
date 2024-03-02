@@ -91,7 +91,6 @@ class MultiBoxLoss(nn.Module):
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
-
         n_predictions = locations_data.shape[0]
         num_priors = priors.shape[0]
 
