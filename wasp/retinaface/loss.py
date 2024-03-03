@@ -49,7 +49,6 @@ class MultiBoxLoss(nn.Module):
         num_classes: int,
         overlap_thresh: float,
         prior_for_matching: bool,
-        bkg_label: int,
         neg_mining: bool,
         neg_pos: int,
         neg_overlap: float,
@@ -60,7 +59,6 @@ class MultiBoxLoss(nn.Module):
         super().__init__()
         self.num_classes = num_classes
         self.threshold = overlap_thresh
-        self.background_label = bkg_label
         self.encode_target = encode_target
         self.use_prior_for_matching = prior_for_matching
         self.do_neg_mining = neg_mining
