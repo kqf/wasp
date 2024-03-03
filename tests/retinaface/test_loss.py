@@ -22,7 +22,6 @@ def loss(anchors):
         num_classes=2,
         overlap_thresh=0.35,
         prior_for_matching=True,
-        bkg_label=0,
         neg_mining=True,
         neg_pos=7,
         neg_overlap=0.35,
