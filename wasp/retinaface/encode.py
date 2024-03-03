@@ -112,6 +112,7 @@ def encode_landm(
     # return target for smooth_l1_loss
     return g_cxcy.reshape(g_cxcy.shape[0], -1)
 
+
 def decode_landm(
     loc_landm: torch.Tensor,
     priors: torch.Tensor,
