@@ -238,7 +238,6 @@ def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
             ).float(),  # noqa
             "labels": torch.from_numpy(sample["annotation"]["labels"]).float(),
             "depths": torch.from_numpy(sample["annotation"]["depths"]).float(),
-
         }
 
         annotation.append(annotations)
