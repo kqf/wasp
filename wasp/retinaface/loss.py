@@ -96,12 +96,13 @@ class MultiBoxLoss(nn.Module):
         label_t = torch.zeros(n_predictions, num_priors).to(device).long()
         boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
         kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
+        dpths_t = torch.zeros(n_predictions, num_priors, 2).to(device)
+
         for i in range(n_predictions):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
             labels_gt = targets[i]["labels"].reshape(-1).data
-            depths = targets[i]["depths"].data
-            print(depths.shape)
+            depths_gt = targets[i]["depths"].data
 
             # matched gt index
             matched, labels = match(
@@ -125,11 +126,13 @@ class MultiBoxLoss(nn.Module):
                 label_t[i] = 0
                 boxes_t[i] = 0
                 kypts_t[i] = 0
+                dpths_t[i] = 0
                 continue
 
             label_t[i] = labels  # [num_priors] top class label prior
             boxes_t[i] = encode(box_gt[matched], priors, self.variance)
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
+            dpths_t[i] = depths_gt[matched]
 
         # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
         positive_1 = label_t > torch.zeros_like(label_t)
