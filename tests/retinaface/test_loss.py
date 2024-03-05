@@ -49,7 +49,7 @@ def predictions():
 
 @pytest.fixture
 def targets():
-    x = torch.zeros((1, 15))
+    x = torch.zeros((1, 17))
     x[0, :4] = torch.Tensor([0.0020, 0.6445, 0.1230, 0.9980])
     x[0, -2] = 1.0
     return [to_dicts(x)]
