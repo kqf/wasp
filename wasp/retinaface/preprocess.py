@@ -150,7 +150,7 @@ def preprocess(
 
     boxes = targets[:, :4].copy()
     landmarks = targets[:, 4:14].copy()
-    labels = targets[:, -1:].copy()
+    labels = targets[:, 14:].copy()
 
     image_t, boxes_t, labels_t, landmarks_t, pad_image_flag = random_crop(
         image, boxes, labels, landmarks, img_dim
@@ -174,7 +174,7 @@ def normalize(
 
     boxes = targets[:, :4].copy()
     landmarks = targets[:, 4:14].copy()
-    labels = targets[:, -1:].copy()
+    labels = targets[:, 14:].copy()
 
     height, width = image.shape[:2]
 
