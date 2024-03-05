@@ -111,7 +111,6 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 
 
 def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
-    print(annotations.shape)
     return {
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
@@ -146,7 +145,6 @@ class FaceDetectionDataset(data.Dataset):
         image_height, image_width = image.shape[:2]
         annotations = to_annotations(sample, image_width, image_height)
 
-        print(">>>> before", annotations, annotations.shape)
         if self.rotate90:
             image, annotations = random_rotate_90(
                 image,
@@ -154,7 +152,6 @@ class FaceDetectionDataset(data.Dataset):
             )
 
         image, annotations = self.preproc(image, annotations)
-        print(">>>> after", annotations, annotations.shape)
 
         image = self.transform(
             image=image,
