@@ -85,7 +85,7 @@ class MultiBoxLoss(nn.Module):
             targets: Ground truth boxes and labels_gt for a batch,
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
-        locations_data, confidence_data, landmark_data = predictions
+        locations_data, confidence_data, landmark_data, dpt_data = predictions
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
@@ -126,8 +126,6 @@ class MultiBoxLoss(nn.Module):
 
         # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
         positive_1 = label_t > torch.zeros_like(label_t)
-        num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
-        n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
         pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
             landmark_data,
         )
@@ -136,6 +134,17 @@ class MultiBoxLoss(nn.Module):
             partial(F.smooth_l1_loss, reduction="sum"),
             data=kypts_t[pos_idx1].view(-1, 10),
             pred=landmark_data[pos_idx1].view(-1, 10),
+        )
+
+        positive_depth = label_t > torch.zeros_like(label_t)
+        pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
+            dpt_data,
+        )
+
+        loss_dpth, ndpth = masked_loss(
+            partial(F.smooth_l1_loss, reduction="sum"),
+            data=dpths_t[pos_depth].view(-1, 2),
+            pred=dpt_data[pos_depth].view(-1, 2),
         )
 
         positive = label_t != torch.zeros_like(label_t)
@@ -176,7 +185,7 @@ class MultiBoxLoss(nn.Module):
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
         n = max(num_pos.data.sum().float(), 1)  # type: ignore
 
-        return loss_l / n, loss_c / n, loss_landm / n1
+        return loss_l / n, loss_c / n, loss_landm / n1, loss_dpth / ndpth
 
     def full_forward(
         self,
