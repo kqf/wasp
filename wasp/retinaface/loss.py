@@ -70,9 +70,14 @@ class MultiBoxLoss(nn.Module):
 
     def forward(
         self,
-        predictions: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        predictions: Tuple[
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+        ],
         targets: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Multibox Loss.
 
         Args:
