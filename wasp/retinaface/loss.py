@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from functools import partial
-from typing import Tuple
 
 import torch
 import torch.nn.functional as F
@@ -9,6 +8,8 @@ from torch import nn
 from wasp.retinaface.encode import encode
 from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import match
+
+T4 = tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
 
 def log_sum_exp(x):
@@ -68,16 +69,7 @@ class MultiBoxLoss(nn.Module):
         self.priors = priors
         self.weights = weights
 
-    def forward(
-        self,
-        predictions: Tuple[
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-        ],
-        targets: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, predictions: T4, targets: torch.Tensor) -> T4:
         """Multibox Loss.
 
         Args:
@@ -194,10 +186,16 @@ class MultiBoxLoss(nn.Module):
 
     def full_forward(
         self,
-        predictions: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        predictions: T4,
         targets: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        localization, classification, landmarks = self(
+    ) -> tuple[
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+    ]:
+        localization, classification, landmarks, depths = self(
             predictions,
             targets,
         )
@@ -208,4 +206,4 @@ class MultiBoxLoss(nn.Module):
             + self.weights.landmarks * landmarks
         )
 
-        return total, localization, classification, landmarks
+        return total, localization, classification, landmarks, depths
