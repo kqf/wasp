@@ -111,6 +111,7 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 
 
 def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
+    print(annotations.shape)
     return {
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
