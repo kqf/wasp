@@ -41,6 +41,7 @@ def predictions():
         torch.zeros([1, 2688, 4]),
         torch.zeros([1, 2688, 2]),
         torch.zeros([1, 2688, 10]),
+        torch.zeros([1, 2688, 2]),
     ]
     x[0][0, 0] = 1.0
     x[1][0, 0, 0] = 1.0
@@ -56,7 +57,10 @@ def targets():
 
 
 def test_loss(loss, predictions, targets):
-    total, boxes, classes, landmarks = loss.full_forward(predictions, targets)
+    total, boxes, classes, landmarks, depths = loss.full_forward(
+        predictions,
+        targets,
+    )
     assert total == 0
     assert boxes == 0
     assert classes == 0
