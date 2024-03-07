@@ -46,10 +46,11 @@ def test_retinaface(inputs, anchors, name, return_layers, in_channels):
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name {name}, size: {total:_}")
 
-    bboxes, classes, landmarks = model(inputs)
+    bboxes, classes, landmarks, depths = model(inputs)
     assert bboxes.shape == (inputs.shape[0], anchors, 4)
     assert classes.shape == (inputs.shape[0], anchors, 2)
     assert landmarks.shape == (inputs.shape[0], anchors, 10)
+    assert depths.shape == (inputs.shape[0], anchors, 1)
 
 
 @pytest.mark.parametrize(
