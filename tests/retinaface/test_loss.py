@@ -22,7 +22,6 @@ def loss(anchors):
         num_classes=2,
         overlap_thresh=0.35,
         prior_for_matching=True,
-        bkg_label=0,
         neg_mining=True,
         neg_pos=7,
         neg_overlap=0.35,
@@ -42,6 +41,7 @@ def predictions():
         torch.zeros([1, 2688, 4]),
         torch.zeros([1, 2688, 2]),
         torch.zeros([1, 2688, 10]),
+        torch.zeros([1, 2688, 2]),
     ]
     x[0][0, 0] = 1.0
     x[1][0, 0, 0] = 1.0
@@ -50,14 +50,17 @@ def predictions():
 
 @pytest.fixture
 def targets():
-    x = torch.zeros((1, 15))
+    x = torch.zeros((1, 17))
     x[0, :4] = torch.Tensor([0.0020, 0.6445, 0.1230, 0.9980])
     x[0, -2] = 1.0
     return [to_dicts(x)]
 
 
 def test_loss(loss, predictions, targets):
-    total, boxes, classes, landmarks = loss.full_forward(predictions, targets)
+    total, boxes, classes, landmarks, depths = loss.full_forward(
+        predictions,
+        targets,
+    )
     assert total == 0
     assert boxes == 0
     assert classes == 0

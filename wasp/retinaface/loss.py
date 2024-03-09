@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple
+from functools import partial
 
 import torch
 import torch.nn.functional as F
@@ -8,6 +8,8 @@ from torch import nn
 from wasp.retinaface.encode import encode
 from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import match
+
+T4 = tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
 
 def log_sum_exp(x):
@@ -22,13 +24,32 @@ class LossWeights:
     landmarks: float
 
 
+def masked_loss(
+    loss_function,
+    data: torch.Tensor,
+    pred: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    mask = ~torch.isnan(data)
+
+    data_masked = data[mask]
+    pred_masked = pred[mask]
+
+    loss = loss_function(
+        data_masked,
+        pred_masked,
+    )
+    if data_masked.numel() == 0:
+        loss = torch.nan_to_num(loss, 0)
+
+    return loss, max(data_masked.shape[0], 1)
+
+
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
         num_classes: int,
         overlap_thresh: float,
         prior_for_matching: bool,
-        bkg_label: int,
         neg_mining: bool,
         neg_pos: int,
         neg_overlap: float,
@@ -39,7 +60,6 @@ class MultiBoxLoss(nn.Module):
         super().__init__()
         self.num_classes = num_classes
         self.threshold = overlap_thresh
-        self.background_label = bkg_label
         self.encode_target = encode_target
         self.use_prior_for_matching = prior_for_matching
         self.do_neg_mining = neg_mining
@@ -49,11 +69,7 @@ class MultiBoxLoss(nn.Module):
         self.priors = priors
         self.weights = weights
 
-    def forward(
-        self,
-        predictions: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
-        targets: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, predictions: T4, targets: torch.Tensor) -> T4:
         """Multibox Loss.
 
         Args:
@@ -66,11 +82,10 @@ class MultiBoxLoss(nn.Module):
             targets: Ground truth boxes and labels_gt for a batch,
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
-        locations_data, confidence_data, landmark_data = predictions
+        locations_data, confidence_data, landmark_data, dpt_data = predictions
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
-
         n_predictions = locations_data.shape[0]
         num_priors = priors.shape[0]
 
@@ -78,11 +93,13 @@ class MultiBoxLoss(nn.Module):
         label_t = torch.zeros(n_predictions, num_priors).to(device).long()
         boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
         kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
+        dpths_t = torch.zeros(n_predictions, num_priors, 2).to(device)
 
         for i in range(n_predictions):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
             labels_gt = targets[i]["labels"].reshape(-1).data
+            depths_gt = targets[i]["depths"].data
 
             # matched gt index
             matched, labels = match(
@@ -96,34 +113,36 @@ class MultiBoxLoss(nn.Module):
                 label_t[i] = 0
                 boxes_t[i] = 0
                 kypts_t[i] = 0
+                dpths_t[i] = 0
                 continue
 
             label_t[i] = labels  # [num_priors] top class label prior
             boxes_t[i] = encode(box_gt[matched], priors, self.variance)
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
+            dpths_t[i] = depths_gt[matched]
 
         # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
         positive_1 = label_t > torch.zeros_like(label_t)
-        num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
-        n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
         pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
             landmark_data,
         )
-        landmarks_p = landmark_data[pos_idx1].view(-1, 10)
-        kypts_t = kypts_t[pos_idx1].view(-1, 10)
 
-        mask = ~torch.isnan(kypts_t)
-        landmarks_p_masked = landmarks_p[mask]
-        landmarks_t_masked = kypts_t[mask]
-
-        loss_landm = F.smooth_l1_loss(
-            landmarks_p_masked,
-            landmarks_t_masked,
-            reduction="sum",
+        loss_landm, n1 = masked_loss(
+            partial(F.smooth_l1_loss, reduction="sum"),
+            data=kypts_t[pos_idx1].view(-1, 10),
+            pred=landmark_data[pos_idx1].view(-1, 10),
         )
-        if landmarks_t_masked.numel() == 0:
-            loss_landm = torch.nan_to_num(loss_landm, 0)
-        n1 = max(landmarks_p_masked.shape[0], 1)
+
+        positive_depth = label_t > torch.zeros_like(label_t)
+        pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
+            dpt_data,
+        )
+
+        loss_dpth, ndpth = masked_loss(
+            partial(F.smooth_l1_loss, reduction="sum"),
+            data=dpths_t[pos_depth].view(-1, 2),
+            pred=dpt_data[pos_depth].view(-1, 2),
+        )
 
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
@@ -163,14 +182,20 @@ class MultiBoxLoss(nn.Module):
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
         n = max(num_pos.data.sum().float(), 1)  # type: ignore
 
-        return loss_l / n, loss_c / n, loss_landm / n1
+        return loss_l / n, loss_c / n, loss_landm / n1, loss_dpth / ndpth
 
     def full_forward(
         self,
-        predictions: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        predictions: T4,
         targets: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        localization, classification, landmarks = self(
+    ) -> tuple[
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+    ]:
+        localization, classification, landmarks, depths = self(
             predictions,
             targets,
         )
@@ -181,4 +206,4 @@ class MultiBoxLoss(nn.Module):
             + self.weights.landmarks * landmarks
         )
 
-        return total, localization, classification, landmarks
+        return total, localization, classification, landmarks, depths

@@ -84,7 +84,7 @@ def trimm_boxes(
 
 
 def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
-    num_annotations = 4 + 10 + 1
+    num_annotations = 4 + 10 + 1 + 2
     annotations = np.zeros((0, num_annotations))
 
     for label in sample.annotations:
@@ -105,15 +105,18 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 
         annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
         annotations = np.append(annotations, annotation, axis=0)
+        annotations[0, 15:] = np.nan
 
     return annotations
 
 
 def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
+    print(annotations.shape)
     return {
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
         "labels": annotations[:, [14]],
+        "depths": annotations[:, 15:],
     }
 
 
@@ -233,6 +236,7 @@ def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
                 sample["annotation"]["keypoints"]
             ).float(),  # noqa
             "labels": torch.from_numpy(sample["annotation"]["labels"]).float(),
+            "depths": torch.from_numpy(sample["annotation"]["depths"]).float(),
         }
 
         annotation.append(annotations)

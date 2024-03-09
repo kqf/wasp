@@ -163,7 +163,13 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         targets = batch["annotation"]
 
         out = self.forward(images)
-        total_loss, loss_loc, loss_clf, loss_lmrks = self.loss.full_forward(
+        (
+            total_loss,
+            loss_loc,
+            loss_clf,
+            loss_lmrks,
+            loss_depths,
+        ) = self.loss.full_forward(
             out,
             targets,
         )
@@ -187,6 +193,14 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.log(
             "train_landmarks",
             loss_lmrks,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+            prog_bar=True,
+        )
+        self.log(
+            "train_depths",
+            loss_depths,
             on_step=True,
             on_epoch=True,
             logger=True,
@@ -221,7 +235,13 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
         out = self.forward(images)
 
-        total_loss, loss_loc, loss_clf, loss_lmrks = self.loss.full_forward(
+        (
+            total_loss,
+            loss_loc,
+            loss_clf,
+            loss_lmrks,
+            loss_depths,
+        ) = self.loss.full_forward(
             out,
             targets,
         )
@@ -243,6 +263,13 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.log(
             "valid_landmarks",
             loss_lmrks,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+        )
+        self.log(
+            "valid_depths",
+            loss_depths,
             on_step=True,
             on_epoch=True,
             logger=True,
