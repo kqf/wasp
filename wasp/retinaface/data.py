@@ -146,7 +146,6 @@ class FaceDetectionDataset(data.Dataset):
         image_height, image_width = image.shape[:2]
         annotations = to_annotations(sample, image_width, image_height)
 
-        print(">>>> before", annotations)
         if self.rotate90:
             image, annotations = random_rotate_90(
                 image,
@@ -154,7 +153,6 @@ class FaceDetectionDataset(data.Dataset):
             )
 
         image, annotations = self.preproc(image, annotations)
-        print(">>>> after", annotations)
 
         image = self.transform(
             image=image,
