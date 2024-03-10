@@ -64,7 +64,7 @@ class DepthsHead(nn.Module):
         super().__init__()
         self.conv1x1 = nn.Conv2d(
             in_channels,
-            num_anchors * 1,
+            num_anchors * 2,
             kernel_size=(1, 1),
             stride=1,
             padding=0,
@@ -73,7 +73,7 @@ class DepthsHead(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.conv1x1(x)
         out = out.permute(0, 2, 3, 1).contiguous()
-        return out.view(out.shape[0], -1, 1)
+        return out.view(out.shape[0], -1, 2)
 
 
 def _make_classes(
