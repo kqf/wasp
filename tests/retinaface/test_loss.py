@@ -25,7 +25,6 @@ def loss(anchors):
         neg_mining=True,
         neg_pos=7,
         neg_overlap=0.35,
-        encode_target=False,
         priors=anchors,
         weights=LossWeights(
             localization=2,

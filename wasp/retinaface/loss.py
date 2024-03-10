@@ -53,14 +53,12 @@ class MultiBoxLoss(nn.Module):
         neg_mining: bool,
         neg_pos: int,
         neg_overlap: float,
-        encode_target: bool,
         priors: torch.Tensor,
         weights: LossWeights,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
         self.threshold = overlap_thresh
-        self.encode_target = encode_target
         self.use_prior_for_matching = prior_for_matching
         self.do_neg_mining = neg_mining
         self.negpos_ratio = neg_pos
@@ -134,7 +132,7 @@ class MultiBoxLoss(nn.Module):
         )
 
         positive_depth = label_t > torch.zeros_like(label_t)
-        pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
+        pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
             dpt_data,
         )
 
