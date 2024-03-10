@@ -134,7 +134,7 @@ class MultiBoxLoss(nn.Module):
         )
 
         positive_depth = label_t > torch.zeros_like(label_t)
-        pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
+        pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
             dpt_data,
         )
 
