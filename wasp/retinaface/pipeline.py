@@ -25,7 +25,7 @@ def prepare_outputs(
     image_height = images.shape[2]
     image_width = images.shape[3]
 
-    location, confidence, _ = out
+    location, confidence, *_ = out
 
     confidence = F.softmax(confidence, dim=-1)
     scale = torch.from_numpy(np.tile([image_width, image_height], 2)).to(
