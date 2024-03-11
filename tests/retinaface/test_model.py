@@ -50,7 +50,7 @@ def test_retinaface(inputs, anchors, name, return_layers, in_channels):
     assert bboxes.shape == (inputs.shape[0], anchors, 4)
     assert classes.shape == (inputs.shape[0], anchors, 2)
     assert landmarks.shape == (inputs.shape[0], anchors, 10)
-    assert depths.shape == (inputs.shape[0], anchors, 1)
+    assert depths.shape == (inputs.shape[0], anchors, 2)
 
 
 @pytest.mark.parametrize(
