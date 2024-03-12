@@ -58,7 +58,6 @@ class MultiBoxLoss(nn.Module):
         super().__init__()
         self.num_classes = num_classes
         self.threshold = overlap_thresh
-        self.do_neg_mining = neg_mining
         self.negpos_ratio = neg_pos
         self.neg_overlap = neg_overlap
         self.variance = [0.1, 0.2]
