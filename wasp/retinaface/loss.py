@@ -49,7 +49,6 @@ class MultiBoxLoss(nn.Module):
         self,
         num_classes: int,
         overlap_thresh: float,
-        neg_mining: bool,
         neg_pos: int,
         neg_overlap: float,
         priors: torch.Tensor,
@@ -58,7 +57,6 @@ class MultiBoxLoss(nn.Module):
         super().__init__()
         self.num_classes = num_classes
         self.threshold = overlap_thresh
-        self.do_neg_mining = neg_mining
         self.negpos_ratio = neg_pos
         self.neg_overlap = neg_overlap
         self.variance = [0.1, 0.2]

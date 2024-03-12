@@ -21,7 +21,6 @@ def loss(anchors):
     return MultiBoxLoss(
         num_classes=2,
         overlap_thresh=0.35,
-        neg_mining=True,
         neg_pos=7,
         neg_overlap=0.35,
         priors=anchors,
