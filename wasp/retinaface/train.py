@@ -61,9 +61,6 @@ def main(
             T_mult=2,
         ),
         loss=MultiBoxLoss(
-            num_classes=2,
-            overlap_thresh=0.35,
-            neg_pos=7,
             priors=priors,
             weights=LossWeights(
                 localization=2,
