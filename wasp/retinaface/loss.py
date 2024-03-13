@@ -50,7 +50,6 @@ class MultiBoxLoss(nn.Module):
         num_classes: int,
         overlap_thresh: float,
         neg_pos: int,
-        neg_overlap: float,
         priors: torch.Tensor,
         weights: LossWeights,
     ) -> None:
@@ -58,7 +57,6 @@ class MultiBoxLoss(nn.Module):
         self.num_classes = num_classes
         self.threshold = overlap_thresh
         self.negpos_ratio = neg_pos
-        self.neg_overlap = neg_overlap
         self.variance = [0.1, 0.2]
         self.priors = priors
         self.weights = weights

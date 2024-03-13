@@ -64,7 +64,6 @@ def main(
             num_classes=2,
             overlap_thresh=0.35,
             neg_pos=7,
-            neg_overlap=0.35,
             priors=priors,
             weights=LossWeights(
                 localization=2,
