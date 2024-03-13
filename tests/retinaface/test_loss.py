@@ -19,9 +19,6 @@ def anchors(resolution=(256, 256)):
 @pytest.fixture
 def loss(anchors):
     return MultiBoxLoss(
-        num_classes=2,
-        overlap_thresh=0.35,
-        neg_pos=7,
         priors=anchors,
         weights=LossWeights(
             localization=2,
