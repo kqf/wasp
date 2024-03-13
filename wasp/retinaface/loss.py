@@ -47,11 +47,11 @@ def masked_loss(
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
-        num_classes: int,
-        overlap_thresh: float,
-        neg_pos: int,
         priors: torch.Tensor,
         weights: LossWeights,
+        num_classes: int = 2,
+        overlap_thresh: float = 0.35,
+        neg_pos: int = 7,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
