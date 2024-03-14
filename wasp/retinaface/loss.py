@@ -44,6 +44,21 @@ def masked_loss(
     return loss, max(data_masked.shape[0], 1)
 
 
+def landmark_loss(label_t, landmark_data, kypts_t):
+    # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
+    positive_1 = label_t > torch.zeros_like(label_t)
+    pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
+        landmark_data,
+    )
+
+    loss_landm, n1 = masked_loss(
+        partial(F.smooth_l1_loss, reduction="sum"),
+        data=kypts_t[pos_idx1].view(-1, 10),
+        pred=landmark_data[pos_idx1].view(-1, 10),
+    )
+    return loss_landm, n1
+
+
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
