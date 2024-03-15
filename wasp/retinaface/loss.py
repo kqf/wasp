@@ -59,6 +59,19 @@ def landmark_loss(label_t, landmark_data, kypts_t):
     return loss_landm, n1
 
 
+def depths_loss(label_t, dpt_data, dpths_t):
+    positive_depth = label_t > torch.zeros_like(label_t)
+    pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
+        dpt_data,
+    )
+
+    return masked_loss(
+        partial(F.smooth_l1_loss, reduction="sum"),
+        data=dpths_t[pos_depth].view(-1, 2),
+        pred=dpt_data[pos_depth].view(-1, 2),
+    )
+
+
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
@@ -129,17 +142,7 @@ class MultiBoxLoss(nn.Module):
             dpths_t[i] = depths_gt[matched]
 
         loss_landm, n1 = landmark_loss(label_t, landmark_data, kypts_t)
-
-        positive_depth = label_t > torch.zeros_like(label_t)
-        pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
-            dpt_data,
-        )
-
-        loss_dpth, ndpth = masked_loss(
-            partial(F.smooth_l1_loss, reduction="sum"),
-            data=dpths_t[pos_depth].view(-1, 2),
-            pred=dpt_data[pos_depth].view(-1, 2),
-        )
+        loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
 
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
