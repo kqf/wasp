@@ -93,8 +93,3 @@ def match(
     # label as background, overlap < 0.35
     labels_matched_[best_truth_overlap < threshold] = 0
     return best_truth_idx, labels_matched_
-
-
-def log_sum_exp(x):
-    x_max = x.data.max()
-    return torch.log(torch.sum(torch.exp(x - x_max), 1, keepdim=True)) + x_max
