@@ -20,6 +20,9 @@ wider
 .env
 lightning_logs
 .fake-mlflow
+*.pth
+*.ckpt
+
 
 # Include
 !requirements.txt
