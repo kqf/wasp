@@ -30,7 +30,7 @@ jobs:
         env:
           LOCAL_STORAGE_LOCATION: ""
           PRIVATE_STORAGE_LOCATION: ""
-          MLFLOW_TRACKING_URI: "123"
+          MLFLOW_TRACKING_URI: ".fake-mlflow"
           MLFLOW_EXPERIMENT_NAME: "test"
           EXPERIMENT_LABEL: "experiment"
           BRANCH: "my-test-branch"

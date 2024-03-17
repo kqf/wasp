@@ -159,11 +159,13 @@ class MultiBoxLoss(nn.Module):
         label_t[positive] = 1
 
         # Compute max conf across batch for hard negative mining
+        # [n_preds, 2] <= [1, n_preds, 2]
         batch_conf = confidence_data.view(-1, self.num_classes)
+
+        # [n_preds, 1] <= [n_preds, 1] - [n_preds, 1]
         loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
             1, label_t.view(-1, 1)
         )  # noqa
-
         # Hard Negative Mining
         loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
         loss_c = loss_c.view(n_predictions, -1)

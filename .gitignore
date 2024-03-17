@@ -19,6 +19,7 @@ wider
 .coverage
 .env
 lightning_logs
+.fake-mlflow
 
 # Include
 !requirements.txt
