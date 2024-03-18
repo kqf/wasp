@@ -211,6 +211,7 @@ class MultiBoxLoss(nn.Module):
             self.weights.localization * localization
             + self.weights.classification * classification
             + self.weights.landmarks * landmarks
+            + depths
         )
 
         return total, localization, classification, landmarks, depths
