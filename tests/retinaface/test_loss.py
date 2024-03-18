@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from wasp.retinaface.data import to_dicts
-from wasp.retinaface.loss import LossWeights, MultiBoxLoss
+from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.priors import priorbox
 
 
@@ -20,11 +20,6 @@ def anchors(resolution=(256, 256)):
 def loss(anchors):
     return MultiBoxLoss(
         priors=anchors,
-        weights=LossWeights(
-            localization=2,
-            classification=1,
-            landmarks=1,
-        ),
     )
 
 
