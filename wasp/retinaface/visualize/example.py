@@ -8,18 +8,6 @@ from wasp.retinaface.visualize.plot import plot
 
 
 def transform_with_keypoints(transform, image, boxes, keypoints):
-    transform = alb.Compose(
-        keypoint_params=alb.KeypointParams(format="xy"),
-        bbox_params=alb.BboxParams(
-            format="pascal_voc",
-            label_fields=["category_ids"],
-        ),
-        p=1,
-        transforms=[
-            alb.Resize(height=1024, width=1024, p=1),
-        ],
-    )
-
     category_ids = list(range(boxes.shape[0]))
     sample = transform(
         image=image,
