@@ -7,6 +7,22 @@ from wasp.retinaface.data import Annotation
 from wasp.retinaface.visualize.plot import plot
 
 
+def transform_with_keypoints(transform, image, boxes, keypoints):
+    category_ids = list(range(boxes.shape[0]))
+    sample = transform(
+        image=image,
+        bboxes=boxes,
+        category_ids=category_ids,
+        keypoints=np.asarray(keypoints).reshape(-1, 2),
+    )
+
+    image = sample["image"]
+    boxes = sample["bboxes"]
+    transofrmed_keypoints = np.asarray(sample["keypoints"])
+    keypoints = transofrmed_keypoints.reshape(-1, 5, 2).tolist()
+    return image, boxes, keypoints
+
+
 def main():
     image = cv2.cvtColor(
         cv2.imread("couple.jpg"),
