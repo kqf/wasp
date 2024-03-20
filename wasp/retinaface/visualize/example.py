@@ -7,12 +7,13 @@ from wasp.retinaface.data import Annotation
 from wasp.retinaface.visualize.plot import plot
 
 
-def transform_with_keypoints(transform, image, boxes, keypoints):
+def transform_with_keypoints(transform, image, boxes, keypoints, depths):
     category_ids = list(range(boxes.shape[0]))
     sample = transform(
         image=image,
         bboxes=boxes,
         category_ids=category_ids,
+        depths=depths,
         keypoints=np.asarray(keypoints).reshape(-1, 2),
     )
 
