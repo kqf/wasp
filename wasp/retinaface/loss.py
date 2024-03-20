@@ -22,6 +22,7 @@ class LossWeights:
     localization: float
     classification: float
     landmarks: float
+    depths: float
 
 
 def masked_loss(
@@ -86,7 +87,12 @@ class MultiBoxLoss(nn.Module):
     def __init__(
         self,
         priors: torch.Tensor,
-        weights: LossWeights,
+        weights: LossWeights = LossWeights(
+            localization=2,
+            classification=1,
+            landmarks=1,
+            depths=1,
+        ),
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
         neg_pos: int = 7,
@@ -211,6 +217,7 @@ class MultiBoxLoss(nn.Module):
             self.weights.localization * localization
             + self.weights.classification * classification
             + self.weights.landmarks * landmarks
+            + self.weights.depths * depths
         )
 
         return total, localization, classification, landmarks, depths
