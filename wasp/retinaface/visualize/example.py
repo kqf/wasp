@@ -34,6 +34,10 @@ def main():
         (332, 128, 542, 424),
         (542, 232, 726, 498),
     )
+    depths = (
+        (123, 123),
+        (123, 123),
+    )
     keypoints = (
         [
             [410.562, 223.625],
@@ -67,6 +71,7 @@ def main():
         image,
         boxes,
         keypoints,
+        depths=depths,
     )
 
     transformed = [Annotation(b, k) for b, k in zip(boxes, keypoints)]
