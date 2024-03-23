@@ -53,7 +53,7 @@ def landmark_loss(label_t, landmark_data, kypts_t):
     )
 
     loss_landm, n1 = masked_loss(
-        partial(F.mse_loss, reduction="sum"),
+        partial(F.smooth_l1_loss, reduction="sum"),
         data=kypts_t[pos_idx1].view(-1, 10),
         pred=landmark_data[pos_idx1].view(-1, 10),
     )
