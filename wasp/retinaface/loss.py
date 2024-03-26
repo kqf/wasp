@@ -182,7 +182,7 @@ class MultiBoxLoss(nn.Module):
             data=dpths_t[pos_depth].view(-1, 2),
             pred=dpt_data[pos_depth].view(-1, 2),
         )
-        # loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
+        loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
 
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
