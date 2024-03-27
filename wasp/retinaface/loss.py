@@ -159,7 +159,7 @@ class MultiBoxLoss(nn.Module):
 
         # loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
         # loss_l, n = localization_loss(label_t, locations_data, boxes_t)
-        loss_landm, n1 = landmark_loss(label_t, landmark_data, kypts_t)
+        # loss_landm, n1 = landmark_loss(label_t, landmark_data, kypts_t)
 
         # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
         positive_1 = label_t > torch.zeros_like(label_t)
