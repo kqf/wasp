@@ -53,7 +53,7 @@ def landmark_loss(label_t, landmark_data, kypts_t):
     )
 
     loss_landm, n1 = masked_loss(
-        partial(F.smooth_l1_loss, reduction="sum"),
+        partial(F.mse_loss, reduction="sum"),
         data=kypts_t[pos_idx1].view(-1, 10),
         pred=landmark_data[pos_idx1].view(-1, 10),
     )
@@ -79,7 +79,7 @@ def localization_loss(label_t, locations_data, boxes_t):
     pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
     loc_p = locations_data[pos_idx].view(-1, 4)
     boxes_t = boxes_t[pos_idx].view(-1, 4)
-    loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
+    loss_l = F.mse_loss(loc_p, boxes_t, reduction="sum")
     return loss_l, None
 
 
@@ -184,6 +184,28 @@ class MultiBoxLoss(nn.Module):
         )
         loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
 
+        # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
+        positive_1 = label_t > torch.zeros_like(label_t)
+        pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
+            landmark_data,
+        )
+
+        loss_landm, n1 = masked_loss(
+            partial(F.smooth_l1_loss, reduction="sum"),
+            data=kypts_t[pos_idx1].view(-1, 10),
+            pred=landmark_data[pos_idx1].view(-1, 10),
+        )
+
+        positive_depth = label_t > torch.zeros_like(label_t)
+        pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
+            dpt_data,
+        )
+        loss_dpth, ndpth = masked_loss(
+            partial(F.smooth_l1_loss, reduction="sum"),
+            data=dpths_t[pos_depth].view(-1, 2),
+            pred=dpt_data[pos_depth].view(-1, 2),
+        )
+        # loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
 
