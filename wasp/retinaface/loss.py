@@ -84,6 +84,7 @@ class MultiBoxLoss(nn.Module):
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
+
         n_predictions = locations_data.shape[0]
         num_priors = priors.shape[0]
 
@@ -121,6 +122,8 @@ class MultiBoxLoss(nn.Module):
 
         # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
         positive_1 = label_t > torch.zeros_like(label_t)
+        num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
+        n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
         pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
             landmark_data,
         )
