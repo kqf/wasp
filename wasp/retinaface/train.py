@@ -72,12 +72,12 @@ def main(
         # gpus=4,
         # amp_level=O1,
         max_epochs=epochs,
-        # distributed_backend=ddp,
+        strategy="ddp",
         num_sanity_val_steps=0,
         # progress_bar_refresh_rate=1,
         benchmark=True,
         precision=16,
-        sync_batchnorm=True,
+        sync_batchnorm=torch.cuda.is_available(),
         logger=build_mlflow(),
         callbacks=[
             BestModelCheckpoint(
