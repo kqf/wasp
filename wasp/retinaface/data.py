@@ -18,7 +18,6 @@ env.read_env()
 
 
 def to_local(filename: Path | str, local: str = "") -> str:
-    print(filename)
     return str(filename).replace(env.str("PRIVATE_STORAGE_LOCATION"), local)
 
 
@@ -111,7 +110,6 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 
 
 def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
-    print(annotations.shape)
     return {
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
