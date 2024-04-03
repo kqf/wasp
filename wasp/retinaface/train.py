@@ -4,7 +4,6 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
-from pytorch_lightning.plugins import DDPPlugin
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 from wasp.retinaface.logger import build_mlflow
@@ -89,7 +88,6 @@ def main(
                 save_weights_only=True,
             )
         ],
-        plugins=DDPPlugin(find_unused_parameters=True),
     )
 
     trainer.fit(pipeline)
