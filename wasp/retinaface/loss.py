@@ -142,7 +142,7 @@ class MultiBoxLoss(nn.Module):
         loss_dpth, ndpth = masked_loss(
             partial(F.smooth_l1_loss, reduction="sum"),
             data=dpths_t[pos_depth].view(-1, 2),
-            pred=dpt_data[pos_depth].view(-1, 2),
+            pred=dpths_t[pos_depth].view(-1, 2),
         )
 
         positive = label_t != torch.zeros_like(label_t)
