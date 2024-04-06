@@ -159,7 +159,7 @@ class RetinaFace(nn.Module):
         self.classes = _make_classes(fpn_num=3, in_channels=out_channels)
         self.boxes = _make_bboxes(fpn_num=3, in_channels=out_channels)
         self.keypoints = _make_landmarks(fpn_num=3, in_channels=out_channels)
-        # self.depths = _make_depths(fpn_num=3, in_channels=out_channels)
+        self.depths = _make_depths(fpn_num=3, in_channels=out_channels)
 
     def forward(
         self, inputs: torch.Tensor
@@ -193,12 +193,14 @@ class RetinaFace(nn.Module):
             ],  # noqa
             dim=1,
         )
-        # depths = torch.cat(
-        #     [self.depths[i](feature) for i, feature in enumerate(features)],  # noqa
-        #     dim=1,
-        # )
+        depths = torch.cat(
+            [
+                self.depths[i](feature) for i, feature in enumerate(features)
+            ],  # noqa
+            dim=1,
+        )
 
         # bbox_regressions = self.boxes[0](feature3)
         # classifications = self.classes[0](feature3)
         # ldm_regressions = self.keypoints[0](feature3)
-        return bbox_regressions, classifications, ldm_regressions, None
+        return bbox_regressions, classifications, ldm_regressions, depths
