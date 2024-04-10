@@ -75,7 +75,6 @@ def main(
         max_epochs=epochs,
         strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
-        progress_bar_refresh_rate=200,
         benchmark=True,
         precision=16,
         sync_batchnorm=torch.cuda.is_available(),
