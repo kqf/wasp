@@ -4,6 +4,7 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
+from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 from wasp.retinaface.logger import build_mlflow
@@ -86,7 +87,10 @@ def main(
                 mode="max",
                 save_top_k=-1,
                 save_weights_only=True,
-            )
+            ),
+            TQDMProgressBar(
+                refresh_rate=100,
+            ),
         ],
     )
 
