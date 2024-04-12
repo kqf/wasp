@@ -58,6 +58,16 @@ def depths_loss(label_t, dpt_data, dpths_t):
     )
 
 
+def localization_loss(label_t, locations_data, boxes_t):
+    # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
+    positive = label_t > torch.zeros_like(label_t)
+    pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
+    loc_p = locations_data[pos_idx].view(-1, 4)
+    boxes_t = boxes_t[pos_idx].view(-1, 4)
+    loss_l = F.mse_loss(loc_p, boxes_t, reduction="sum")
+    return loss_l, None
+
+
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
@@ -148,14 +158,15 @@ class MultiBoxLoss(nn.Module):
         )
 
         loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
+        loss_l, _ = localization_loss(label_t, locations_data, boxes_t)
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
 
         # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
-        pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
-        loc_p = locations_data[pos_idx].view(-1, 4)
-        boxes_t = boxes_t[pos_idx].view(-1, 4)
-        loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
+        # pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
+        # loc_p = locations_data[pos_idx].view(-1, 4)
+        # boxes_t = boxes_t[pos_idx].view(-1, 4)
+        # loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
 
         # Compute max conf across batch for hard negative mining
         batch_conf = confidence_data.view(-1, self.num_classes)
