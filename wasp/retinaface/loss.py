@@ -64,7 +64,7 @@ def localization_loss(label_t, locations_data, boxes_t):
     pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
     loc_p = locations_data[pos_idx].view(-1, 4)
     boxes_t = boxes_t[pos_idx].view(-1, 4)
-    loss_l = F.mse_loss(loc_p, boxes_t, reduction="sum")
+    loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
     return loss_l, None
 
 
