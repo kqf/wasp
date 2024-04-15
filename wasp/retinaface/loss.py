@@ -163,6 +163,7 @@ class MultiBoxLoss(nn.Module):
         loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
+
         # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
         pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
         loc_p = locations_data[pos_idx].view(-1, 4)
