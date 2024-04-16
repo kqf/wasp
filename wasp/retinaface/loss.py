@@ -192,7 +192,7 @@ class MultiBoxLoss(nn.Module):
         neg_idx = neg.unsqueeze(2).expand_as(confidence_data)
         total = (pos_idx + neg_idx).gt(0)
         conf_p = confidence_data[total].view(-1, self.num_classes)
-        targets_weighted = label_t[total]
+        targets_weighted = label_t[(positive + neg).gt(0)]
         loss_c = F.cross_entropy(conf_p, targets_weighted, reduction="sum")
 
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
