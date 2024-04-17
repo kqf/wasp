@@ -37,11 +37,11 @@ def encode(
         encoded boxes, Shape: [num_priors, 4]
     """
     # dist b/t match center and prior's center
-    g_cxcy = (matched[:, :2] + matched[:, 2:]) / 2 - priors[:, :2]
+    g_cxcy = (matched[:, :2] + matched[:, 2:]) / 2 - priors[..., :2]
     # encode variance
-    g_cxcy /= variances[0] * priors[:, 2:]
+    g_cxcy /= variances[0] * priors[..., 2:]
     # match wh / prior wh
-    g_wh = (matched[:, 2:] - matched[:, :2]) / priors[:, 2:]
+    g_wh = (matched[:, 2:] - matched[:, :2]) / priors[..., 2:]
     g_wh = torch.log(g_wh) / variances[1]
     # return target for smooth_l1_loss
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
