@@ -5,18 +5,12 @@ from wasp.retinaface.encode import decode, decode_landm, encode, encode_landm
 
 
 @pytest.fixture
-def matched(encode):
-    if encode == encode_landm:
-        return torch.arange(20).reshape(2, 10).float()
-    # Define matched data
+def matched():
     return torch.tensor([[1, 1, 3, 3, 5] * 2, [2, 2, 4, 4.0, 4] * 2])
 
 
 @pytest.fixture
-def priors(encode):
-    if encode == encode_landm:
-        return torch.arange(20).reshape(2, 10).float()
-    # Define priors data
+def priors():
     return torch.tensor([[0, 0, 2, 2], [1, 1, 3, 3.0]])
 
 
