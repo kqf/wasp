@@ -9,7 +9,7 @@ def matched(encode):
     if encode == encode_landm:
         return torch.arange(20).reshape(2, 10).float()
     # Define matched data
-    return torch.tensor([[1, 1, 3, 3], [2, 2, 4, 4.0]])
+    return torch.tensor([[1, 1, 3, 3, 5] * 2, [2, 2, 4, 4.0, 4] * 2])
 
 
 @pytest.fixture
