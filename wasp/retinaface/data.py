@@ -42,6 +42,7 @@ AbsoluteXYXY = tuple[int, int, int, int]
 class Annotation:
     bbox: AbsoluteXYXY
     landmarks: list
+    depths: tuple = ()
 
 
 @dataclass
@@ -102,9 +103,13 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
         else:
             annotation[0, 4:14] = np.nan
 
+        if label.depths:
+            annotation[0, 15:17] = label.depths
+        else:
+            annotation[0, 15:17] = np.nan
+
         annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
         annotations = np.append(annotations, annotation, axis=0)
-        annotations[0, 15:] = np.nan
 
     return annotations
 

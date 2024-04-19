@@ -5,6 +5,8 @@ import pytorch_lightning as pl
 import torch
 from environs import Env
 
+from pytorch_lightning.callbacks import TQDMProgressBar
+
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 from wasp.retinaface.logger import build_mlflow
 from wasp.retinaface.loss import MultiBoxLoss
@@ -20,7 +22,7 @@ env.read_env()
 def main(
     train_labels: str = None,
     valid_labels: str = None,
-    resolution: tuple[int, int] = (840, 840),
+    resolution: tuple[int, int] = (640, 640),
     epochs: int = 20,
 ) -> None:
     pl.trainer.seed_everything(137)
@@ -72,9 +74,8 @@ def main(
         # gpus=4,
         # amp_level=O1,
         max_epochs=epochs,
-        strategy="ddp",
+        strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
-        # progress_bar_refresh_rate=1,
         benchmark=True,
         precision=16,
         sync_batchnorm=torch.cuda.is_available(),
@@ -86,7 +87,10 @@ def main(
                 mode="max",
                 save_top_k=-1,
                 save_weights_only=True,
-            )
+            ),
+            TQDMProgressBar(
+                refresh_rate=100,
+            ),
         ],
     )
 

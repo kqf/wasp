@@ -45,6 +45,45 @@ def masked_loss(
     return loss, max(data_masked.shape[0], 1)
 
 
+def depths_loss(label_t, dpt_data, dpths_t):
+    positive_depth = label_t > torch.zeros_like(label_t)
+    pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
+        dpt_data,
+    )
+
+    return masked_loss(
+        partial(F.mse_loss, reduction="sum"),
+        data=dpths_t[pos_depth].view(-1, 2) / dpths_t[pos_depth].view(-1, 2),
+        pred=dpt_data[pos_depth].view(-1, 2) / dpths_t[pos_depth].view(-1, 2),
+    )
+
+
+def localization_loss(label_t, locations_data, boxes_t):
+    # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
+    positive = label_t != torch.zeros_like(label_t)
+    pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
+    loc_p = locations_data[pos_idx].view(-1, 4)
+    boxes_t = boxes_t[pos_idx].view(-1, 4)
+    loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
+    return loss_l, None
+
+
+def landmark_loss(label_t, landmark_data, kypts_t):
+    # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
+    positive_1 = label_t > torch.zeros_like(label_t)
+    # num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
+    # n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
+    pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
+        landmark_data,
+    )
+
+    return masked_loss(
+        partial(F.smooth_l1_loss, reduction="sum"),
+        data=kypts_t[pos_idx1].view(-1, 10),
+        pred=landmark_data[pos_idx1].view(-1, 10),
+    )
+
+
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
@@ -121,39 +160,12 @@ class MultiBoxLoss(nn.Module):
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
             dpths_t[i] = depths_gt[matched]
 
-        # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
-        positive_1 = label_t > torch.zeros_like(label_t)
-        num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
-        n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
-        pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
-            landmark_data,
-        )
-
-        loss_landm, n1 = masked_loss(
-            partial(F.smooth_l1_loss, reduction="sum"),
-            data=kypts_t[pos_idx1].view(-1, 10),
-            pred=landmark_data[pos_idx1].view(-1, 10),
-        )
-
-        positive_depth = label_t > torch.zeros_like(label_t)
-        pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
-            dpt_data,
-        )
-
-        loss_dpth, ndpth = masked_loss(
-            partial(F.smooth_l1_loss, reduction="sum"),
-            data=dpths_t[pos_depth].view(-1, 2),
-            pred=dpths_t[pos_depth].view(-1, 2),
-        )
+        loss_landm, n1 = landmark_loss(label_t, landmark_data, kypts_t)
+        loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
 
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
-
-        # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
-        pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
-        loc_p = locations_data[pos_idx].view(-1, 4)
-        boxes_t = boxes_t[pos_idx].view(-1, 4)
-        loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
+        loss_l, _ = localization_loss(label_t, locations_data, boxes_t)
 
         # Compute max conf across batch for hard negative mining
         batch_conf = confidence_data.view(-1, self.num_classes)
@@ -175,9 +187,8 @@ class MultiBoxLoss(nn.Module):
         # Confidence Loss Including Positive and Negative Examples
         pos_idx = positive.unsqueeze(2).expand_as(confidence_data)
         neg_idx = neg.unsqueeze(2).expand_as(confidence_data)
-        conf_p = confidence_data[(pos_idx + neg_idx).gt(0)].view(
-            -1, self.num_classes
-        )  # noqa
+        total = (pos_idx + neg_idx).gt(0)
+        conf_p = confidence_data[total].view(-1, self.num_classes)
         targets_weighted = label_t[(positive + neg).gt(0)]
         loss_c = F.cross_entropy(conf_p, targets_weighted, reduction="sum")
 
@@ -206,6 +217,7 @@ class MultiBoxLoss(nn.Module):
             self.weights.localization * localization
             + self.weights.classification * classification
             + self.weights.landmarks * landmarks
+            + self.weights.depths * depths
         )
 
         return total, localization, classification, landmarks, depths
