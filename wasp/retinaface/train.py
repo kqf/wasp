@@ -4,6 +4,7 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
+
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint

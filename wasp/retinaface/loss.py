@@ -119,7 +119,7 @@ class MultiBoxLoss(nn.Module):
             targets: Ground truth boxes and labels_gt for a batch,
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
-        locations_data, confidence_data, landmark_data, dpt_data = predictions
+        locations_data, confidence_data, landmark_data, _ = predictions
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
@@ -132,6 +132,7 @@ class MultiBoxLoss(nn.Module):
         boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
         kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
         dpths_t = torch.zeros(n_predictions, num_priors, 2).to(device)
+        dpt_data = landmark_data[:, :, :2].clone()
 
         for i in range(n_predictions):
             box_gt = targets[i]["boxes"].data
@@ -161,6 +162,7 @@ class MultiBoxLoss(nn.Module):
 
         loss_landm, n1 = landmark_loss(label_t, landmark_data, kypts_t)
         loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
+
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
         loss_l, _ = localization_loss(label_t, locations_data, boxes_t)
