@@ -45,7 +45,9 @@ def masked_loss(
     return loss, max(data_masked.shape[0], 1)
 
 
-def depths_loss(label_t, dpt_data, dpths_t):
+def depths_loss(
+    label_t, dpt_data, dpths_t
+) -> tuple[torch.Tensor, torch.Tensor]:
     positive_depth = label_t > torch.zeros_like(label_t)
     pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
         dpt_data,
@@ -58,7 +60,9 @@ def depths_loss(label_t, dpt_data, dpths_t):
     )
 
 
-def localization_loss(label_t, locations_data, boxes_t):
+def localization_loss(
+    label_t, locations_data, boxes_t
+) -> tuple[torch.Tensor, torch.Tensor]:
     # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
     positive = label_t != torch.zeros_like(label_t)
     pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
@@ -68,7 +72,9 @@ def localization_loss(label_t, locations_data, boxes_t):
     return loss_l, None
 
 
-def landmark_loss(label_t, landmark_data, kypts_t):
+def landmark_loss(
+    label_t, landmark_data, kypts_t
+) -> tuple[torch.Tensor, torch.Tensor]:
     # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
     positive_1 = label_t > torch.zeros_like(label_t)
     # num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
@@ -91,7 +97,7 @@ def confidence_loss(
     n_predictions,
     negpos_ratio,
     num_classes,
-):
+) -> tuple[torch.Tensor, torch.Tensor]:
     batch_conf = confidence_data.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
         1, label_t.view(-1, 1)
