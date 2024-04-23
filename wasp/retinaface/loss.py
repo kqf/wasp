@@ -45,7 +45,11 @@ def masked_loss(
     return loss, max(data_masked.shape[0], 1)
 
 
-def depths_loss(label_t, dpt_data, dpths_t):
+def depths_loss(
+    label_t: torch.Tensor,
+    dpt_data: torch.Tensor,
+    dpths_t: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
     positive_depth = label_t > torch.zeros_like(label_t)
     pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
         dpt_data,
@@ -58,17 +62,25 @@ def depths_loss(label_t, dpt_data, dpths_t):
     )
 
 
-def localization_loss(label_t, locations_data, boxes_t):
+def localization_loss(
+    label_t: torch.Tensor,
+    locations_data: torch.Tensor,
+    boxes_t: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
     # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
     positive = label_t != torch.zeros_like(label_t)
     pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
     loc_p = locations_data[pos_idx].view(-1, 4)
     boxes_t = boxes_t[pos_idx].view(-1, 4)
     loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
-    return loss_l, None
+    return loss_l, torch.empty_like(loss_l)
 
 
-def landmark_loss(label_t, landmark_data, kypts_t):
+def landmark_loss(
+    label_t: torch.Tensor,
+    landmark_data: torch.Tensor,
+    kypts_t: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
     # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
     positive_1 = label_t > torch.zeros_like(label_t)
     # num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
@@ -85,13 +97,13 @@ def landmark_loss(label_t, landmark_data, kypts_t):
 
 
 def confidence_loss(
-    label_t,
-    confidence_data,
-    positive,
-    n_predictions,
-    negpos_ratio,
-    num_classes,
-):
+    label_t: torch.Tensor,
+    confidence_data: torch.Tensor,
+    positive: torch.Tensor,
+    n_predictions: int,
+    negpos_ratio: float,
+    num_classes: int,
+) -> tuple[torch.Tensor, torch.Tensor]:
     batch_conf = confidence_data.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
         1, label_t.view(-1, 1)
