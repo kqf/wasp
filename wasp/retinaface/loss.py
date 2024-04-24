@@ -100,7 +100,7 @@ def confidence_loss(
     label_t: torch.Tensor,
     confidence_data: torch.Tensor,
     positive: torch.Tensor,
-    n_predictions: int,
+    n_batch: int,
     negpos_ratio: float,
     num_classes: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -111,7 +111,7 @@ def confidence_loss(
 
     # Hard Negative Mining
     loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
-    loss_c = loss_c.view(n_predictions, -1)
+    loss_c = loss_c.view(n_batch, -1)
     _, loss_idx = loss_c.sort(1, descending=True)
     _, idx_rank = loss_idx.sort(1)
     num_pos = positive.long().sum(1, keepdim=True)
@@ -171,23 +171,23 @@ class MultiBoxLoss(nn.Module):
 
         priors = self.priors.to(device)
 
-        n_predictions = locations_data.shape[0]
+        n_batch = locations_data.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
-        label_t = torch.zeros(n_predictions, num_priors).to(device).long()
-        boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
-        kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
-        dpths_t = torch.zeros(n_predictions, num_priors, 2).to(device)
+        label_t = torch.zeros(n_batch, num_priors).to(device).long()
+        boxes_t = torch.zeros(n_batch, num_priors, 4).to(device)
+        kypts_t = torch.zeros(n_batch, num_priors, 10).to(device)
+        dpths_t = torch.zeros(n_batch, num_priors, 2).to(device)
         dpt_data = landmark_data[:, :, :2].clone()
 
-        for i in range(n_predictions):
+        for i in range(n_batch):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
             labels_gt = targets[i]["labels"].reshape(-1).data
             depths_gt = targets[i]["depths"].data
 
-            # matched gt index
+            # matched gt index, matched, labels are [num_priors]
             matched, labels = match(
                 labels_gt,
                 box_gt,
@@ -219,7 +219,7 @@ class MultiBoxLoss(nn.Module):
         #     label_t,
         #     confidence_data,
         #     positive,
-        #     n_predictions,
+        #     n_batch,
         #     self.negpos_ratio,
         #     self.num_classes,
         # )
@@ -231,7 +231,7 @@ class MultiBoxLoss(nn.Module):
 
         # Hard Negative Mining
         loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
-        loss_c = loss_c.view(n_predictions, -1)
+        loss_c = loss_c.view(n_batch, -1)
         _, loss_idx = loss_c.sort(1, descending=True)
         _, idx_rank = loss_idx.sort(1)
         num_pos = positive.long().sum(1, keepdim=True)
