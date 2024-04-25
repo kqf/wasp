@@ -166,7 +166,7 @@ class MultiBoxLoss(nn.Module):
             targets: Ground truth boxes and labels_gt for a batch,
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
-        locations_data, confidence_data, landmark_data, _ = predictions
+        locations_data, confidence_data, landmark_data, dpt_data = predictions
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
