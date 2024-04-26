@@ -179,7 +179,7 @@ class MultiBoxLoss(nn.Module):
         boxes_t = torch.zeros(n_batch, num_priors, 4).to(device)
         kypts_t = torch.zeros(n_batch, num_priors, 10).to(device)
         dpths_t = torch.zeros(n_batch, num_priors, 2).to(device)
-        # dpt_data = landmark_data[:, :, :2].clone()
+        dpt_data = landmark_data[:, :, :2].clone()
 
         for i in range(n_batch):
             box_gt = targets[i]["boxes"].data
