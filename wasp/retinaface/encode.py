@@ -14,10 +14,7 @@ def point_form(boxes: torch.Tensor) -> torch.Tensor:
         boxes: Converted x_min, y_min, x_max, y_max form of boxes.
     """
     return torch.cat(
-        (
-            boxes[..., :2] - boxes[..., 2:] / 2,
-            boxes[..., :2] + boxes[..., 2:] / 2,
-        ),
+        (boxes[:, :2] - boxes[:, 2:] / 2, boxes[:, :2] + boxes[:, 2:] / 2),
         dim=1,
     )
 
@@ -40,11 +37,11 @@ def encode(
         encoded boxes, Shape: [num_priors, 4]
     """
     # dist b/t match center and prior's center
-    g_cxcy = (matched[:, :2] + matched[:, 2:]) / 2 - priors[..., :2]
+    g_cxcy = (matched[:, :2] + matched[:, 2:]) / 2 - priors[:, :2]
     # encode variance
-    g_cxcy /= variances[0] * priors[..., 2:]
+    g_cxcy /= variances[0] * priors[:, 2:]
     # match wh / prior wh
-    g_wh = (matched[:, 2:] - matched[:, :2]) / priors[..., 2:]
+    g_wh = (matched[:, 2:] - matched[:, :2]) / priors[:, 2:]
     g_wh = torch.log(g_wh) / variances[1]
     # return target for smooth_l1_loss
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
@@ -70,14 +67,13 @@ def decode(
     """
     boxes = torch.cat(
         (
-            priors[..., :2] + loc[..., :2] * variances[0] * priors[..., 2:],
-            priors[..., 2:] * torch.exp(loc[..., 2:] * variances[1]),
+            priors[:, :2] + loc[:, :2] * variances[0] * priors[:, 2:],
+            priors[:, 2:] * torch.exp(loc[:, 2:] * variances[1]),
         ),
-        dim=-1,
+        1,
     )
-    boxes[..., :2] -= boxes[..., 2:] / 2
-    boxes[..., 2:] += boxes[..., :2]
-
+    boxes[:, :2] -= boxes[:, 2:] / 2
+    boxes[:, 2:] += boxes[:, :2]
     return boxes
 
 
@@ -118,7 +114,7 @@ def encode_landm(
 
 
 def decode_landm(
-    pre: torch.Tensor,
+    loc_landm: torch.Tensor,
     priors: torch.Tensor,
     variances: Union[List[float], Tuple[float, float]],
 ) -> torch.Tensor:
@@ -132,13 +128,22 @@ def decode_landm(
     Return:
         decoded landmark predictions
     """
-    return torch.cat(
-        (
-            priors[..., :2] + pre[..., :2] * variances[0] * priors[..., 2:],
-            priors[..., :2] + pre[..., 2:4] * variances[0] * priors[..., 2:],
-            priors[..., :2] + pre[..., 4:6] * variances[0] * priors[..., 2:],
-            priors[..., :2] + pre[..., 6:8] * variances[0] * priors[..., 2:],
-            priors[..., :2] + pre[..., 8:10] * variances[0] * priors[..., 2:],
-        ),
-        dim=-1,
-    )
+    # Reshape loc_landm to [num_priors, 5, 2]
+    loc_landm = loc_landm.reshape(loc_landm.shape[0], 5, 2)
+
+    # Compute priors centers and sizes
+    priors_cx = priors[:, 0].unsqueeze(1).expand_as(loc_landm[:, :, 0])
+    priors_cy = priors[:, 1].unsqueeze(1).expand_as(loc_landm[:, :, 1])
+    priors_w = priors[:, 2].unsqueeze(1).expand_as(loc_landm[:, :, 0])
+    priors_h = priors[:, 3].unsqueeze(1).expand_as(loc_landm[:, :, 1])
+
+    priors_centers = torch.stack([priors_cx, priors_cy], dim=2)
+    priors_sizes = torch.stack([priors_w, priors_h], dim=2)
+
+    # Decode landmark locations
+    decoded_landm = loc_landm * variances[0] * priors_sizes + priors_centers
+
+    # Reshape to [num_priors, 10]
+    decoded_landm = decoded_landm.view(decoded_landm.size(0), -1)
+
+    return decoded_landm
