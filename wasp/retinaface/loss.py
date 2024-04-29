@@ -73,7 +73,7 @@ def localization_loss(
     loc_p = locations_data[pos_idx].view(-1, 4)
     boxes_t = boxes_t[pos_idx].view(-1, 4)
     loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
-    return loss_l, torch.empty_like(loss_l)
+    return loss_l, None
 
 
 def landmark_loss(
