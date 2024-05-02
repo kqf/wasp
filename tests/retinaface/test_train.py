@@ -24,7 +24,7 @@ def annotations(tmp_path) -> pathlib.Path:
                 }
             ],
         },
-    ] * 10
+    ]
     ofile = tmp_path / "annotations.json"
     with open(ofile, "w") as f:
         json.dump(example, f, indent=2)
