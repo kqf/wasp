@@ -171,16 +171,16 @@ class MultiBoxLoss(nn.Module):
 
         priors = self.priors.to(device)
 
-        n_predictions = locations_data.shape[0]
+        n_batch = locations_data.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
-        label_t = torch.zeros(n_predictions, num_priors).to(device).long()
-        boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
-        kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
-        dpths_t = torch.zeros(n_predictions, num_priors, 2).to(device)
+        label_t = torch.zeros(n_batch, num_priors).to(device).long()
+        boxes_t = torch.zeros(n_batch, num_priors, 4).to(device)
+        kypts_t = torch.zeros(n_batch, num_priors, 10).to(device)
+        dpths_t = torch.zeros(n_batch, num_priors, 2).to(device)
 
-        for i in range(n_predictions):
+        for i in range(n_batch):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
             labels_gt = targets[i]["labels"].reshape(-1).data
@@ -220,7 +220,7 @@ class MultiBoxLoss(nn.Module):
             label_t,
             confidence_data,
             positive,
-            n_predictions,
+            n_batch,
             self.negpos_ratio,
             self.num_classes,
         )
