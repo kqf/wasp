@@ -166,12 +166,13 @@ class MultiBoxLoss(nn.Module):
             targets: Ground truth boxes and labels_gt for a batch,
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
-        loc_pred, conf_pred, kpts_pred, dpth_pred = predictions
+        boxes_pred, conf_pred, kpts_pred, dpth_pred = predictions
+
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
 
-        n_batch = loc_pred.shape[0]
+        n_batch = boxes_pred.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
@@ -210,12 +211,7 @@ class MultiBoxLoss(nn.Module):
         loss_dpth, ndpth = depths_loss(label_t, dpth_pred, dpths_t)
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
-
-        # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
-        pos_idx = positive.unsqueeze(positive.dim()).expand_as(loc_pred)
-        loc_p = loc_pred[pos_idx].view(-1, 4)
-        boxes_t = boxes_t[pos_idx].view(-1, 4)
-        loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
+        loss_l, _ = localization_loss(label_t, boxes_pred, boxes_t=boxes_t)
         loss_c, n = confidence_loss(
             label_t,
             conf_pred,
