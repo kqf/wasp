@@ -166,12 +166,12 @@ class MultiBoxLoss(nn.Module):
             targets: Ground truth boxes and labels_gt for a batch,
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
-        locations_data, confidence_data, landmark_data, dpt_data = predictions
+        loc_pred, conf_pred, kpts_pred, dpth_pred = predictions
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
 
-        n_batch = locations_data.shape[0]
+        n_batch = loc_pred.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
@@ -206,19 +206,19 @@ class MultiBoxLoss(nn.Module):
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
             dpths_t[i] = depths_gt[matched]
 
-        loss_landm, n1 = landmark_loss(label_t, landmark_data, kypts_t)
-        loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
+        loss_landm, n1 = landmark_loss(label_t, kpts_pred, kypts_t)
+        loss_dpth, ndpth = depths_loss(label_t, dpth_pred, dpths_t)
         positive = label_t != torch.zeros_like(label_t)
         label_t[positive] = 1
 
         # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
-        pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
-        loc_p = locations_data[pos_idx].view(-1, 4)
+        pos_idx = positive.unsqueeze(positive.dim()).expand_as(loc_pred)
+        loc_p = loc_pred[pos_idx].view(-1, 4)
         boxes_t = boxes_t[pos_idx].view(-1, 4)
         loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
         loss_c, n = confidence_loss(
             label_t,
-            confidence_data,
+            conf_pred,
             positive,
             n_batch,
             self.negpos_ratio,
