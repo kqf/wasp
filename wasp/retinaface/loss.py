@@ -167,7 +167,6 @@ class MultiBoxLoss(nn.Module):
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
         boxes_pred, conf_pred, kpts_pred, dpth_pred = predictions
-
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
