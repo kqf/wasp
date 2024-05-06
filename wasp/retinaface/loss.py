@@ -139,7 +139,7 @@ class MultiBoxLoss(nn.Module):
             localization=2,
             classification=1,
             landmarks=1,
-            depths=2,
+            depths=4,
         ),
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
