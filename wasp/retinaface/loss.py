@@ -139,11 +139,11 @@ class MultiBoxLoss(nn.Module):
             localization=2,
             classification=1,
             landmarks=1,
-            depths=1,
+            depths=2,
         ),
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
-        neg_pos: int = 7,
+        neg_pos: int = 8,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
