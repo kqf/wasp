@@ -104,6 +104,7 @@ def confidence_loss(
     negpos_ratio: float,
     num_classes: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
+    label_t[positive] = 1
     batch_conf = confidence_data.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
         1, label_t.view(-1, 1)
@@ -210,7 +211,6 @@ class MultiBoxLoss(nn.Module):
         loss_landm, n1 = landmark_loss(label_t, kpts_pred, kypts_t)
         loss_dpth, ndpth = depths_loss(label_t, dpth_pred, dpths_t)
         positive = label_t != torch.zeros_like(label_t)
-        # label_t[positive] = 1
         loss_l, _ = localization_loss(label_t, boxes_pred, boxes_t=boxes_t)
         loss_c, n = confidence_loss(
             label_t,
