@@ -51,7 +51,7 @@ def depths_loss(
     dpths_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     positive_depth = label_t > torch.zeros_like(label_t)
-    pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
+    pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
         dpt_pred,
     )
 
@@ -99,11 +99,11 @@ def landmark_loss(
 def confidence_loss(
     label_t: torch.Tensor,
     confidence_data: torch.Tensor,
-    positive: torch.Tensor,
     n_batch: int,
     negpos_ratio: float,
     num_classes: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
+    positive = label_t != torch.zeros_like(label_t)
     label_t[positive] = 1
     batch_conf = confidence_data.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
@@ -210,12 +210,10 @@ class MultiBoxLoss(nn.Module):
 
         loss_landm, n1 = landmark_loss(label_t, kpts_pred, kypts_t)
         loss_dpth, ndpth = depths_loss(label_t, dpth_pred, dpths_t)
-        positive = label_t != torch.zeros_like(label_t)
         loss_l, _ = localization_loss(label_t, boxes_pred, boxes_t=boxes_t)
         loss_c, n = confidence_loss(
             label_t,
             conf_pred,
-            positive,
             n_batch,
             self.negpos_ratio,
             self.num_classes,
