@@ -47,18 +47,18 @@ def masked_loss(
 
 def depths_loss(
     label_t: torch.Tensor,
-    dpt_pred: torch.Tensor,
+    dpt_data: torch.Tensor,
     dpths_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     positive_depth = label_t > torch.zeros_like(label_t)
-    pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
-        dpt_pred,
+    pos_depth = positive_depth.unsqueeze(positive_depth.dim(),).expand_as(
+        dpt_data,
     )
 
     return masked_loss(
         partial(F.mse_loss, reduction="sum"),
-        data=dpths_t[pos_depth].view(-1, 2),
-        pred=dpt_pred[pos_depth].view(-1, 2),
+        data=dpths_t[pos_depth].view(-1, 2) / dpths_t[pos_depth].view(-1, 2),
+        pred=dpt_data[pos_depth].view(-1, 2) / dpths_t[pos_depth].view(-1, 2),
     )
 
 
@@ -73,7 +73,7 @@ def localization_loss(
     loc_p = locations_data[pos_idx].view(-1, 4)
     boxes_t = boxes_t[pos_idx].view(-1, 4)
     loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
-    return loss_l, None
+    return loss_l, torch.empty_like(loss_l)
 
 
 def landmark_loss(
@@ -99,7 +99,8 @@ def landmark_loss(
 def confidence_loss(
     label_t: torch.Tensor,
     confidence_data: torch.Tensor,
-    n_batch: int,
+    positive: torch.Tensor,
+    n_predictions: int,
     negpos_ratio: float,
     num_classes: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -112,7 +113,7 @@ def confidence_loss(
 
     # Hard Negative Mining
     loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
-    loss_c = loss_c.view(n_batch, -1)
+    loss_c = loss_c.view(n_predictions, -1)
     _, loss_idx = loss_c.sort(1, descending=True)
     _, idx_rank = loss_idx.sort(1)
     num_pos = positive.long().sum(1, keepdim=True)
@@ -140,7 +141,7 @@ class MultiBoxLoss(nn.Module):
             localization=2,
             classification=1,
             landmarks=1,
-            depths=4,
+            depths=1,
         ),
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
@@ -167,22 +168,22 @@ class MultiBoxLoss(nn.Module):
             targets: Ground truth boxes and labels_gt for a batch,
                 shape: [batch_size, num_objs, 5] (last box_index is the label).
         """
-        boxes_pred, conf_pred, kpts_pred, dpth_pred = predictions
-
+        locations_data, confidence_data, landmark_data, _ = predictions
         device = targets[0]["boxes"].device
 
         priors = self.priors.to(device)
 
-        n_batch = boxes_pred.shape[0]
+        n_predictions = locations_data.shape[0]
         num_priors = priors.shape[0]
 
         # match priors (default boxes) and ground truth boxes
-        label_t = torch.zeros(n_batch, num_priors).to(device).long()
-        boxes_t = torch.zeros(n_batch, num_priors, 4).to(device)
-        kypts_t = torch.zeros(n_batch, num_priors, 10).to(device)
-        dpths_t = torch.zeros(n_batch, num_priors, 2).to(device)
+        label_t = torch.zeros(n_predictions, num_priors).to(device).long()
+        boxes_t = torch.zeros(n_predictions, num_priors, 4).to(device)
+        kypts_t = torch.zeros(n_predictions, num_priors, 10).to(device)
+        dpths_t = torch.zeros(n_predictions, num_priors, 2).to(device)
+        dpt_data = landmark_data[:, :, :2].clone()
 
-        for i in range(n_batch):
+        for i in range(n_predictions):
             box_gt = targets[i]["boxes"].data
             landmarks_gt = targets[i]["keypoints"].data
             labels_gt = targets[i]["labels"].reshape(-1).data
@@ -208,18 +209,23 @@ class MultiBoxLoss(nn.Module):
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
             dpths_t[i] = depths_gt[matched]
 
-        loss_landm, n1 = landmark_loss(label_t, kpts_pred, kypts_t)
-        loss_dpth, ndpth = depths_loss(label_t, dpth_pred, dpths_t)
-        loss_l, _ = localization_loss(label_t, boxes_pred, boxes_t=boxes_t)
+        loss_landm, n1 = landmark_loss(label_t, landmark_data, kypts_t)
+        loss_dpth, ndpth = depths_loss(label_t, dpt_data, dpths_t)
+
+        positive = label_t != torch.zeros_like(label_t)
+        label_t[positive] = 1
+        loss_l, _ = localization_loss(label_t, locations_data, boxes_t)
+
+        # Compute max conf across batch for hard negative mining
         loss_c, n = confidence_loss(
             label_t,
-            conf_pred,
-            n_batch,
+            confidence_data,
+            positive,
+            n_predictions,
             self.negpos_ratio,
             self.num_classes,
         )
 
-        # Compute max conf across batch for hard negative mining
         return loss_l / n, loss_c / n, loss_landm / n1, loss_dpth / ndpth
 
     def full_forward(
