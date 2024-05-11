@@ -50,7 +50,7 @@ def depths_loss(
     dpt_pred: torch.Tensor,
     dpths_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    positive_depth = label_t != torch.zeros_like(label_t)
+    positive_depth = label_t > torch.zeros_like(label_t)
     pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
         dpt_pred,
     )
