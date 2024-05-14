@@ -56,7 +56,7 @@ def depths_loss(
     )
 
     return masked_loss(
-        partial(F.mse_loss, reduction="sum"),
+        partial(F.smooth_l1_loss, reduction="sum"),
         data=dpths_t[pos_depth].view(-1, 2),
         pred=dpt_pred[pos_depth].view(-1, 2),
     )
