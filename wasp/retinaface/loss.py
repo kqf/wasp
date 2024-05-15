@@ -64,16 +64,17 @@ def depths_loss(
 
 def localization_loss(
     label_t: torch.Tensor,
-    locations_data: torch.Tensor,
+    boxes_pred: torch.Tensor,
     boxes_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
     positive = label_t > torch.zeros_like(label_t)
-    pos_idx = positive.unsqueeze(positive.dim()).expand_as(locations_data)
-    loc_p = locations_data[pos_idx].view(-1, 4)
-    boxes_t = boxes_t[pos_idx].view(-1, 4)
-    loss_l = F.smooth_l1_loss(loc_p, boxes_t, reduction="sum")
-    return loss_l, None
+    pos_idx = positive.unsqueeze(positive.dim()).expand_as(boxes_pred)
+    return masked_loss(
+        partial(F.smooth_l1_loss, reduction="sum"),
+        data=boxes_t[pos_idx].view(-1, 4),
+        pred=boxes_pred[pos_idx].view(-1, 4),
+    )
 
 
 def landmark_loss(
