@@ -82,7 +82,7 @@ def landmark_loss(
     kypts_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
-    positive_1 = label_t != torch.zeros_like(label_t)
+    positive_1 = label_t > torch.zeros_like(label_t)
     # num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
     # n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
     pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
@@ -103,7 +103,7 @@ def confidence_loss(
     negpos_ratio: float,
     num_classes: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    positive = label_t != torch.zeros_like(label_t)
+    positive = label_t > torch.zeros_like(label_t)
     label_t[positive] = 1
     batch_conf = confidence_data.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
