@@ -79,7 +79,7 @@ def localization_loss(
 
 def landmark_loss(
     label_t: torch.Tensor,
-    landmark_data: torch.Tensor,
+    kypts_pred: torch.Tensor,
     kypts_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     # landmark Loss (Smooth L1) Shape: [batch, num_priors, 10]
@@ -87,13 +87,13 @@ def landmark_loss(
     # num_positive_landmarks = positive_1.long().sum(1, keepdim=True)
     # n1 = max(num_positive_landmarks.data.sum().float(), 1)  # type: ignore
     pos_idx1 = positive_1.unsqueeze(positive_1.dim()).expand_as(
-        landmark_data,
+        kypts_pred,
     )
 
     return masked_loss(
         partial(F.smooth_l1_loss, reduction="sum"),
         data=kypts_t[pos_idx1].view(-1, 10),
-        pred=landmark_data[pos_idx1].view(-1, 10),
+        pred=kypts_pred[pos_idx1].view(-1, 10),
     )
 
 
