@@ -50,7 +50,7 @@ def depths_loss(
     dpt_pred: torch.Tensor,
     dpths_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    positive_depth = label_t > torch.zeros_like(label_t)
+    positive_depth = label_t != torch.zeros_like(label_t)
     pos_depth = positive_depth.unsqueeze(positive_depth.dim()).expand_as(
         dpt_pred,
     )
@@ -68,7 +68,7 @@ def localization_loss(
     boxes_t: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
-    positive = label_t > torch.zeros_like(label_t)
+    positive = label_t != torch.zeros_like(label_t)
     pos_idx = positive.unsqueeze(positive.dim()).expand_as(boxes_pred)
     return masked_loss(
         partial(F.smooth_l1_loss, reduction="sum"),
