@@ -197,7 +197,7 @@ class MultiBoxLoss(nn.Module):
         positive = torch.where(label_t != torch.zeros_like(label_t))
         loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
         loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
-        loss_l, _ = localization_loss(positive, boxes_pred, boxes_t=boxes_t)
+        loss_l, nl = localization_loss(positive, boxes_pred, boxes_t=boxes_t)
         loss_c, n = confidence_loss(
             label_t,
             conf_pred,
@@ -206,8 +206,7 @@ class MultiBoxLoss(nn.Module):
             self.num_classes,
         )
 
-        # Compute max conf across batch for hard negative mining
-        return loss_l / n, loss_c / n, loss_landm / n1, loss_dpth / ndpth
+        return loss_l / nl, loss_c / n, loss_landm / n1, loss_dpth / ndpth
 
     def full_forward(
         self,
