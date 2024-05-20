@@ -90,22 +90,15 @@ def confidence_loss(
     num_classes: int,  # num_classes
 ) -> tuple[torch.Tensor, torch.Tensor]:
     positive = label_t != torch.zeros_like(label_t)
-    label_t[positive] = 1
-    batch_conf = confidence_data.view(-1, num_classes)
-    loss_c = log_sum_exp(batch_conf) - batch_conf.gather(
-        1, label_t.view(-1, 1)
-    )  # noqa
+    neg = compute_negatives(
+        label_t,
+        confidence_data,
+        n_batch,
+        negpos_ratio,
+        num_classes,
+        positive,
+    )
 
-    # Hard Negative Mining
-    loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
-    loss_c = loss_c.view(n_batch, -1)
-    _, loss_idx = loss_c.sort(1, descending=True)
-    _, idx_rank = loss_idx.sort(1)
-    num_pos = positive.long().sum(1, keepdim=True)
-    num_neg = torch.clamp(negpos_ratio * num_pos, max=positive.shape[1] - 1)
-    neg = idx_rank < num_neg.expand_as(idx_rank)
-
-    # Create a combined mask for positive and negative samples
     combined_mask = positive | neg
 
     # Use this combined mask to index confidence_data and label_t
@@ -120,8 +113,31 @@ def confidence_loss(
     )
 
     # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
+    num_pos = positive.long().sum(1, keepdim=True)
     n = max(num_pos.data.sum().float(), 1)  # type: ignore
     return loss_c, n
+
+
+def compute_negatives(
+    label,
+    pred,
+    n_batch,
+    negpos_ratio,
+    num_classes,
+    positive,
+):
+    label[positive] = 1
+    batch_conf = pred.view(-1, num_classes)
+    loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, label.view(-1, 1))
+
+    # Hard Negative Mining
+    loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
+    loss_c = loss_c.view(n_batch, -1)
+    _, loss_idx = loss_c.sort(1, descending=True)
+    _, idx_rank = loss_idx.sort(1)
+    num_pos = positive.long().sum(1, keepdim=True)
+    num_neg = torch.clamp(negpos_ratio * num_pos, max=positive.shape[1] - 1)
+    return idx_rank < num_neg.expand_as(idx_rank)
 
 
 class MultiBoxLoss(nn.Module):
