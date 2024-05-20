@@ -83,11 +83,11 @@ def landmark_loss(
 
 
 def confidence_loss(
-    label_t: torch.Tensor,
-    confidence_data: torch.Tensor,
-    n_batch: int,
+    label_t: torch.Tensor,  # shape [n_batch, n_anchors]
+    confidence_data: torch.Tensor,  # [n_batch, n_anchors, num_classes]
+    n_batch: int,  # n_batch
     negpos_ratio: float,
-    num_classes: int,
+    num_classes: int,  # num_classes
 ) -> tuple[torch.Tensor, torch.Tensor]:
     positive = label_t != torch.zeros_like(label_t)
     label_t[positive] = 1
@@ -105,13 +105,19 @@ def confidence_loss(
     num_neg = torch.clamp(negpos_ratio * num_pos, max=positive.shape[1] - 1)
     neg = idx_rank < num_neg.expand_as(idx_rank)
 
-    # Confidence Loss Including Positive and Negative Examples
-    pos_idx = positive.unsqueeze(2).expand_as(confidence_data)
-    neg_idx = neg.unsqueeze(2).expand_as(confidence_data)
-    total = (pos_idx + neg_idx).gt(0)
-    conf_p = confidence_data[total].view(-1, num_classes)
-    targets_weighted = label_t[(positive + neg).gt(0)]
-    loss_c = F.cross_entropy(conf_p, targets_weighted, reduction="sum")
+    # Create a combined mask for positive and negative samples
+    combined_mask = positive | neg
+
+    # Use this combined mask to index confidence_data and label_t
+    conf_p = confidence_data[combined_mask]
+    targets_weighted = label_t[combined_mask]
+
+    # Compute confidenc loss
+    loss_c = F.cross_entropy(
+        conf_p.view(-1, num_classes),
+        targets_weighted.view(-1),
+        reduction="sum",
+    )
 
     # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
     n = max(num_pos.data.sum().float(), 1)  # type: ignore
