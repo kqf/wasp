@@ -90,7 +90,7 @@ def confidence_loss(
     num_classes: int,  # num_classes
 ) -> tuple[torch.Tensor, torch.Tensor]:
     positive = label_t != torch.zeros_like(label_t)
-    neg = compute_negatives(
+    neg = mine_negatives(
         label_t,
         confidence_data,
         n_batch,
@@ -118,7 +118,7 @@ def confidence_loss(
     return loss_c, n
 
 
-def compute_negatives(
+def mine_negatives(
     label,
     pred,
     n_batch,
