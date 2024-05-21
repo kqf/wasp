@@ -87,6 +87,7 @@ def confidence_loss(
     label_t: torch.Tensor,  # shape [n_batch, n_anchors]
     confidence_data: torch.Tensor,  # [n_batch, n_anchors, num_classes]
     neg: torch.Tensor,
+    num_classes: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     combined_mask = positive | neg
 
@@ -96,7 +97,7 @@ def confidence_loss(
 
     # Compute confidenc loss
     loss_c = F.cross_entropy(
-        conf_p.view(targets_weighted.shape[0], -1),
+        conf_p.view(-1, num_classes),
         targets_weighted,
         reduction="sum",
     )
@@ -214,7 +215,7 @@ class MultiBoxLoss(nn.Module):
             num_classes=self.num_classes,
             positive=positives,
         )
-        
+
         positive = torch.where(positives)
         loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
         loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
@@ -224,6 +225,7 @@ class MultiBoxLoss(nn.Module):
             label_t,
             conf_pred,
             negatives,
+            self.num_classes,
         )
 
         return loss_l / nl, loss_c / n, loss_landm / n1, loss_dpth / ndpth
