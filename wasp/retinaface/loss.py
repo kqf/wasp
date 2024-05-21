@@ -214,7 +214,7 @@ class MultiBoxLoss(nn.Module):
             num_classes=self.num_classes,
             positive=positives,
         )
-
+        
         positive = torch.where(positives)
         loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
         loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
