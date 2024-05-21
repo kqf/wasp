@@ -83,32 +83,21 @@ def landmark_loss(
 
 
 def confidence_loss(
+    positive: torch.Tensor,
     label_t: torch.Tensor,  # shape [n_batch, n_anchors]
     confidence_data: torch.Tensor,  # [n_batch, n_anchors, num_classes]
-    n_batch: int,  # n_batch
-    negpos_ratio: float,
-    num_classes: int,  # num_classes
+    neg: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    positive = label_t != torch.zeros_like(label_t)
-    neg = compute_negatives(
-        label_t,
-        confidence_data,
-        n_batch,
-        negpos_ratio,
-        num_classes,
-        positive,
-    )
-
     combined_mask = positive | neg
 
     # Use this combined mask to index confidence_data and label_t
     conf_p = confidence_data[combined_mask]
-    targets_weighted = label_t[combined_mask]
+    targets_weighted = label_t[combined_mask].view(-1)
 
     # Compute confidenc loss
     loss_c = F.cross_entropy(
-        conf_p.view(-1, num_classes),
-        targets_weighted.view(-1),
+        conf_p.view(targets_weighted.shape[0], -1),
+        targets_weighted,
         reduction="sum",
     )
 
@@ -118,7 +107,7 @@ def confidence_loss(
     return loss_c, n
 
 
-def compute_negatives(
+def mine_negatives(
     label,
     pred,
     n_batch,
@@ -216,16 +205,25 @@ class MultiBoxLoss(nn.Module):
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
             dpths_t[i] = depths_gt[matched]
 
-        positive = torch.where(label_t != torch.zeros_like(label_t))
-        loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
-        loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
-        loss_l, nl = localization_loss(positive, boxes_pred, boxes_t=boxes_t)
-        loss_c, n = confidence_loss(
+        positives = label_t != torch.zeros_like(label_t)
+        negatives = mine_negatives(
+            positives,
             label_t,
             conf_pred,
             n_batch,
             self.negpos_ratio,
             self.num_classes,
+        )
+
+        positive = torch.where(positives)
+        loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
+        loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
+        loss_l, nl = localization_loss(positive, boxes_pred, boxes_t)
+        loss_c, n = confidence_loss(
+            positives,
+            label_t,
+            conf_pred,
+            negatives,
         )
 
         return loss_l / nl, loss_c / n, loss_landm / n1, loss_dpth / ndpth
