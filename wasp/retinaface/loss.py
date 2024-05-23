@@ -183,12 +183,12 @@ class MultiBoxLoss(nn.Module):
         for i in range(n_batch):
             box_gt = targets[i]["boxes"]
             landmarks_gt = targets[i]["keypoints"]
-            labels_gt = targets[i]["labels"].reshape(-1)
+            labels_gt = targets[i]["labels"]
             depths_gt = targets[i]["depths"]
 
             # matched gt index
             matched, labels = match(
-                labels_gt,
+                labels_gt.view(-1),
                 box_gt,
                 priors.data,
                 self.threshold,
