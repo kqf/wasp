@@ -181,10 +181,10 @@ class MultiBoxLoss(nn.Module):
         dpths_t = torch.zeros(n_batch, num_priors, 2).to(device)
 
         for i in range(n_batch):
-            box_gt = targets[i]["boxes"].data
-            landmarks_gt = targets[i]["keypoints"].data
-            labels_gt = targets[i]["labels"].reshape(-1).data
-            depths_gt = targets[i]["depths"].data
+            box_gt = targets[i]["boxes"]
+            landmarks_gt = targets[i]["keypoints"]
+            labels_gt = targets[i]["labels"].reshape(-1)
+            depths_gt = targets[i]["depths"]
 
             # matched gt index
             matched, labels = match(
