@@ -116,7 +116,7 @@ def mine_negatives(
     num_classes,
     positive,
 ):
-    label = label.clone()
+    label = torch.tensor(label).clone()
     label[positive] = 1
     batch_conf = pred.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, label.view(-1, 1))
