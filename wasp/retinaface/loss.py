@@ -212,7 +212,7 @@ class MultiBoxLoss(nn.Module):
         loss_l, nl = localization_loss(positive, boxes_pred, boxes_t)
 
         label = label_t.detach().clone()
-        # label[positive] = 1
+        label[positive] = 1
 
         negatives = mine_negatives(
             label=label,
