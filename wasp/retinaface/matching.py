@@ -4,56 +4,26 @@ from wasp.retinaface.encode import point_form
 
 
 def intersect(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
-    """We resize both tensors to [A,B,2] without new malloc.
-
-    [A, 2] -> [A, 1, 2] -> [A, B, 2]
-    [B, 2] -> [1, B, 2] -> [A, B, 2]
-    Then we compute the area of intersect between box_a and box_b.
-    Args:
-      box_a: bounding boxes, Shape: [A, 4].
-      box_b: bounding boxes, Shape: [B, 4].
-    Return:
-      intersection area, Shape: [A, B].
-    """
-    a = box_a.shape[0]
-    b = box_b.shape[0]
+    """Computes the area of intersection between each pair of boxes."""
+    a, b = box_a.size(0), box_b.size(0)
     max_xy = torch.min(
-        box_a[:, 2:].unsqueeze(1).expand(a, b, 2),
-        box_b[:, 2:].unsqueeze(0).expand(a, b, 2),
+        box_a[:, 2:].unsqueeze(1).expand(-1, b, -1),
+        box_b[:, 2:].unsqueeze(0).expand(a, -1, -1),
     )
     min_xy = torch.max(
-        box_a[:, :2].unsqueeze(1).expand(a, b, 2),
-        box_b[:, :2].unsqueeze(0).expand(a, b, 2),
+        box_a[:, :2].unsqueeze(1).expand(-1, b, -1),
+        box_b[:, :2].unsqueeze(0).expand(a, -1, -1),
     )
-    inter = torch.clamp((max_xy - min_xy), min=0)
+    inter = torch.clamp(max_xy - min_xy, min=0)
     return inter[:, :, 0] * inter[:, :, 1]
 
 
 def iou(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
-    """Computes the jaccard overlap of two sets of boxes.
-
-    The jaccard overlap is simply the intersection over union of two boxes.
-    Here we operate on ground truth boxes and default boxes.
-    E.g.:
-        A ∩ B / A ∪ B = A ∩ B / (area(A) + area(B) - A ∩ B)
-    Args:
-        box_a: Ground truth bounding boxes, Shape: [num_objects,4]
-        box_b: Prior boxes from priorbox layers, Shape: [num_priors,4]
-    Return:
-        jaccard overlap: Shape: [box_a.shape[0], box_b.shape[0]]
-    """
+    """Computes the Intersection over Union (IoU) of two sets of boxes."""
     inter = intersect(box_a, box_b)
-    area_a = (
-        ((box_a[:, 2] - box_a[:, 0]) * (box_a[:, 3] - box_a[:, 1]))
-        .unsqueeze(1)
-        .expand_as(inter)
-    )  # [A,B]
-    area_b = (
-        ((box_b[:, 2] - box_b[:, 0]) * (box_b[:, 3] - box_b[:, 1]))
-        .unsqueeze(0)
-        .expand_as(inter)
-    )  # [A,B]
-    union = area_a + area_b - inter
+    area_a = (box_a[:, 2] - box_a[:, 0]) * (box_a[:, 3] - box_a[:, 1])
+    area_b = (box_b[:, 2] - box_b[:, 0]) * (box_b[:, 3] - box_b[:, 1])
+    union = area_a.unsqueeze(1) + area_b.unsqueeze(0) - inter
     return inter / union
 
 
@@ -63,7 +33,6 @@ def match(
     priors: torch.Tensor,
     threshold: float,
 ) -> tuple[torch.Tensor, torch.Tensor] | tuple[None, None]:
-    # Compute iou between gt and priors
     overlaps = iou(boxes, point_form(priors))
     # (Bipartite Matching)
     # [1, num_objects] best prior for each ground truth
