@@ -109,15 +109,15 @@ def confidence_loss(
 
 
 def mine_negatives(
-    label,  # [batch, n_anchors]
+    label,
     pred,
+    n_batch,
     negpos_ratio,
     num_classes,
-    positive,  # [batch, n_anchors]
+    positive,
 ):
     batch_conf = pred.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, label.view(-1, 1))
-    n_batch = label.shape[0]
 
     # Hard Negative Mining
     loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
@@ -211,9 +211,13 @@ class MultiBoxLoss(nn.Module):
         loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
         loss_l, nl = localization_loss(positive, boxes_pred, boxes_t)
 
+        label = label_t.detach().clone()
+        label[positive] = 1
+
         negatives = mine_negatives(
-            label=label_t,
+            label=label,
             pred=conf_pred,
+            n_batch=n_batch,
             negpos_ratio=self.negpos_ratio,
             num_classes=self.num_classes,
             positive=positives,
@@ -221,7 +225,7 @@ class MultiBoxLoss(nn.Module):
 
         loss_c, n = confidence_loss(
             positives,
-            label_t,
+            label,
             conf_pred,
             negatives,
             self.num_classes,
