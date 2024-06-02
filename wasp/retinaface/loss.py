@@ -109,12 +109,12 @@ def confidence_loss(
 
 
 def mine_negatives(
-    label,
+    label,  # [batch, n_anchors]
     pred,
     n_batch,
     negpos_ratio,
     num_classes,
-    positive,
+    positive,  # [batch, n_anchors]
 ):
     batch_conf = pred.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, label.view(-1, 1))
