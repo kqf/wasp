@@ -118,6 +118,7 @@ def mine_negatives(
 ):
     batch_conf = pred.view(-1, num_classes)
     loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, label.view(-1, 1))
+    n_batch = label.shape[0]
 
     # Hard Negative Mining
     loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
