@@ -45,12 +45,12 @@ def pred(batch_size, num_classes, n_anchors):
 
 
 @pytest.fixture
-def positive(batch_size, num_classes, n_anchors):
+def positive(batch_size, n_anchors):
     return torch.randint(0, 2, (batch_size, n_anchors)).bool()
 
 
 @pytest.mark.parametrize(
-    "batch_size, n_anchors, num_classe",
+    "batch_size, n_anchors, num_classes",
     [
         (32, 8732, 3),
         (12, 10_000, 3),
@@ -76,35 +76,30 @@ def test_mine_negatives_results(
     ), "The results of both methods should be the same."
 
 
+@pytest.mark.parametrize(
+    "batch_size, n_anchors, num_classes",
+    [
+        (32, 8732, 3),
+        (12, 10_000, 3),
+    ],
+)
+@pytest.mark.parametrize(
+    "mining_function", [mine_negatives, mine_negatives_cross_entropy]
+)
 def test_performance(
     label,
     pred,
     positive,
     num_classes,
+    mining_function,
     benchmark,
     negpos_ratio=7,
 ):
-    gather_time = benchmark(
-        mine_negatives,
+    benchmark(
+        mining_function,
         label,
         pred,
         negpos_ratio,
         num_classes,
         positive,
     )
-
-    cross_entropy_time = benchmark(
-        mine_negatives_cross_entropy,
-        label,
-        pred,
-        negpos_ratio,
-        num_classes,
-        positive,
-    )
-
-    print(f"Gather time: {gather_time:.4f} seconds")
-    print(f"Cross-entropy time: {cross_entropy_time:.4f} seconds")
-
-    assert (
-        gather_time > cross_entropy_time
-    ), "Cross-entropy version should be faster or comparable to gather."
