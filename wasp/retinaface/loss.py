@@ -211,11 +211,11 @@ class MultiBoxLoss(nn.Module):
         loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
         loss_l, nl = localization_loss(positive, boxes_pred, boxes_t)
 
-        # label = label_t.detach().clone()
-        # label[positive] = 1
+        label = label_t.detach().clone()
+        label[positive] = 1
 
         negatives = mine_negatives(
-            label=label_t,
+            label=label,
             pred=conf_pred,
             negpos_ratio=self.negpos_ratio,
             num_classes=self.num_classes,
@@ -224,7 +224,7 @@ class MultiBoxLoss(nn.Module):
 
         loss_c, n = confidence_loss(
             positives,
-            label_t,
+            label,
             conf_pred,
             negatives,
             self.num_classes,
