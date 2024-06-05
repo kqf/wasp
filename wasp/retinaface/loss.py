@@ -112,15 +112,18 @@ def mine_negatives(
     label,  # [batch, n_anchors]
     pred,
     negpos_ratio,
-    num_classes,
     positive,  # [batch, n_anchors]
 ):
-    batch_conf = pred.view(-1, num_classes)
-    loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, label.view(-1, 1))
+    # Compute the classification loss using cross_entropy
+    loss_c = torch.nn.functional.cross_entropy(
+        pred.view(-1, pred.shape[-1]),
+        label.view(-1),
+        reduction="none",
+    )
     n_batch = label.shape[0]
 
     # Hard Negative Mining
-    loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
+    loss_c[positive.view(-1)] = 0  # filter out positive boxes for now
     loss_c = loss_c.view(n_batch, -1)
     _, loss_idx = loss_c.sort(1, descending=True)
     _, idx_rank = loss_idx.sort(1)
@@ -218,7 +221,6 @@ class MultiBoxLoss(nn.Module):
             label=label,
             pred=conf_pred,
             negpos_ratio=self.negpos_ratio,
-            num_classes=self.num_classes,
             positive=positives,
         )
 
