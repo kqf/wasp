@@ -21,12 +21,13 @@ def mine_negatives_cross_entropy(
 
     # Hard Negative Mining
     loss_c[positive.view(-1)] = 0  # filter out positive boxes for now
+    # now loss is [n_bat h, n_anchors]
     loss_c = loss_c.view(n_batch, -1)
     _, loss_idx = loss_c.sort(1, descending=True)
     _, idx_rank = loss_idx.sort(1)
     num_pos = positive.long().sum(1, keepdim=True)
     num_neg = torch.clamp(negpos_ratio * num_pos, max=positive.shape[1] - 1)
-    return idx_rank < num_neg.expand_as(idx_rank)
+    return idx_rank < num_neg
 
 
 # Sample data generator
