@@ -9,16 +9,12 @@ def mine_negatives_cross_entropy(
     label,
     pred,
     negpos_ratio,
-    num_classes,
     positive,
 ):
-    batch_conf = pred.view(-1, num_classes)
-    labels = label.view(-1)
-
     # Compute the classification loss using cross_entropy
     loss_c = torch.nn.functional.cross_entropy(
-        batch_conf,
-        labels,
+        pred.reshape(-1, pred.shape[-1]),
+        label.reshape(-1),
         reduction="none",
     )
     n_batch = label.shape[0]
@@ -60,15 +56,12 @@ def test_mine_negatives_results(
     label,
     pred,
     positive,
-    num_classes,
     negpos_ratio=7,
 ):
 
-    negatives_mask_gather = mine_negatives(
-        label, pred, negpos_ratio, num_classes, positive
-    )
+    negatives_mask_gather = mine_negatives(label, pred, negpos_ratio, positive)
     negatives_mask_cross_entropy = mine_negatives_cross_entropy(
-        label, pred, negpos_ratio, num_classes, positive
+        label, pred, negpos_ratio, positive
     )
 
     assert torch.equal(
@@ -100,6 +93,5 @@ def test_performance(
         label,
         pred,
         negpos_ratio,
-        num_classes,
         positive,
     )
