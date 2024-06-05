@@ -1,7 +1,7 @@
 pytest
 pytest-cov
 pytest-timeout
-pyetst-benchmark
+pytest-benchmark
 isort
 mypy
 black
