@@ -29,7 +29,6 @@ def mine_negatives_cross_entropy(
     num_neg = torch.clamp(negpos_ratio * num_pos, max=positive.shape[1] - 1)
     return idx_rank < num_neg
 
-
 # Sample data generator
 @pytest.fixture
 def label(batch_size, num_classes, n_anchors):
