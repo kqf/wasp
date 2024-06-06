@@ -210,12 +210,12 @@ class MultiBoxLoss(nn.Module):
 
         positives = label_t != torch.zeros_like(label_t)
         positive = torch.where(positives)
+        label = label_t.detach().clone()
+        label[positive] = 1
+
         loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
         loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
         loss_l, nl = localization_loss(positive, boxes_pred, boxes_t)
-
-        label = label_t.detach().clone()
-        label[positive] = 1
 
         negatives = mine_negatives(
             label=label,
