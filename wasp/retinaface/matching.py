@@ -34,31 +34,24 @@ def match(
     threshold: float,
 ) -> tuple[torch.Tensor, torch.Tensor] | tuple[None, None]:
     overlaps = iou(boxes, point_form(priors))
-    # (Bipartite Matching)
-    # [1, num_objects] best prior for each ground truth
-    best_prior_overlap, best_prior_idx = overlaps.max(1, keepdim=True)
 
-    # ignore hard gt
+    # (Bipartite Matching)
+    best_prior_overlap, best_prior_idx = overlaps.max(1, keepdim=True)
     valid_gt_idx = best_prior_overlap[:, 0] >= 0.2
-    best_prior_idx_filter = best_prior_idx[valid_gt_idx, :]
-    if best_prior_idx_filter.shape[0] <= 0:
+
+    if valid_gt_idx.sum() == 0:
         return None, None
 
-    # [1, num_priors] best ground truth for each prior
     best_truth_overlap, best_truth_idx = overlaps.max(0, keepdim=True)
-    best_truth_idx.squeeze_(0)
-    best_truth_overlap.squeeze_(0)
-    best_prior_idx.squeeze_(1)
-    best_prior_idx_filter.squeeze_(1)
-    best_prior_overlap.squeeze_(1)
-    # ensure best prior
-    best_truth_overlap.index_fill_(0, best_prior_idx_filter, 2)
+    best_truth_overlap = best_truth_overlap.squeeze(0)
+    best_prior_idx = best_prior_idx.squeeze(1)
+    best_truth_overlap.index_fill_(0, best_prior_idx[valid_gt_idx], 2)
 
-    # ensure every gt matches with its prior of max overlap
+    best_truth_idx = best_truth_idx.squeeze(0)
     for j in range(best_prior_idx.shape[0]):
         best_truth_idx[best_prior_idx[j]] = j
 
-    labels_matched_ = labels[best_truth_idx]  # Shape: [num_priors]
-    # label as background, overlap < 0.35
-    labels_matched_[best_truth_overlap < threshold] = 0
-    return best_truth_idx, labels_matched_
+    labels_matched = labels[best_truth_idx].clone()
+    labels_matched[best_truth_overlap < threshold] = 0
+
+    return best_truth_idx, labels_matched
