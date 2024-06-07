@@ -42,7 +42,7 @@ def masked_loss(
     if data_masked.numel() == 0:
         loss = torch.nan_to_num(loss, 0)
 
-    return loss, max(data_masked.shape[0], 1)
+    return loss / max(data_masked.shape[0], 1)
 
 
 def depths_loss(
@@ -105,7 +105,7 @@ def confidence_loss(
     # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
     num_pos = positive.long().sum(1, keepdim=True)
     n = max(num_pos.data.sum().float(), 1)  # type: ignore
-    return loss_c, n
+    return loss_c / n
 
 
 def mine_negatives(
@@ -213,9 +213,9 @@ class MultiBoxLoss(nn.Module):
         label = label_t.detach().clone()
         label[positive] = 1
 
-        loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
-        loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
-        loss_l, nl = localization_loss(positive, boxes_pred, boxes_t)
+        loss_landm = landmark_loss(positive, kpts_pred, kypts_t)
+        loss_dpth = depths_loss(positive, dpth_pred, dpths_t)
+        loss_l = localization_loss(positive, boxes_pred, boxes_t)
 
         negatives = mine_negatives(
             label=label,
@@ -224,7 +224,7 @@ class MultiBoxLoss(nn.Module):
             positive=positives,
         )
 
-        loss_c, n = confidence_loss(
+        loss_c = confidence_loss(
             positives,
             label,
             conf_pred,
@@ -232,7 +232,7 @@ class MultiBoxLoss(nn.Module):
             self.num_classes,
         )
 
-        return loss_l / nl, loss_c / n, loss_landm / n1, loss_dpth / ndpth
+        return loss_l, loss_c, loss_landm, loss_dpth
 
     def full_forward(
         self,
