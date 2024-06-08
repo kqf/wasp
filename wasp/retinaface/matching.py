@@ -4,26 +4,27 @@ from wasp.retinaface.encode import point_form
 
 
 def intersect(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
-    """Computes the area of intersection between each pair of boxes."""
-    a, b = box_a.size(0), box_b.size(0)
-    max_xy = torch.min(
-        box_a[:, 2:].unsqueeze(1).expand(-1, b, -1),
-        box_b[:, 2:].unsqueeze(0).expand(a, -1, -1),
-    )
-    min_xy = torch.max(
-        box_a[:, :2].unsqueeze(1).expand(-1, b, -1),
-        box_b[:, :2].unsqueeze(0).expand(a, -1, -1),
-    )
+    # [batch, n_obj, n_anchors, 2]
+    max_xy = torch.min(box_a[..., None, 2:], box_b[..., 2:])
+    # [batch, n_obj, n_anchors, 2]
+    min_xy = torch.max(box_a[..., None, :2], box_b[..., :2])
+
     inter = torch.clamp(max_xy - min_xy, min=0)
-    return inter[:, :, 0] * inter[:, :, 1]
+    # [batch, n_obj, n_anchors]
+    return inter[..., 0] * inter[..., 1]
 
 
 def iou(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
-    """Computes the Intersection over Union (IoU) of two sets of boxes."""
+    # [batch, n_obj, n_anchors]
     inter = intersect(box_a, box_b)
-    area_a = (box_a[:, 2] - box_a[:, 0]) * (box_a[:, 3] - box_a[:, 1])
-    area_b = (box_b[:, 2] - box_b[:, 0]) * (box_b[:, 3] - box_b[:, 1])
-    union = area_a.unsqueeze(1) + area_b.unsqueeze(0) - inter
+
+    # [batch, n_obj]
+    area_a = (box_a[..., 2] - box_a[..., 0]) * (box_a[..., 3] - box_a[..., 1])
+    # [batch, n_anchors]
+    area_b = (box_b[..., 2] - box_b[..., 0]) * (box_b[..., 3] - box_b[..., 1])
+    union = area_a[..., None] + area_b - inter
+
+    # [batch, n_obj, n_anchors]
     return inter / union
 
 
