@@ -51,7 +51,7 @@ def match(
     best_prior_idx = best_prior_idx.squeeze(1)  # [n_obj]
     best_truth_overlap.index_fill_(0, best_prior_idx[valid_gt_idx], 2)
 
-    best_truth_idx = best_truth_idx.squeeze(0)  # [n_anchors]
+    best_truth_idx = best_truth_idx.squeeze(0)  # [n_anchors
 
     # Use arange instead of for loop
     best_truth_idx[best_prior_idx] = torch.arange(
