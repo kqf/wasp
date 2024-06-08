@@ -48,8 +48,12 @@ def match(
     best_truth_overlap.index_fill_(0, best_prior_idx[valid_gt_idx], 2)
 
     best_truth_idx = best_truth_idx.squeeze(0)
-    for j in range(best_prior_idx.shape[0]):
-        best_truth_idx[best_prior_idx[j]] = j
+
+    # Use arange instead of for loop
+    best_truth_idx[best_prior_idx] = torch.arange(
+        best_prior_idx.shape[0],
+        device=best_prior_idx.device,
+    )
 
     labels_matched = labels[best_truth_idx].clone()
     labels_matched[best_truth_overlap < threshold] = 0
