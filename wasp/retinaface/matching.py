@@ -5,9 +5,8 @@ from wasp.retinaface.encode import point_form
 
 def intersect(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
     # [batch, n_obj, n_anchors, 2]
-    max_xy = torch.min(box_a[..., None, 2:], box_b[..., 2:])
-    # [batch, n_obj, n_anchors, 2]
-    min_xy = torch.max(box_a[..., None, :2], box_b[..., :2])
+    max_xy = torch.min(box_a[..., 2:], box_b[..., 2:])
+    min_xy = torch.max(box_a[..., :2], box_b[..., :2])
 
     inter = torch.clamp(max_xy - min_xy, min=0)
     # [batch, n_obj, n_anchors]
@@ -22,7 +21,7 @@ def iou(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
     area_a = (box_a[..., 2] - box_a[..., 0]) * (box_a[..., 3] - box_a[..., 1])
     # [batch, n_anchors]
     area_b = (box_b[..., 2] - box_b[..., 0]) * (box_b[..., 3] - box_b[..., 1])
-    union = area_a[..., None] + area_b - inter
+    union = area_a + area_b - inter
 
     # [batch, n_obj, n_anchors]
     return inter / union
@@ -59,7 +58,7 @@ def match(
         best_prior_idx.shape[0],
         device=best_prior_idx.device,
     )
-    
+
     labels_matched = labels[best_truth_idx].clone()  # [n_anchors]
     labels_matched[best_truth_overlap < threshold] = 0
 
