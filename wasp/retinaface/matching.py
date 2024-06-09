@@ -59,7 +59,7 @@ def match(
         best_prior_idx.shape[0],
         device=best_prior_idx.device,
     )
-    
+
     labels_matched = labels[best_truth_idx].clone()  # [n_anchors]
     labels_matched[best_truth_overlap < threshold] = 0
 
