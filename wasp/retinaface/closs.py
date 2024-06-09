@@ -121,11 +121,26 @@ def default_losses(variance=None):
             ),
             enc_true=lambda y, _: torch.nn.functional.one_hot(
                 y.reshape(-1).long(), num_classes=2
-            ).float(),
+            )
+            .float()
+            .clamp(0, 1.0),
             # enc_true=debug,
             needs_negatives=True,
         ),
     }
+
+
+def stack(tensors, pad_value=-1) -> torch.Tensor:
+    max_length = max(tensor.shape[0] for tensor in tensors)
+
+    # Pad each tensor to the maximum length
+    padded = []
+    for t in tensors:
+        # (left, right, top, bottom)
+        padding = (0, 0, 0, max_length - t.shape[0])
+        padded.append(torch.nn.functional.pad(t, padding, value=pad_value))
+
+    return torch.stack(padded)
 
 
 class DetectionLoss(torch.nn.Module):
@@ -145,12 +160,12 @@ class DetectionLoss(torch.nn.Module):
 
     def forward(self, predictions, targets):
         y = {
-            "classes": torch.stack([target["labels"] for target in targets]),
-            "boxes": torch.stack([target["boxes"] for target in targets]),
-            "keypoints": torch.stack(
+            "classes": stack([target["labels"] for target in targets]),
+            "boxes": stack([target["boxes"] for target in targets]),
+            "keypoints": stack(
                 [target["keypoints"] for target in targets],
             ),
-            "depths": torch.stack([target["depths"] for target in targets]),
+            "depths": stack([target["depths"] for target in targets]),
         }
         y_pred = {
             "classes": predictions[1],
