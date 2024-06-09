@@ -75,7 +75,7 @@ def select(y_pred, y_true, anchor, positives, negatives, use_negatives=True):
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
     # Increase y_true_pos by 1 since negatives are zeros
-    y_true_tot = torch.squeeze(torch.cat([y_true_pos + 1, y_true_neg], dim=0))
+    y_true_tot = torch.squeeze(torch.cat([y_true_pos, y_true_neg], dim=0))
     return y_pred_tot, y_true_tot, anchor_tot
 
 
@@ -96,7 +96,6 @@ class WeightedLoss:
 def default_losses(variance=None):
     variance = variance or [0.1, 0.2]
 
-    # TODO: Use partials
     return {
         "boxes": WeightedLoss(
             torch.nn.SmoothL1Loss(),
@@ -121,8 +120,9 @@ def default_losses(variance=None):
                 gamma=0.5,
             ),
             enc_true=lambda y, _: torch.nn.functional.one_hot(
-                y.reshape(-1).long(), num_classes=3
+                y.reshape(-1).long(), num_classes=2
             ).float(),
+            # enc_true=debug,
             needs_negatives=True,
         ),
     }
@@ -140,7 +140,8 @@ class DetectionLoss(torch.nn.Module):
                 if isinstance(loss.loss, torch.nn.Module)
             ]
         )
-        self.anchors = anchors
+        # Add the batch
+        self.anchors = anchors[None]
 
     def forward(self, predictions, targets):
         y = {
@@ -160,7 +161,7 @@ class DetectionLoss(torch.nn.Module):
 
         positives, negatives, _ = match(
             y["boxes"],
-            y["classes"] < 0,
+            (y["classes"] < 0).squeeze(-1),
             self.anchors,
         )
 
