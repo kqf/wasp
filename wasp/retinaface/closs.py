@@ -121,7 +121,9 @@ def default_losses(variance=None):
             ),
             enc_true=lambda y, _: torch.nn.functional.one_hot(
                 y.reshape(-1).long(), num_classes=2
-            ).float(),
+            )
+            .float()
+            .clamp(0, 1.0),
             # enc_true=debug,
             needs_negatives=True,
         ),
