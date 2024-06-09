@@ -5,6 +5,8 @@ from typing import Callable
 import torch
 import torchvision
 
+from wasp.retinaface.encode import encode
+from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import iou
 
 
@@ -91,17 +93,19 @@ class WeightedLoss:
         return self.weight * self.loss(y_pred_encoded, y_true_encoded)
 
 
-def default_losses():
+def default_losses(variance=None):
+    variance = variance or [0.1, 0.2]
+
+    # TODO: Use partials
     return {
         "boxes": WeightedLoss(
             torch.nn.SmoothL1Loss(),
-            # enc_true=lambda x, a: encode(to_cchw(x), a),
-            # enc_true=encode,
+            enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
         ),
-        "landmarks": WeightedLoss(
+        "keypoints": WeightedLoss(
             torch.nn.SmoothL1Loss(),
-            # enc_true=lambda x, a: encode(to_cchw(x), a),
+            enc_true=lambda x, a: encl(x, a, variances=variance),
             # enc_true=encode,
             weight=1,
         ),
@@ -138,7 +142,22 @@ class DetectionLoss(torch.nn.Module):
         )
         self.anchors = anchors
 
-    def forward(self, y_pred, y):
+    def forward(self, predictions, targets):
+        y = {
+            "classes": torch.stack([target["labels"] for target in targets]),
+            "boxes": torch.stack([target["boxes"] for target in targets]),
+            "keypoints": torch.stack(
+                [target["keypoints"] for target in targets],
+            ),
+            "depths": torch.stack([target["depths"] for target in targets]),
+        }
+        y_pred = {
+            "classes": predictions[1],
+            "boxes": predictions[0],
+            "keypoints": predictions[2],
+            "depths": predictions[3],
+        }
+
         positives, negatives, _ = match(
             y["boxes"],
             y["classes"] < 0,
@@ -147,7 +166,7 @@ class DetectionLoss(torch.nn.Module):
 
         # fselect -- selects only matched positives / negatives
         fselect = partial(select, positives=positives, negatives=negatives)
-        losses, metrics = {}, {}
+        losses = {}
         for name, subloss in self.sublosses.items():
             # fselect(
             #   y_pred[batch, n_detections, dim1],
@@ -165,9 +184,6 @@ class DetectionLoss(torch.nn.Module):
                 use_negatives=subloss.needs_negatives,
             )
             losses[name] = subloss(y_pred_, y_true_, anchor_)
-            for mname, metric in self.metrics[name].items():
-                metrics[f"{name}_{mname}"] = metric(y_pred_, y_true_, anchor_)
 
         losses["loss"] = torch.stack(tuple(losses.values())).sum()
-        losses.update(metrics)
         return losses
