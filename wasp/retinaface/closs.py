@@ -155,8 +155,7 @@ class DetectionLoss(torch.nn.Module):
                 if isinstance(loss.loss, torch.nn.Module)
             ]
         )
-        # Add the batch
-        self.anchors = anchors[None]
+        self.register_buffer("anchors", anchors[None])
 
     def forward(self, predictions, targets):
         y = {
