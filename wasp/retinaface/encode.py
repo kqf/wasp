@@ -90,31 +90,37 @@ def encode_landm(
     priors: torch.Tensor,
     variances: Union[List[float], Tuple[float, float]],
 ) -> torch.Tensor:
-    """Encodes the variances from the priorbox
-    layers into the ground truth boxes we have matched.
+    # Check initial shapes
+    print(f"Initial matched shape: {matched.shape}")
+    print(f"Initial priors shape: {priors.shape}")
 
-    (based on jaccard overlap) with the prior boxes.
-    Args:
-        matched: Coords of ground truth for each prior in point-form
-            Shape: [num_priors, 10].
-        priors: Prior boxes in center-offset form
-            Shape: [num_priors,4].
-        variances: Variances of priorboxes
-    Return:
-        encoded landmarks, Shape: [num_priors, 10]
-    """
-    # dist b/t match center and prior's center
+    if matched.numel() == 0 or priors.numel() == 0:
+        raise ValueError("Input tensors must not be empty")
+
+    # Reshape matched tensor
     matched = torch.reshape(matched, (matched.shape[0], 5, 2))
+    print(f"Reshaped matched shape: {matched.shape}")
+
+    # Expand priors to match the shape of matched
     priors_cx = to_shape(priors[:, 0], matched)
     priors_cy = to_shape(priors[:, 1], matched)
     priors_w = to_shape(priors[:, 2], matched)
     priors_h = to_shape(priors[:, 3], matched)
     priors = torch.cat([priors_cx, priors_cy, priors_w, priors_h], dim=2)
+    print(f"Priors shape after expansion: {priors.shape}")
+
+    # Calculate g_cxcy
     g_cxcy = matched[:, :, :2] - priors[:, :, :2]
-    # encode variance
+    print(f"g_cxcy shape before encoding variance: {g_cxcy.shape}")
+
+    # Encode variance
     g_cxcy /= variances[0] * priors[:, :, 2:]
-    # return target for smooth_l1_loss
-    return g_cxcy.reshape(g_cxcy.shape[0], -1)
+    print(f"g_cxcy shape after encoding variance: {g_cxcy.shape}")
+
+    # Return target for smooth_l1_loss
+    final_shape = g_cxcy.shape[0], -1
+    print(f"Final reshape target shape: {final_shape}")
+    return g_cxcy.reshape(final_shape)
 
 
 def decode_landm(
