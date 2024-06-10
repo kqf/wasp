@@ -90,19 +90,6 @@ def encode_landm(
     priors: torch.Tensor,
     variances: Union[List[float], Tuple[float, float]],
 ) -> torch.Tensor:
-    """Encodes the variances from the priorbox
-    layers into the ground truth boxes we have matched.
-
-    (based on jaccard overlap) with the prior boxes.
-    Args:
-        matched: Coords of ground truth for each prior in point-form
-            Shape: [num_priors, 10].
-        priors: Prior boxes in center-offset form
-            Shape: [num_priors,4].
-        variances: Variances of priorboxes
-    Return:
-        encoded landmarks, Shape: [num_priors, 10]
-    """
     # dist b/t match center and prior's center
 
     # Reshape matched to [num_priors, 5, 2]
