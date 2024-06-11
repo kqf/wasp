@@ -93,31 +93,62 @@ class WeightedLoss:
         return self.weight * self.loss(y_pred_encoded, y_true_encoded)
 
 
+def masked_loss(
+    loss_function,
+    pred: torch.Tensor,
+    data: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    mask = ~torch.isnan(data)
+
+    data_masked = data[mask]
+    pred_masked = pred[mask]
+
+    loss = loss_function(
+        data_masked,
+        pred_masked,
+    )
+    if data_masked.numel() == 0:
+        loss = torch.nan_to_num(loss, 0)
+    return loss / max(data_masked.shape[0], 1)
+
+
 def default_losses(variance=None):
     variance = variance or [0.1, 0.2]
 
     return {
         "boxes": WeightedLoss(
-            torch.nn.SmoothL1Loss(),
+            partial(
+                masked_loss,
+                loss_function=torch.nn.SmoothL1Loss(),
+            ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
         ),
         "keypoints": WeightedLoss(
-            torch.nn.SmoothL1Loss(),
+            partial(
+                masked_loss,
+                loss_function=torch.nn.SmoothL1Loss(),
+            ),
             enc_true=lambda x, a: encl(x, a, variances=variance),
             # enc_true=encode,
             weight=1,
         ),
         "depths": WeightedLoss(
-            torch.nn.SmoothL1Loss(),
+            partial(
+                masked_loss,
+                loss_function=torch.nn.SmoothL1Loss(),
+            ),
             weight=1,
         ),
         "classes": WeightedLoss(
             partial(
-                torchvision.ops.sigmoid_focal_loss,
-                reduction="mean",
-                alpha=0.8,
-                gamma=0.5,
+                masked_loss,
+                loss_function=partial(
+                    torchvision.ops.sigmoid_focal_loss,
+                    reduction="mean",
+                    alpha=0.8,
+                    gamma=0.5,
+                ),
             ),
             enc_true=lambda y, _: torch.nn.functional.one_hot(
                 y.reshape(-1).long(), num_classes=2
