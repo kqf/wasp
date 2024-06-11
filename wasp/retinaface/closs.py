@@ -94,9 +94,9 @@ class WeightedLoss:
 
 
 def masked_loss(
-    loss_function,
     pred: torch.Tensor,
     data: torch.Tensor,
+    loss_function,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     mask = ~torch.isnan(data)
 
