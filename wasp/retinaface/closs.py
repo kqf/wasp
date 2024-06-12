@@ -100,7 +100,6 @@ def masked_loss(
 ) -> torch.Tensor:
     if data.numel() == 0:
         return torch.Tensor(0.0, device=data.device)
-
     mask = ~torch.isnan(data)
 
     data_masked = data[mask]
