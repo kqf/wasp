@@ -97,7 +97,9 @@ def masked_loss(
     pred: torch.Tensor,
     data: torch.Tensor,
     loss_function,
-) -> tuple[torch.Tensor, torch.Tensor]:
+) -> torch.Tensor:
+    if data.numel() == 0:
+        return torch.Tensor(0.0, device=data.device)
     mask = ~torch.isnan(data)
 
     data_masked = data[mask]
