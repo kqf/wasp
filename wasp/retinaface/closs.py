@@ -240,5 +240,8 @@ class DetectionLoss(torch.nn.Module):
             )
             losses[name] = subloss(y_pred_, y_true_, anchor_)
 
-        losses["loss"] = torch.stack(tuple(losses.values())).sum()
-        return losses
+        total = torch.sum(losses.values())
+        # detach the losses, from the graph
+        losses = {k: v.detach() for k, v in losses.items()}
+        losses["loss"] = total
+        return total
