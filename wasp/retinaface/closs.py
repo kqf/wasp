@@ -245,4 +245,4 @@ class DetectionLoss(torch.nn.Module):
         losses = {k: v.detach() for k, v in losses.items()}
 
         losses["loss"] = total
-        return total
+        return losses
