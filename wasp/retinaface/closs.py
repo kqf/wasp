@@ -13,8 +13,7 @@ from wasp.retinaface.matching import iou
 def match_positives(score, pos_th):
     # socre[batch_size, n_obj, n_anchor]
     max_overlap = torch.abs(score.max(dim=1, keepdim=True)[0] - score) < 1.0e-6
-    positive = max_overlap & (score > pos_th)
-    return positive
+    return max_overlap & (score > pos_th)
 
 
 def match(
@@ -24,7 +23,7 @@ def match(
     on_image=None,  # [batch_size, n_anchors]
     criterion=iou,
     pos_th=0.5,
-    neg_th=0.1,
+    neg_th=0.5,
     fill_value=-1,
 ):
     # criterion([batch_size, 1, n_anchors, 4], [batch_size, n_obj, 1, 4])
@@ -99,7 +98,9 @@ def masked_loss(
     loss_function,
 ) -> torch.Tensor:
     if data.numel() == 0:
-        return torch.tensor(0.0, device=data.device)
+        return torch.tensor(
+            0.0, device=data.device, requires_grad=True
+        )  # Ensure gradient tracking
 
     mask = ~torch.isnan(data)
 
@@ -117,7 +118,10 @@ def masked_loss(
         pred_masked,
     )
     if data_masked.numel() == 0:
-        loss = torch.nan_to_num(loss, 0)
+        return torch.tensor(
+            0.0, device=data.device, requires_grad=True
+        )  # Ensure gradient tracking
+
     return loss / max(data_masked.shape[0], 1)
 
 
@@ -242,7 +246,7 @@ class DetectionLoss(torch.nn.Module):
 
         total = torch.stack(tuple(losses.values())).sum()
         # detach the losses, from the graph
-        losses = {k: v.detach() for k, v in losses.items()}
+        # losses = {k: v.detach() for k, v in losses.items()}
 
         losses["loss"] = total
         return losses
