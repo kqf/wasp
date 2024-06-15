@@ -51,35 +51,7 @@ def match(
     return positive, negative, overlap
 
 
-def mine_negatives(y_pred_neg, y_true_neg, num_negatives):
-    # Calculate cross entropy loss for negative samples
-    loss_neg = torch.nn.functional.cross_entropy(
-        y_pred_neg, y_true_neg, reduction="none"
-    )
-
-    # Sort negatives based on loss (ascending order)
-    sorted_indices = torch.argsort(loss_neg, descending=True)
-
-    # Select the top-k hardest negatives
-    selected_indices = sorted_indices[:num_negatives]
-
-    # Return selected negatives
-    y_pred_neg = y_pred_neg[selected_indices]
-    y_true_neg = y_true_neg[selected_indices]
-
-    return y_pred_neg, y_true_neg
-
-
-def select(
-    y_pred,
-    y_true,
-    anchor,
-    positives,
-    negatives,
-    use_negatives=True,
-    # mine_negatives=lambda x, y, n_pos: (x, y),
-    mine_negatives=mine_negatives,
-):
+def select(y_pred, y_true, anchor, positives, negatives, use_negatives=True):
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
     y_true_pos = y_true[batch_, obj_]
@@ -88,22 +60,19 @@ def select(
     if not use_negatives:
         return y_pred_pos, y_true_pos, anchor_pos
 
-    y_pred_neg = y_pred[torch.where(negatives)]
-    anchor_neg = anchor[torch.where(negatives)]
+    n_neg = batch_.shape[0] * 10
+    i, j = torch.where(negatives)
+    indices = torch.randperm(i.shape[0])[:n_neg]
+    y_pred_neg = y_pred[i[indices], j[indices]]
+    anchor_neg = anchor[i[indices], j[indices]]
 
     # Zero is a background
     y_true_neg_shape = [y_pred_neg.shape[0]]
     if len(y_true_pos.shape) > 1:
         y_true_neg_shape.append(y_true_pos.shape[-1])
 
-    # Assume that zero is the negative class
+    # Assume that zero is the negative class, increase the labels by 1
     y_true_neg = torch.zeros(y_true_neg_shape, device=y_true_pos.device)
-
-    y_pred_neg, y_true_neg = mine_negatives(
-        y_pred_neg,
-        y_true_neg,
-        y_pred_pos.shape[0] * 7,
-    )
 
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
