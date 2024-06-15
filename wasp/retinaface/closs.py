@@ -51,6 +51,25 @@ def match(
     return positive, negative, overlap
 
 
+def mine_negatives(y_pred_neg, y_true_neg, num_negatives):
+    # Calculate cross entropy loss for negative samples
+    loss_neg = torch.nn.functional.cross_entropy(
+        y_pred_neg, y_true_neg, reduction="none"
+    )
+
+    # Sort negatives based on loss (ascending order)
+    sorted_indices = torch.argsort(loss_neg, descending=True)
+
+    # Select the top-k hardest negatives
+    selected_indices = sorted_indices[:num_negatives]
+
+    # Return selected negatives
+    y_pred_neg = y_pred_neg[selected_indices]
+    y_true_neg = y_true_neg[selected_indices]
+
+    return y_pred_neg, y_true_neg
+
+
 def select(
     y_pred,
     y_true,
@@ -58,7 +77,8 @@ def select(
     positives,
     negatives,
     use_negatives=True,
-    mine_negatives=lambda x, y: (x, y),
+    # mine_negatives=lambda x, y, n_pos: (x, y),
+    mine_negatives=mine_negatives,
 ):
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
@@ -79,7 +99,11 @@ def select(
     # Assume that zero is the negative class
     y_true_neg = torch.zeros(y_true_neg_shape, device=y_true_pos.device)
 
-    y_pred_neg, y_true_neg = mine_negatives(y_pred_neg, y_true_neg)
+    y_pred_neg, y_true_neg = mine_negatives(
+        y_pred_neg,
+        y_true_neg,
+        y_pred_pos.shape[0] * 7,
+    )
 
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
