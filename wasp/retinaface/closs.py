@@ -101,13 +101,6 @@ def select(
 
     # Assume that zero is the negative class
     y_true_neg = torch.zeros(y_true_neg_shape, device=y_true_pos.device)
-
-    y_pred_neg, y_true_neg = mine_negatives(
-        y_pred_neg,
-        y_true_neg,
-        y_pred_pos.shape[0] * 7,
-    )
-
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
     # Increase y_true_pos by 1 since negatives are zeros
