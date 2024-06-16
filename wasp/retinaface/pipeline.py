@@ -163,57 +163,21 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         targets = batch["annotation"]
 
         out = self.forward(images)
-        (
-            total_loss,
-            loss_loc,
-            loss_clf,
-            loss_lmrks,
-            loss_depths,
-        ) = self.loss.full_forward(
+        losses = self.loss(
             out,
             targets,
         )
 
-        self.log(
-            "train_classification",
-            loss_clf,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-            prog_bar=True,
-        )
-        self.log(
-            "train_localization",
-            loss_loc,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-            prog_bar=True,
-        )
-        self.log(
-            "train_landmarks",
-            loss_lmrks,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-            prog_bar=True,
-        )
-        self.log(
-            "train_depths",
-            loss_depths,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-            prog_bar=True,
-        )
-        self.log(
-            "train_loss",
-            total_loss,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-            prog_bar=True,
-        )
+        for name, loss in losses.items():
+            self.log(
+                f"train_{name}",
+                loss,
+                on_step=True,
+                on_epoch=True,
+                logger=True,
+                prog_bar=True,
+            )
+
         self.log(
             "lr",
             self._get_current_lr(),
@@ -223,7 +187,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             prog_bar=True,
         )
 
-        return total_loss
+        return losses["loss"]
 
     def validation_step(
         self,
@@ -234,53 +198,20 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         targets = batch["annotation"]
 
         out = self.forward(images)
-
-        (
-            total_loss,
-            loss_loc,
-            loss_clf,
-            loss_lmrks,
-            loss_depths,
-        ) = self.loss.full_forward(
+        losses = self.loss(
             out,
             targets,
         )
 
-        self.log(
-            "valid_classification",
-            loss_clf,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-        )
-        self.log(
-            "valid_localization",
-            loss_loc,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-        )
-        self.log(
-            "valid_landmarks",
-            loss_lmrks,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-        )
-        self.log(
-            "valid_depths",
-            loss_depths,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-        )
-        self.log(
-            "valid_loss",
-            total_loss,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-        )
+        for name, loss in losses.items():
+            self.log(
+                f"train_{name}",
+                loss,
+                on_step=True,
+                on_epoch=True,
+                logger=True,
+                prog_bar=True,
+            )
 
         outputs = prepare_outputs(
             images=images,
