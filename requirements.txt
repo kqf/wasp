@@ -9,7 +9,7 @@ torch<=1.13.1
 mlflow<2.4.0
 torchvision
 types-PyYAML
-albumentations==1.4.4
+albumentations
 addict
 dacite
 environs
@@ -17,4 +17,3 @@ mean-average-precision
 boto3==1.26.161
 pytorch-lightning
 toolz
-psutil

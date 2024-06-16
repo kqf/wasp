@@ -103,7 +103,11 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
         else:
             annotation[0, 4:14] = np.nan
 
-        annotation[0, 15:17] = label.depths or np.nan
+        if label.depths:
+            annotation[0, 15:17] = label.depths
+        else:
+            annotation[0, 15:17] = np.nan
+
         annotation[0, 14] = -1 if annotation[0, 4] < 0 else 1
         annotations = np.append(annotations, annotation, axis=0)
 
