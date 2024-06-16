@@ -88,8 +88,11 @@ def select(
     if not use_negatives:
         return y_pred_pos, y_true_pos, anchor_pos
 
-    y_pred_neg = y_pred[torch.where(negatives)]
-    anchor_neg = anchor[torch.where(negatives)]
+    n_neg = batch_.shape[0] * 10
+    i, j = torch.where(negatives)
+    indices = torch.randperm(i.shape[0])[:n_neg]
+    y_pred_neg = y_pred[i[indices], j[indices]]
+    anchor_neg = anchor[i[indices], j[indices]]
 
     # Zero is a background
     y_true_neg_shape = [y_pred_neg.shape[0]]
