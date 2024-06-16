@@ -44,10 +44,10 @@ def targets():
     return [to_dicts(x)]
 
 
-@pytest.mark.skip
 def test_loss(loss, predictions, targets):
     total, boxes, classes, landmarks, depths = loss.full_forward(
-        predictions, targets
+        predictions,
+        targets,
     )
     assert total == 0
     assert boxes == 0
