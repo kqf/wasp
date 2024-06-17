@@ -51,23 +51,31 @@ def match(
     return positive, negative, overlap
 
 
-def mine_negatives(y_pred_neg, y_true_neg, num_negatives):
-    # Calculate cross entropy loss for negative samples
-    loss_neg = torch.nn.functional.cross_entropy(
-        y_pred_neg, y_true_neg, reduction="none"
+def mine_negatives(y_pred, y_true, anchors, n_positive):
+    # Compute the classification loss using cross_entropy
+    loss = torch.nn.functional.cross_entropy(
+        y_pred,
+        y_true.long(),
+        reduction="none",
+    )
+    # Mask out first n_positive entries (those are positives)
+    loss[:n_positive] = -float("inf")
+
+    # Find 10 times more negatives
+    _, hard_indices = torch.topk(
+        loss,
+        min(n_positive * 10, y_pred.shape[0] - n_positive),
     )
 
-    # Sort negatives based on loss (ascending order)
-    sorted_indices = torch.argsort(loss_neg, descending=True)
+    # Merge hard-negatives and positive indices
+    total = torch.cat(
+        (
+            torch.arange(n_positive, device=y_pred.device),
+            hard_indices,
+        )
+    )
 
-    # Select the top-k hardest negatives
-    selected_indices = sorted_indices[:num_negatives]
-
-    # Return selected negatives
-    y_pred_neg = y_pred_neg[selected_indices]
-    y_true_neg = y_true_neg[selected_indices]
-
-    return y_pred_neg, y_true_neg
+    return y_pred[total], y_true[total], anchors[total]
 
 
 def select(
@@ -88,11 +96,9 @@ def select(
     if not use_negatives:
         return y_pred_pos, y_true_pos, anchor_pos
 
-    n_neg = batch_.shape[0] * 10
-    i, j = torch.where(negatives)
-    indices = torch.randperm(i.shape[0])[:n_neg]
-    y_pred_neg = y_pred[i[indices], j[indices]]
-    anchor_neg = anchor[i[indices], j[indices]]
+    neg = torch.where(negatives)
+    y_pred_neg = y_pred[neg]
+    anchor_neg = anchor[neg]
 
     # Zero is a background
     y_true_neg_shape = [y_pred_neg.shape[0]]
@@ -105,7 +111,13 @@ def select(
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
     # Increase y_true_pos by 1 since negatives are zeros
     y_true_tot = torch.squeeze(torch.cat([y_true_pos, y_true_neg], dim=0))
-    return y_pred_tot, y_true_tot, anchor_tot
+
+    return mine_negatives(
+        y_pred_tot,
+        y_true_tot,
+        anchor_tot,
+        y_pred_pos.shape[0],
+    )
 
 
 @dataclass
