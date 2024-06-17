@@ -146,11 +146,9 @@ def masked_loss(
 
     mask = ~torch.isnan(data)
 
-    # data_masked = data[mask]
-    # pred_masked = pred[mask]
     try:
         data_masked = torch.masked_select(data, mask)
-        pred_masked = torch.masked_select(data, mask)
+        pred_masked = torch.masked_select(pred, mask)
     except RuntimeError as e:
         print(f"{pred.shape=}, {data.shape=}, {mask.shape=}")
         raise e
@@ -160,6 +158,13 @@ def masked_loss(
         pred_masked,
     )
     if data_masked.numel() == 0:
+        return torch.tensor(
+            0.0, device=data.device, requires_grad=True
+        )  # Ensure gradient tracking
+
+    # Check for non-finite values and return zero if any are found
+    if not torch.isfinite(loss).all():
+        print(f"Non-finite loss detected: {loss.item()}")
         return torch.tensor(
             0.0, device=data.device, requires_grad=True
         )  # Ensure gradient tracking
