@@ -4,7 +4,9 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
-from pytorch_lightning.callbacks import DeviceStatsMonitor, TQDMProgressBar
+
+# from pytorch_lightning.callbacks import DeviceStatsMonitor
+from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 from wasp.retinaface.closs import DetectionLoss
@@ -91,7 +93,7 @@ def main(
             TQDMProgressBar(
                 refresh_rate=100,
             ),
-            DeviceStatsMonitor(),
+            # DeviceStatsMonitor(),
         ],
     )
 
