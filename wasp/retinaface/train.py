@@ -77,13 +77,13 @@ def main(
         strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
         benchmark=True,
-        precision=16,
+        precision=32,
         sync_batchnorm=torch.cuda.is_available(),
         logger=build_mlflow(),
         callbacks=[
             BestModelCheckpoint(
                 monitor="mAP",
-                verbose=True,
+                verboe=True,
                 mode="max",
                 save_top_k=-1,
                 save_weights_only=True,
