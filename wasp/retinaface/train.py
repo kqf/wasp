@@ -85,7 +85,7 @@ def main(
         callbacks=[
             BestModelCheckpoint(
                 monitor="mAP",
-                verboe=True,
+                verbose=True,
                 mode="max",
                 save_top_k=-1,
                 save_weights_only=True,
