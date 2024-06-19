@@ -147,8 +147,8 @@ def masked_loss(
     mask = ~torch.isnan(data)
 
     try:
-        data_masked = torch.masked_select(data, mask)
-        pred_masked = torch.masked_select(pred, mask)
+        data_masked = data[mask]
+        pred_masked = pred[mask]
     except RuntimeError as e:
         print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
         raise e
