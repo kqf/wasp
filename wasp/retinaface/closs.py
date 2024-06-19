@@ -150,7 +150,7 @@ def masked_loss(
         data_masked = torch.masked_select(data, mask)
         pred_masked = torch.masked_select(pred, mask)
     except RuntimeError as e:
-        print(f"{pred.shape=}, {data.shape=}, {mask.shape=}")
+        print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
         raise e
 
     loss = loss_function(
