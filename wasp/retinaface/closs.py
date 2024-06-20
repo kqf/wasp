@@ -3,11 +3,12 @@ from functools import partial
 from typing import Callable
 
 import torch
-import torchvision
 
 from wasp.retinaface.encode import encode
 from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import iou
+
+# import torchvision
 
 
 def match_positives(score, pos_th):
@@ -201,20 +202,24 @@ def default_losses(variance=None):
             weight=1,
         ),
         "classes": WeightedLoss(
+            # partial(
+            #     masked_loss,
+            #     loss_function=partial(
+            #         torchvision.ops.sigmoid_focal_loss,
+            #         reduction="mean",
+            #         alpha=0.8,
+            #         gamma=0.5,
+            #     ),
+            # ),
+            # enc_true=lambda y, _: torch.nn.functional.one_hot(
+            #     y.reshape(-1).long(), num_classes=2
+            # )
+            # .float()
+            # .clamp(0, 1.0),
             partial(
                 masked_loss,
-                loss_function=partial(
-                    torchvision.ops.sigmoid_focal_loss,
-                    reduction="mean",
-                    alpha=0.8,
-                    gamma=0.5,
-                ),
+                loss_function=torch.nn.CrossEntropyLoss(),
             ),
-            enc_true=lambda y, _: torch.nn.functional.one_hot(
-                y.reshape(-1).long(), num_classes=2
-            )
-            .float()
-            .clamp(0, 1.0),
             # enc_true=debug,
             needs_negatives=True,
         ),
