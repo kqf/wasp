@@ -57,7 +57,7 @@ def mine_negatives(y_pred, y_true, anchors, n_positive):
     # Compute the classification loss using cross_entropy
     loss = torch.nn.functional.cross_entropy(
         y_pred,
-        y_true.long(),
+        y_true,
         reduction="none",
     )
     # Mask out first n_positive entries (those are positives)
@@ -108,7 +108,11 @@ def select(
         y_true_neg_shape.append(y_true_pos.shape[-1])
 
     # Assume that zero is the negative class
-    y_true_neg = torch.zeros(y_true_neg_shape, device=y_true_pos.device)
+    y_true_neg = torch.zeros(
+        y_true_neg_shape,
+        device=y_true_pos.device,
+        dtype=y_true_pos.dtype,
+    )
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
     # Increase y_true_pos by 1 since negatives are zeros
@@ -156,8 +160,8 @@ def masked_loss(
         raise e
 
     loss = loss_function(
-        data_masked,
         pred_masked,
+        data_masked,
     )
     if data_masked.numel() == 0:
         return torch.tensor(
@@ -256,7 +260,7 @@ class DetectionLoss(torch.nn.Module):
 
     def forward(self, predictions, targets):
         y = {
-            "classes": stack([target["labels"] for target in targets]),
+            "classes": stack([target["labels"] for target in targets]).long(),
             "boxes": stack([target["boxes"] for target in targets]),
             "keypoints": stack(
                 [target["keypoints"] for target in targets],
@@ -276,8 +280,6 @@ class DetectionLoss(torch.nn.Module):
             self.anchors,
         )
 
-        # fselect -- selects only matched positives / negatives
-        fselect = partial(select, positives=positives, negatives=negatives)
         losses = {}
         for name, subloss in self.sublosses.items():
             # fselect(
@@ -289,17 +291,15 @@ class DetectionLoss(torch.nn.Module):
             # ~> y_true_[n_samples, dim2]
             # ~> anchor_[n_samples, 4]
 
-            y_pred_, y_true_, anchor_ = fselect(
+            y_pred_, y_true_, anchor_ = select(
                 y_pred[name],
                 y[name],
                 self.anchors,
                 use_negatives=subloss.needs_negatives,
+                positives=positives,
+                negatives=negatives,
             )
             losses[name] = subloss(y_pred_, y_true_, anchor_)
 
-        total = torch.stack(tuple(losses.values())).sum()
-        # detach the losses, from the graph
-        # losses = {k: v.detach() for k, v in losses.items()}
-
-        losses["loss"] = total
+        losses["loss"] = torch.stack(tuple(losses.values())).sum()
         return losses
