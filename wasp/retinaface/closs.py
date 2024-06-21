@@ -150,32 +150,32 @@ def masked_loss(
             0.0, device=data.device, requires_grad=True
         )  # Ensure gradient tracking
 
-    mask = ~torch.isnan(data)
+    # mask = ~torch.isnan(data)
 
-    try:
-        data_masked = data[mask]
-        pred_masked = pred[mask]
-    except RuntimeError as e:
-        print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
-        raise e
+    # try:
+    #     data_masked = data[mask]
+    #     pred_masked = pred[mask]
+    # except RuntimeError as e:
+    #     print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
+    #     raise e
 
     loss = loss_function(
-        pred_masked,
-        data_masked,
+        pred,
+        data,
     )
-    if data_masked.numel() == 0:
-        return torch.tensor(
-            0.0, device=data.device, requires_grad=True
-        )  # Ensure gradient tracking
+    # if data_masked.numel() == 0:
+    #     return torch.tensor(
+    #         0.0, device=data.device, requires_grad=True
+    #     )  # Ensure gradient tracking
 
     # Check for non-finite values and return zero if any are found
-    if not torch.isfinite(loss).all():
-        print(f"Non-finite loss detected: {loss.item()}")
-        return torch.tensor(
-            0.0, device=data.device, requires_grad=True
-        )  # Ensure gradient tracking
+    # if not torch.isfinite(loss).all():
+    #     print(f"Non-finite loss detected: {loss.item()}")
+    #     return torch.tensor(
+    #         0.0, device=data.device, requires_grad=True
+    #     )  # Ensure gradient tracking
 
-    return loss / max(data_masked.shape[0], 1)
+    return loss / max(data.shape[0], 1)
 
 
 def default_losses(variance=None):
