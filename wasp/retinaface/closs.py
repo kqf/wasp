@@ -175,7 +175,7 @@ def masked_loss(
     #         0.0, device=data.device, requires_grad=True
     #     )  # Ensure gradient tracking
 
-    return loss / max(data.shape[0], 1)
+    return torch.nan_to_num(loss) / max(data.shape[0], 1)
 
 
 def default_losses(variance=None):
