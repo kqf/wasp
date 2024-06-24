@@ -75,6 +75,7 @@ def main(
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
+        devices=1,
         max_epochs=epochs,
         strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
