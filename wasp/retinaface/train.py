@@ -81,7 +81,7 @@ def main(
         num_sanity_val_steps=0,
         benchmark=True,
         precision=64,
-        # sync_batchnorm=torch.cuda.is_available(),
+        sync_batchnorm=torch.cuda.is_available(),
         logger=build_mlflow(),
         callbacks=[
             BestModelCheckpoint(
