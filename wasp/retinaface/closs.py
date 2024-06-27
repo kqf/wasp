@@ -223,7 +223,7 @@ def default_losses(variance=None):
             # .clamp(0, 1.0),
             partial(
                 masked_loss,
-                loss_function=torch.nn.CrossEntropyLoss(),
+                loss_function=torch.nn.CrossEntropyLoss(reduce=None),
             ),
             # enc_true=debug,
             needs_negatives=True,
