@@ -276,7 +276,7 @@ class DetectionLoss(torch.nn.Module):
 
         positives, negatives, _ = match(
             y["boxes"],
-            y["classes"] < 0,
+            (y["classes"] < 0).squeeze(0),
             self.anchors,
         )
 
