@@ -185,7 +185,7 @@ def default_losses(variance=None):
         "boxes": WeightedLoss(
             partial(
                 masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(),
+                loss_function=torch.nn.SmoothL1Loss(reduction="sum"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
