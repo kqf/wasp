@@ -116,7 +116,7 @@ def select(
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
     # Increase y_true_pos by 1 since negatives are zeros
-    y_true_tot = torch.squeeze(torch.cat([y_true_pos + 1, y_true_neg], dim=0))
+    y_true_tot = torch.squeeze(torch.cat([y_true_pos, y_true_neg], dim=0))
 
     return mine_negatives(
         y_pred_tot,
