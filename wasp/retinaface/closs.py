@@ -53,7 +53,13 @@ def match(
     return positive, negative, overlap
 
 
-def mine_negatives(y_pred, y_true, anchors, n_positive, neg_pos_ratio=10):
+def mine_negatives(
+    y_pred: torch.Tensor,
+    y_true: torch.Tensor,
+    anchors: torch.Tensor,
+    n_positive: int,
+    neg_pos_ratio: int = 10,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     # Compute the classification loss using cross_entropy
     loss = torch.nn.functional.cross_entropy(
         y_pred,
