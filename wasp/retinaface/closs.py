@@ -227,7 +227,7 @@ def default_losses(variance=None):
             ),
             # enc_true=debug,
             needs_negatives=True,
-            weight=2.0,
+            weight=1.0,
         ),
     }
 
