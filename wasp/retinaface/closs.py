@@ -53,7 +53,7 @@ def match(
     return positive, negative, overlap
 
 
-def mine_negatives(y_pred, y_true, anchors, n_positive):
+def mine_negatives(y_pred, y_true, anchors, n_positive, neg_pos_ratio=10):
     # Compute the classification loss using cross_entropy
     loss = torch.nn.functional.cross_entropy(
         y_pred,
@@ -66,7 +66,7 @@ def mine_negatives(y_pred, y_true, anchors, n_positive):
     # Find 10 times more negatives
     _, hard_indices = torch.topk(
         loss,
-        min(n_positive * 10, y_pred.shape[0] - n_positive),
+        min(n_positive * neg_pos_ratio, y_pred.shape[0] - n_positive),
     )
 
     # Merge hard-negatives and positive indices
