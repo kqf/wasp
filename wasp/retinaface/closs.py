@@ -238,6 +238,7 @@ def default_losses(variance=None):
     }
 
 
+@torch.no_grad()
 def stack(tensors, pad_value=-1) -> torch.Tensor:
     max_length = max(tensor.shape[0] for tensor in tensors)
 
