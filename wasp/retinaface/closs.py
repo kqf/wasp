@@ -19,14 +19,14 @@ def match_positives(score, pos_th):
 
 
 def match(
-    boxes,  # [batch_size, n_obj, 4]
-    mask,  # [batch_size, n_obj]
-    anchors,  # [batch_size, n_anchors, 4]
+    boxes: torch.Tensor,  # [batch_size, n_obj, 4]
+    mask: torch.Tensor,  # [batch_size, n_obj]
+    anchor: torch.Tensors,  # [batch_size, n_anchors, 4]
     on_image=None,  # [batch_size, n_anchors]
     criterion=iou,
-    pos_th=0.5,
-    neg_th=0.5,
-    fill_value=-1,
+    pos_th: float = 0.5,
+    neg_th: float = 0.5,
+    fill_value: int = -1,
 ):
     # criterion([batch_size, 1, n_anchors, 4], [batch_size, n_obj, 1, 4])
     # ~> overlap[batch_size, n_obj, n_anchor]
@@ -36,7 +36,7 @@ def match(
     # )
 
     overlap = torch.rand(
-        (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
+        (boxes.shape[0], boxes.shape[1], anchor.shape[1]),
         device=boxes.device,
     )
 
