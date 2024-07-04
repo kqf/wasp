@@ -12,7 +12,7 @@ from wasp.retinaface.matching import iou
 # import torchvision
 
 
-def match_positives(score, pos_th):
+def match_positives(score: torch.Tensor, pos_th: float) -> torch.Tensor:
     # socre[batch_size, n_obj, n_anchor]
     max_overlap = torch.abs(score.max(dim=1, keepdim=True)[0] - score) < 1.0e-6
     return max_overlap & (score > pos_th)
