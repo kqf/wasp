@@ -21,7 +21,7 @@ def match_positives(score, pos_th):
 def match(
     boxes: torch.Tensor,  # [batch_size, n_obj, 4]
     mask: torch.Tensor,  # [batch_size, n_obj]
-    anchor: torch.Tensors,  # [batch_size, n_anchors, 4]
+    anchor: torch.Tensor,  # [batch_size, n_anchors, 4]
     on_image=None,  # [batch_size, n_anchors]
     criterion=iou,
     pos_th: float = 0.5,
