@@ -3,34 +3,41 @@ from functools import partial
 from typing import Callable
 
 import torch
-import torchvision
 
 from wasp.retinaface.encode import encode
-from wasp.retinaface.encode import encode_landm as encl
+
+# from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import iou
 
+# import torchvision
 
-def match_positives(score, pos_th):
+
+def match_positives(score: torch.Tensor, pos_th: float) -> torch.Tensor:
     # socre[batch_size, n_obj, n_anchor]
     max_overlap = torch.abs(score.max(dim=1, keepdim=True)[0] - score) < 1.0e-6
     return max_overlap & (score > pos_th)
 
 
 def match(
-    boxes,  # [batch_size, n_obj, 4]
-    mask,  # [batch_size, n_obj]
-    anchors,  # [batch_size, n_anchors, 4]
+    boxes: torch.Tensor,  # [batch_size, n_obj, 4]
+    mask: torch.Tensor,  # [batch_size, n_obj]
+    anchor: torch.Tensor,  # [batch_size, n_anchors, 4]
     on_image=None,  # [batch_size, n_anchors]
     criterion=iou,
-    pos_th=0.5,
-    neg_th=0.5,
-    fill_value=-1,
+    pos_th: float = 0.5,
+    neg_th: float = 0.5,
+    fill_value: int = -1,
 ):
     # criterion([batch_size, 1, n_anchors, 4], [batch_size, n_obj, 1, 4])
     # ~> overlap[batch_size, n_obj, n_anchor]
-    overlap = criterion(
-        anchors[:, None],
-        boxes[:, :, None],
+    # overlap = criterion(
+    #     anchors[:, None],
+    #     boxes[:, :, None],
+    # )
+
+    overlap = torch.rand(
+        (boxes.shape[0], boxes.shape[1], anchor.shape[1]),
+        device=boxes.device,
     )
 
     # Remove all scores that are masked
@@ -51,7 +58,49 @@ def match(
     return positive, negative, overlap
 
 
-def select(y_pred, y_true, anchor, positives, negatives, use_negatives=True):
+def mine_negatives(
+    y_pred: torch.Tensor,
+    y_true: torch.Tensor,
+    anchors: torch.Tensor,
+    n_positive: int,
+    neg_pos_ratio: int = 10,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    # Compute the classification loss using cross_entropy
+    loss = torch.nn.functional.cross_entropy(
+        y_pred,
+        y_true,
+        reduction="none",
+    )
+    # Mask out first n_positive entries (those are positives)
+    loss[:n_positive] = -float("inf")
+
+    # Find 10 times more negatives
+    _, hard_indices = torch.topk(
+        loss,
+        min(n_positive * neg_pos_ratio, y_pred.shape[0] - n_positive),
+    )
+
+    # Merge hard-negatives and positive indices
+    total = torch.cat(
+        (
+            torch.arange(n_positive, device=y_pred.device),
+            hard_indices,
+        )
+    )
+
+    return y_pred[total], y_true[total], anchors[total]
+
+
+def select(
+    y_pred,
+    y_true,
+    anchor,
+    positives,
+    negatives,
+    use_negatives=True,
+    # mine_negatives=lambda x, y, n_pos: (x, y),
+    mine_negatives=mine_negatives,
+):
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
     y_true_pos = y_true[batch_, obj_]
@@ -60,25 +109,32 @@ def select(y_pred, y_true, anchor, positives, negatives, use_negatives=True):
     if not use_negatives:
         return y_pred_pos, y_true_pos, anchor_pos
 
-    n_neg = batch_.shape[0] * 10
-    i, j = torch.where(negatives)
-    indices = torch.randperm(i.shape[0])[:n_neg]
-    y_pred_neg = y_pred[i[indices], j[indices]]
-    anchor_neg = anchor[i[indices], j[indices]]
+    neg = torch.where(negatives)
+    y_pred_neg = y_pred[neg]
+    anchor_neg = anchor[neg]
 
     # Zero is a background
     y_true_neg_shape = [y_pred_neg.shape[0]]
     if len(y_true_pos.shape) > 1:
         y_true_neg_shape.append(y_true_pos.shape[-1])
 
-    # Assume that zero is the negative class, increase the labels by 1
-    y_true_neg = torch.zeros(y_true_neg_shape, device=y_true_pos.device)
-
+    # Assume that zero is the negative class
+    y_true_neg = torch.zeros(
+        y_true_neg_shape,
+        device=y_true_pos.device,
+        dtype=y_true_pos.dtype,
+    )
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
     # Increase y_true_pos by 1 since negatives are zeros
     y_true_tot = torch.squeeze(torch.cat([y_true_pos, y_true_neg], dim=0))
-    return y_pred_tot, y_true_tot, anchor_tot
+
+    return mine_negatives(
+        y_pred_tot,
+        y_true_tot,
+        anchor_tot,
+        y_pred_pos.shape[0],
+    )
 
 
 @dataclass
@@ -105,27 +161,32 @@ def masked_loss(
             0.0, device=data.device, requires_grad=True
         )  # Ensure gradient tracking
 
-    mask = ~torch.isnan(data)
+    # mask = ~torch.isnan(data)
 
-    # data_masked = data[mask]
-    # pred_masked = pred[mask]
-    try:
-        data_masked = torch.masked_select(data, mask)
-        pred_masked = torch.masked_select(data, mask)
-    except RuntimeError as e:
-        print(f"{pred.shape=}, {data.shape=}, {mask.shape=}")
-        raise e
+    # try:
+    #     data_masked = data[mask]
+    #     pred_masked = pred[mask]
+    # except RuntimeError as e:
+    #     print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
+    #     raise e
 
     loss = loss_function(
-        data_masked,
-        pred_masked,
+        pred,
+        data,
     )
-    if data_masked.numel() == 0:
-        return torch.tensor(
-            0.0, device=data.device, requires_grad=True
-        )  # Ensure gradient tracking
+    # if data_masked.numel() == 0:
+    #     return torch.tensor(
+    #         0.0, device=data.device, requires_grad=True
+    #     )  # Ensure gradient tracking
 
-    return loss / max(data_masked.shape[0], 1)
+    # Check for non-finite values and return zero if any are found
+    # if not torch.isfinite(loss).all():
+    #     print(f"Non-finite loss detected: {loss.item()}")
+    #     return torch.tensor(
+    #         0.0, device=data.device, requires_grad=True
+    #     )  # Ensure gradient tracking
+
+    return torch.nan_to_num(loss) / max(data.shape[0], 1)
 
 
 def default_losses(variance=None):
@@ -135,48 +196,54 @@ def default_losses(variance=None):
         "boxes": WeightedLoss(
             partial(
                 masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(),
+                loss_function=torch.nn.SmoothL1Loss(reduction="sum"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
         ),
-        "keypoints": WeightedLoss(
-            partial(
-                masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(),
-            ),
-            enc_true=lambda x, a: encl(x, a, variances=variance),
-            # enc_true=encode,
-            weight=1,
-        ),
-        "depths": WeightedLoss(
-            partial(
-                masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(),
-            ),
-            weight=1,
-        ),
+        # "keypoints": WeightedLoss(
+        #     partial(
+        #         masked_loss,
+        #         loss_function=torch.nn.SmoothL1Loss(),
+        #     ),
+        #     enc_true=lambda x, a: encl(x, a, variances=variance),
+        #     # enc_true=encode,
+        #     weight=1,
+        # ),
+        # "depths": WeightedLoss(
+        #     partial(
+        #         masked_loss,
+        #         loss_function=torch.nn.SmoothL1Loss(),
+        #     ),
+        #     weight=1,
+        # ),
         "classes": WeightedLoss(
+            # partial(
+            #     masked_loss,
+            #     loss_function=partial(
+            #         torchvision.ops.sigmoid_focal_loss,
+            #         reduction="mean",
+            #         alpha=0.8,
+            #         gamma=0.5,
+            #     ),
+            # ),
+            # enc_true=lambda y, _: torch.nn.functional.one_hot(
+            #     y.reshape(-1).long(), num_classes=2
+            # )
+            # .float()
+            # .clamp(0, 1.0),
             partial(
                 masked_loss,
-                loss_function=partial(
-                    torchvision.ops.sigmoid_focal_loss,
-                    reduction="mean",
-                    alpha=0.8,
-                    gamma=0.5,
-                ),
+                loss_function=torch.nn.CrossEntropyLoss(reduce="sum"),
             ),
-            enc_true=lambda y, _: torch.nn.functional.one_hot(
-                y.reshape(-1).long(), num_classes=2
-            )
-            .float()
-            .clamp(0, 1.0),
             # enc_true=debug,
             needs_negatives=True,
+            weight=1.0,
         ),
     }
 
 
+@torch.no_grad()
 def stack(tensors, pad_value=-1) -> torch.Tensor:
     max_length = max(tensor.shape[0] for tensor in tensors)
 
@@ -206,7 +273,7 @@ class DetectionLoss(torch.nn.Module):
 
     def forward(self, predictions, targets):
         y = {
-            "classes": stack([target["labels"] for target in targets]),
+            "classes": stack([target["labels"] for target in targets]).long(),
             "boxes": stack([target["boxes"] for target in targets]),
             "keypoints": stack(
                 [target["keypoints"] for target in targets],
@@ -226,8 +293,6 @@ class DetectionLoss(torch.nn.Module):
             self.anchors,
         )
 
-        # fselect -- selects only matched positives / negatives
-        fselect = partial(select, positives=positives, negatives=negatives)
         losses = {}
         for name, subloss in self.sublosses.items():
             # fselect(
@@ -239,17 +304,15 @@ class DetectionLoss(torch.nn.Module):
             # ~> y_true_[n_samples, dim2]
             # ~> anchor_[n_samples, 4]
 
-            y_pred_, y_true_, anchor_ = fselect(
+            y_pred_, y_true_, anchor_ = select(
                 y_pred[name],
                 y[name],
                 self.anchors,
                 use_negatives=subloss.needs_negatives,
+                positives=positives,
+                negatives=negatives,
             )
             losses[name] = subloss(y_pred_, y_true_, anchor_)
 
-        total = torch.stack(tuple(losses.values())).sum()
-        # detach the losses, from the graph
-        # losses = {k: v.detach() for k, v in losses.items()}
-
-        losses["loss"] = total
+        losses["loss"] = torch.stack(tuple(losses.values())).sum()
         return losses
