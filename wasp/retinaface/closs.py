@@ -12,27 +12,32 @@ from wasp.retinaface.matching import iou
 # import torchvision
 
 
-def match_positives(score, pos_th):
+def match_positives(score: torch.Tensor, pos_th: float) -> torch.Tensor:
     # socre[batch_size, n_obj, n_anchor]
     max_overlap = torch.abs(score.max(dim=1, keepdim=True)[0] - score) < 1.0e-6
     return max_overlap & (score > pos_th)
 
 
 def match(
-    boxes,  # [batch_size, n_obj, 4]
-    mask,  # [batch_size, n_obj]
-    anchors,  # [batch_size, n_anchors, 4]
+    boxes: torch.Tensor,  # [batch_size, n_obj, 4]
+    mask: torch.Tensor,  # [batch_size, n_obj]
+    anchor: torch.Tensor,  # [batch_size, n_anchors, 4]
     on_image=None,  # [batch_size, n_anchors]
     criterion=iou,
-    pos_th=0.5,
-    neg_th=0.5,
-    fill_value=-1,
+    pos_th: float = 0.5,
+    neg_th: float = 0.5,
+    fill_value: int = -1,
 ):
     # criterion([batch_size, 1, n_anchors, 4], [batch_size, n_obj, 1, 4])
     # ~> overlap[batch_size, n_obj, n_anchor]
-    overlap = criterion(
-        anchors[:, None],
-        boxes[:, :, None],
+    # overlap = criterion(
+    #     anchors[:, None],
+    #     boxes[:, :, None],
+    # )
+
+    overlap = torch.rand(
+        (boxes.shape[0], boxes.shape[1], anchor.shape[1]),
+        device=boxes.device,
     )
 
     # Remove all scores that are masked
@@ -53,7 +58,13 @@ def match(
     return positive, negative, overlap
 
 
-def mine_negatives(y_pred, y_true, anchors, n_positive):
+def mine_negatives(
+    y_pred: torch.Tensor,
+    y_true: torch.Tensor,
+    anchors: torch.Tensor,
+    n_positive: int,
+    neg_pos_ratio: int = 10,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     # Compute the classification loss using cross_entropy
     loss = torch.nn.functional.cross_entropy(
         y_pred,
@@ -66,7 +77,7 @@ def mine_negatives(y_pred, y_true, anchors, n_positive):
     # Find 10 times more negatives
     _, hard_indices = torch.topk(
         loss,
-        min(n_positive * 10, y_pred.shape[0] - n_positive),
+        min(n_positive * neg_pos_ratio, y_pred.shape[0] - n_positive),
     )
 
     # Merge hard-negatives and positive indices
@@ -116,7 +127,7 @@ def select(
     y_pred_tot = torch.cat([y_pred_pos, y_pred_neg], dim=0)
     anchor_tot = torch.cat([anchor_pos, anchor_neg], dim=0)
     # Increase y_true_pos by 1 since negatives are zeros
-    y_true_tot = torch.squeeze(torch.cat([y_true_pos + 1, y_true_neg], dim=0))
+    y_true_tot = torch.squeeze(torch.cat([y_true_pos, y_true_neg], dim=0))
 
     return mine_negatives(
         y_pred_tot,
@@ -185,7 +196,7 @@ def default_losses(variance=None):
         "boxes": WeightedLoss(
             partial(
                 masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(),
+                loss_function=torch.nn.SmoothL1Loss(reduction="sum"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
@@ -223,14 +234,16 @@ def default_losses(variance=None):
             # .clamp(0, 1.0),
             partial(
                 masked_loss,
-                loss_function=torch.nn.CrossEntropyLoss(),
+                loss_function=torch.nn.CrossEntropyLoss(reduce="sum"),
             ),
             # enc_true=debug,
             needs_negatives=True,
+            weight=1.0,
         ),
     }
 
 
+@torch.no_grad()
 def stack(tensors, pad_value=-1) -> torch.Tensor:
     max_length = max(tensor.shape[0] for tensor in tensors)
 
@@ -276,7 +289,7 @@ class DetectionLoss(torch.nn.Module):
 
         positives, negatives, _ = match(
             y["boxes"],
-            (y["classes"] < 0).squeeze(0),
+            (y["classes"] < 0).squeeze(-1),
             self.anchors,
         )
 
