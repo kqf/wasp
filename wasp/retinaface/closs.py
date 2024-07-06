@@ -169,7 +169,7 @@ def masked_loss(
     # except RuntimeError as e:
     #     print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
     #     raise e
-
+    
     loss = loss_function(
         pred,
         data,
@@ -314,5 +314,8 @@ class DetectionLoss(torch.nn.Module):
             )
             losses[name] = subloss(y_pred_, y_true_, anchor_)
 
-        losses["loss"] = torch.stack(tuple(losses.values())).sum()
-        return losses
+        total = torch.sum(losses.values())
+        # detach the losses, from the graph
+        losses = {k: v.detach() for k, v in losses.items()}
+        losses["loss"] = total
+        return total

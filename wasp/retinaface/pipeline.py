@@ -110,7 +110,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                 preproc=compose(normalize, self.preproc),
                 rotate90=False,
             ),
-
             batch_size=1,
             num_workers=1,
             shuffle=True,
