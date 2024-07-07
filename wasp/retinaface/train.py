@@ -4,11 +4,13 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
-from pytorch_lightning.callbacks import DeviceStatsMonitor, TQDMProgressBar
+
+# from pytorch_lightning.callbacks import DeviceStatsMonitor
+from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
+from wasp.retinaface.closs import DetectionLoss
 from wasp.retinaface.logger import build_mlflow
-from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.pipeline import RetinaFacePipeline
 from wasp.retinaface.preprocess import preprocess
@@ -51,17 +53,18 @@ def main(
         preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,
         build_optimizer=partial(
-            torch.optim.SGD,
+            torch.optim.Adam,
             lr=0.001,
             weight_decay=0.0001,
-            momentum=0.9,
+            # momentum=0.9,
         ),
         build_scheduler=partial(
             torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
             T_0=10,
             T_mult=2,
         ),
-        loss=MultiBoxLoss(priors=priors),
+        # loss=MultiBoxLoss(priors=priors),
+        loss=DetectionLoss(anchors=priors),
     )
 
     Path("./retinaface-results").mkdir(
@@ -72,12 +75,13 @@ def main(
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
+        devices=1,
         max_epochs=epochs,
         strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
         benchmark=True,
-        precision=16,
-        sync_batchnorm=torch.cuda.is_available(),
+        # precision=32,
+        # sync_batchnorm=torch.cuda.is_available(),
         logger=build_mlflow(),
         callbacks=[
             BestModelCheckpoint(

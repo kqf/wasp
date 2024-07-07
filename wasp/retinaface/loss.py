@@ -42,7 +42,7 @@ def masked_loss(
     if data_masked.numel() == 0:
         loss = torch.nan_to_num(loss, 0)
 
-    return loss, max(data_masked.shape[0], 1)
+    return loss / max(data_masked.shape[0], 1)
 
 
 def depths_loss(
@@ -105,22 +105,25 @@ def confidence_loss(
     # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
     num_pos = positive.long().sum(1, keepdim=True)
     n = max(num_pos.data.sum().float(), 1)  # type: ignore
-    return loss_c, n
+    return loss_c / n
 
 
 def mine_negatives(
     label,  # [batch, n_anchors]
     pred,
     negpos_ratio,
-    num_classes,
     positive,  # [batch, n_anchors]
 ):
-    batch_conf = pred.view(-1, num_classes)
-    loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, label.view(-1, 1))
+    # Compute the classification loss using cross_entropy
+    loss_c = torch.nn.functional.cross_entropy(
+        pred.view(-1, pred.shape[-1]),
+        label.view(-1),
+        reduction="none",
+    )
     n_batch = label.shape[0]
 
     # Hard Negative Mining
-    loss_c[positive.view(-1, 1)] = 0  # filter out positive boxes for now
+    loss_c[positive.view(-1)] = 0  # filter out positive boxes for now
     loss_c = loss_c.view(n_batch, -1)
     _, loss_idx = loss_c.sort(1, descending=True)
     _, idx_rank = loss_idx.sort(1)
@@ -207,19 +210,21 @@ class MultiBoxLoss(nn.Module):
 
         positives = label_t != torch.zeros_like(label_t)
         positive = torch.where(positives)
-        loss_landm, n1 = landmark_loss(positive, kpts_pred, kypts_t)
-        loss_dpth, ndpth = depths_loss(positive, dpth_pred, dpths_t)
-        loss_l, nl = localization_loss(positive, boxes_pred, boxes_t)
+        label = label_t.detach().clone()
+        label[positive] = 1
+
+        loss_landm = landmark_loss(positive, kpts_pred, kypts_t)
+        loss_dpth = depths_loss(positive, dpth_pred, dpths_t)
+        loss_l = localization_loss(positive, boxes_pred, boxes_t)
 
         negatives = mine_negatives(
             label=label_t,
             pred=conf_pred,
             negpos_ratio=self.negpos_ratio,
-            num_classes=self.num_classes,
             positive=positives,
         )
 
-        loss_c, n = confidence_loss(
+        loss_c = confidence_loss(
             positives,
             label_t,
             conf_pred,
@@ -227,7 +232,7 @@ class MultiBoxLoss(nn.Module):
             self.num_classes,
         )
 
-        return loss_l / nl, loss_c / n, loss_landm / n1, loss_dpth / ndpth
+        return loss_l, loss_c, loss_landm, loss_dpth
 
     def full_forward(
         self,
