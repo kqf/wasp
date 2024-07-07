@@ -94,7 +94,7 @@ def main(
             TQDMProgressBar(
                 refresh_rate=100,
             ),
-            # DeviceStatsMonitor(),
+            DeviceStatsMonitor(),
         ],
     )
 
