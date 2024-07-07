@@ -136,6 +136,7 @@ def select(
         y_pred_pos.shape[0],
     )
 
+
 @dataclass
 class WeightedLoss:
     loss: torch.nn.Module
@@ -168,7 +169,7 @@ def masked_loss(
     # except RuntimeError as e:
     #     print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
     #     raise e
-    
+
     loss = loss_function(
         pred,
         data,
