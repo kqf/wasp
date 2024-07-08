@@ -23,7 +23,7 @@ def match(
     mask: torch.Tensor,  # [batch_size, n_obj]
     anchor: torch.Tensor,  # [batch_size, n_anchors, 4]
     on_image=None,  # [batch_size, n_anchors]
-    criterion=iou,
+    criterion: Callable = iou,
     pos_th: float = 0.5,
     neg_th: float = 0.5,
     fill_value: int = -1,
