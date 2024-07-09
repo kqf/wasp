@@ -210,13 +210,13 @@ def default_losses(variance=None):
         #     # enc_true=encode,
         #     weight=1,
         # ),
-        # "depths": WeightedLoss(
-        #     partial(
-        #         masked_loss,
-        #         loss_function=torch.nn.SmoothL1Loss(),
-        #     ),
-        #     weight=1,
-        # ),
+        "depths": WeightedLoss(
+            partial(
+                masked_loss,
+                loss_function=torch.nn.SmoothL1Loss(),
+            ),
+            weight=1,
+        ),
         "classes": WeightedLoss(
             # partial(
             #     masked_loss,
