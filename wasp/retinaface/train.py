@@ -4,7 +4,9 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
-from pytorch_lightning.callbacks import DeviceStatsMonitor, TQDMProgressBar
+
+# from pytorch_lightning.callbacks import DeviceStatsMonitor
+from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 from wasp.retinaface.closs import DetectionLoss
@@ -51,10 +53,10 @@ def main(
         preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,
         build_optimizer=partial(
-            torch.optim.SGD,
+            torch.optim.Adam,
             lr=0.001,
             weight_decay=0.0001,
-            momentum=0.9,
+            # momentum=0.9,
         ),
         build_scheduler=partial(
             torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
@@ -73,12 +75,13 @@ def main(
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
+        devices=1,
         max_epochs=epochs,
         strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
         benchmark=True,
-        precision=16,
-        sync_batchnorm=torch.cuda.is_available(),
+        # precision=32,
+        # sync_batchnorm=torch.cuda.is_available(),
         logger=build_mlflow(),
         callbacks=[
             BestModelCheckpoint(
@@ -91,7 +94,7 @@ def main(
             TQDMProgressBar(
                 refresh_rate=100,
             ),
-            DeviceStatsMonitor(),
+            # DeviceStatsMonitor(), ~
         ],
     )
 
