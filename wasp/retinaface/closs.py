@@ -201,22 +201,22 @@ def default_losses(variance=None):
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
         ),
-        "keypoints": WeightedLoss(
-            partial(
-                masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(),
-            ),
-            # enc_true=lambda x, a: encl(x, a, variances=variance),
-            enc_true=encode,
-            weight=1,
-        ),
-        "depths": WeightedLoss(
-            partial(
-                masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(),
-            ),
-            weight=1,
-        ),
+        # "keypoints": WeightedLoss(
+        #     partial(
+        #         masked_loss,
+        #         loss_function=torch.nn.SmoothL1Loss(),
+        #     ),
+        #     # enc_true=lambda x, a: encl(x, a, variances=variance),
+        #     enc_true=encode,
+        #     weight=1,
+        # ),
+        # "depths": WeightedLoss(
+        #     partial(
+        #         masked_loss,
+        #         loss_function=torch.nn.SmoothL1Loss(),
+        #     ),
+        #     weight=1,
+        # ),
         "classes": WeightedLoss(
             # partial(
             #     masked_loss,
