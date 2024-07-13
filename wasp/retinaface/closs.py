@@ -55,7 +55,7 @@ def match(
     overlap_, _ = overlap.max(dim=1)
     negative = overlap_ < neg_th
 
-    return positive, negative, overlap
+    return positive, negative
 
 
 def mine_negatives(
@@ -287,7 +287,7 @@ class DetectionLoss(torch.nn.Module):
             "depths": predictions[3],
         }
 
-        positives, negatives, _ = match(
+        positives, negatives = match(
             y["boxes"],
             (y["classes"] < 0).squeeze(-1),
             self.anchors,
