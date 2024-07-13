@@ -80,7 +80,7 @@ def main(
         strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
         benchmark=True,
-        precision=32,
+        precision=16,
         sync_batchnorm=torch.cuda.is_available(),
         # sync_batchnorm=False,
         logger=build_mlflow(),
