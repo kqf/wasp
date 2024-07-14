@@ -40,6 +40,11 @@ def match(
         device=boxes.device,
     )
 
+    # overlap = torch.rand(
+    #     (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
+    #     device=boxes.device,
+    # )
+
     # Remove all scores that are masked
     overlap[mask] = fill_value
 
