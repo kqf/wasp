@@ -18,3 +18,4 @@ boto3==1.26.161
 pytorch-lightning
 toolz
 psutil
+gpumonitor
