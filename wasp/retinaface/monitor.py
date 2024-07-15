@@ -6,7 +6,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
     def __init__(self, delay=1, display_options=None, log_per_batch=False):
         super().__init__()
         self.delay = delay
-        self.display_options = display_options or {}
+        self.display_options = display_options if display_options else {}
         self.log_per_batch = log_per_batch
         self.monitor = None
 
@@ -39,4 +39,16 @@ class PyTorchGpuMonitorCallback(pl.Callback):
 
     def on_epoch_end(self, trainer, pl_module):
         if not self.log_per_batch:
+            self._stop_monitoring()
+
+    def on_validation_batch_start(
+        self, trainer, pl_module, batch, batch_idx, dataloader_idx
+    ):
+        if self.log_per_batch:
+            self._start_monitoring()
+
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        if self.log_per_batch:
             self._stop_monitoring()
