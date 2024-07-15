@@ -3,7 +3,7 @@ from gpumonitor.monitor import GPUStatMonitor
 
 
 class PyTorchGpuMonitorCallback(pl.Callback):
-    def __init__(self, delay=1, display_options=None, log_per_batch=True):
+    def __init__(self, delay=1, display_options=None, log_per_batch=False):
         super().__init__()
         self.delay = delay
         self.display_options = display_options or {}
