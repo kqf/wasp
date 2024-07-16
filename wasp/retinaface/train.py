@@ -4,7 +4,6 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from environs import Env
-from gpumonitor.callbacks.lightning import PyTorchGpuMonitorCallback
 
 # from pytorch_lightning.callbacks import DeviceStatsMonitor
 from pytorch_lightning.callbacks import TQDMProgressBar
@@ -17,6 +16,9 @@ from wasp.retinaface.monitor import PyTorchGpuMonitorCallback
 from wasp.retinaface.pipeline import RetinaFacePipeline
 from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.priors import priorbox
+
+# from gpumonitor.callbacks.lightning import PyTorchGpuMonitorCallback
+
 
 env = Env()
 env.read_env()
