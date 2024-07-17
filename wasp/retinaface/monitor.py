@@ -61,6 +61,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
         outputs,
         batch,
         batch_idx,
+
     ):
         if self.log_per_batch:
             self._stop_monitoring()
