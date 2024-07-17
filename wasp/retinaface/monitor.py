@@ -13,6 +13,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
     def _start_monitoring(self):
         if self.monitor is None:
             self.monitor = GPUStatMonitor(self.delay, self.display_options)
+            self.monitor.average_stats = []
 
     def _stop_monitoring(self):
         if self.monitor:
