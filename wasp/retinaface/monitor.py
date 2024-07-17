@@ -22,13 +22,22 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             self.monitor = None
 
     def on_train_batch_start(
-        self, trainer, pl_module, batch, batch_idx, dataloader_idx
+        self,
+        trainer,
+        pl_module,
+        batch,
+        batch_idx,
     ):
         if self.log_per_batch:
             self._start_monitoring()
 
     def on_train_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+        self,
+        trainer,
+        pl_module,
+        outputs,
+        batch,
+        batch_idx,
     ):
         if self.log_per_batch:
             self._stop_monitoring()
@@ -41,14 +50,17 @@ class PyTorchGpuMonitorCallback(pl.Callback):
         if not self.log_per_batch:
             self._stop_monitoring()
 
-    def on_validation_batch_start(
-        self, trainer, pl_module, batch, batch_idx, dataloader_idx
-    ):
+    def on_validation_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
             self._start_monitoring()
 
     def on_validation_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+        self,
+        trainer,
+        pl_module,
+        outputs,
+        batch,
+        batch_idx,
     ):
         if self.log_per_batch:
             self._stop_monitoring()
