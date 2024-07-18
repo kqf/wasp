@@ -60,7 +60,12 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             self._start_monitoring()
 
     def on_validation_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx
+        self,
+        trainer,
+        pl_module,
+        outputs,
+        batch,
+        batch_idx,
     ):
         if self.log_per_batch:
             self._stop_monitoring()
