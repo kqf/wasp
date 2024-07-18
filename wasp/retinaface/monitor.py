@@ -18,17 +18,21 @@ class PyTorchGpuMonitorCallback(pl.Callback):
     def _stop_monitoring(self):
         if self.monitor:
             self.monitor.stop()
-            print("")
-            self.monitor.display_average_stats_per_gpu()
+            self._log_average_stats()
             self.monitor = None
 
-    def on_train_batch_start(
-        self,
-        trainer,
-        pl_module,
-        batch,
-        batch_idx,
-    ):
+    def _log_average_stats(self):
+        avg_stats = self.monitor.average_stats_per_gpu()
+        for gpu_idx, stats in enumerate(avg_stats):
+            for key, value in stats.items():
+                self._log_metric(f"gpu_{gpu_idx}_{key}", value)
+
+    def _log_metric(self, name, value):
+        if logger := self.trainer.logger:
+            # Log the metric using the Lightning logger
+            logger.log_metrics({name: value}, step=self.trainer.global_step)
+
+    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
             self._start_monitoring()
 
@@ -56,12 +60,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             self._start_monitoring()
 
     def on_validation_batch_end(
-        self,
-        trainer,
-        pl_module,
-        outputs,
-        batch,
-        batch_idx,
+        self, trainer, pl_module, outputs, batch, batch_idx
     ):
         if self.log_per_batch:
             self._stop_monitoring()
