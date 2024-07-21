@@ -5,8 +5,7 @@ from typing import Callable
 import torch
 
 from wasp.retinaface.encode import encode
-
-# from wasp.retinaface.encode import encode_landm as encl
+from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import iou
 
 # import torchvision
