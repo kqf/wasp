@@ -5,8 +5,7 @@ from typing import Callable
 import torch
 
 from wasp.retinaface.encode import encode
-
-# from wasp.retinaface.encode import encode_landm as encl
+from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import iou
 
 # import torchvision
@@ -211,8 +210,8 @@ def default_losses(variance=None):
                 masked_loss,
                 loss_function=torch.nn.SmoothL1Loss(),
             ),
-            # enc_true=lambda x, a: encl(x, a, variances=variance),
-            enc_true=encode,
+            enc_true=lambda x, a: encl(x, a, variances=variance),
+            # enc_true=encode,
             weight=1,
         ),
         # "depths": WeightedLoss(
