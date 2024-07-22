@@ -184,11 +184,11 @@ def masked_loss(
         )  # Ensure gradient tracking
 
     # Check for non-finite values and return zero if any are found
-    # if not torch.isfinite(loss).all():
-    #     print(f"Non-finite loss detected: {loss.item()}")
-    #     return torch.tensor(
-    #         0.0, device=data.device, requires_grad=True
-    #     )  # Ensure gradient tracking
+    if not torch.isfinite(loss).all():
+        print(f"Non-finite loss detected: {loss.item()}")
+        return torch.tensor(
+            0.0, device=data.device, requires_grad=True
+        )  # Ensure gradient tracking
 
     return torch.nan_to_num(loss) / max(data.shape[0], 1)
 
