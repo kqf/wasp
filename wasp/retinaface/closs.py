@@ -30,15 +30,15 @@ def match(
 ):
     # criterion([batch_size, 1, n_anchors, 4], [batch_size, n_obj, 1, 4])
     # ~> overlap[batch_size, n_obj, n_anchor]
-    # overlap = criterion(
-    #     anchors[:, None],
-    #     boxes[:, :, None],
-    # )
-
-    overlap = torch.rand(
-        (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
-        device=boxes.device,
+    overlap = criterion(
+        anchors[:, None],
+        boxes[:, :, None],
     )
+
+    # overlap = torch.rand(
+    #     (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
+    #     device=boxes.device,
+    # )
 
     # overlap = torch.rand(
     #     (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
@@ -166,30 +166,30 @@ def masked_loss(
             0.0, device=data.device, requires_grad=True
         )  # Ensure gradient tracking
 
-    mask = ~torch.isnan(data)
+    # mask = ~torch.isnan(data)
 
-    try:
-        data_masked = data[mask]
-        pred_masked = pred[mask]
-    except RuntimeError as e:
-        print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
-        raise e
+    # try:
+    #     data_masked = data[mask]
+    #     pred_masked = pred[mask]
+    # except RuntimeError as e:
+    #     print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
+    #     raise e
 
     loss = loss_function(
-        pred_masked,
-        data_masked,
+        pred,
+        data,
     )
-    if data_masked.numel() == 0:
-        return torch.tensor(
-            0.0, device=data.device, requires_grad=True
-        )  # Ensure gradient tracking
+    # if data_masked.numel() == 0:
+    #     return torch.tensor(
+    #         0.0, device=data.device, requires_grad=True
+    #     )  # Ensure gradient tracking
 
     # Check for non-finite values and return zero if any are found
-    if not torch.isfinite(loss).all():
-        print(f"Non-finite loss detected: {loss.item()}")
-        return torch.tensor(
-            0.0, device=data.device, requires_grad=True
-        )  # Ensure gradient tracking
+    # if not torch.isfinite(loss).all():
+    #     print(f"Non-finite loss detected: {loss.item()}")
+    #     return torch.tensor(
+    #         0.0, device=data.device, requires_grad=True
+    #     )  # Ensure gradient tracking
 
     return torch.nan_to_num(loss) / max(data.shape[0], 1)
 
