@@ -21,7 +21,7 @@ def match_positives(score: torch.Tensor, pos_th: float) -> torch.Tensor:
 def match(
     boxes: torch.Tensor,  # [batch_size, n_obj, 4]
     mask: torch.Tensor,  # [batch_size, n_obj]
-    anchor: torch.Tensor,  # [batch_size, n_anchors, 4]
+    anchors: torch.Tensor,  # [batch_size, n_anchors, 4]
     on_image=None,  # [batch_size, n_anchors]
     criterion: Callable = iou,
     pos_th: float = 0.5,
@@ -30,15 +30,20 @@ def match(
 ):
     # criterion([batch_size, 1, n_anchors, 4], [batch_size, n_obj, 1, 4])
     # ~> overlap[batch_size, n_obj, n_anchor]
-    # overlap = criterion(
-    #     anchors[:, None],
-    #     boxes[:, :, None],
+    overlap = criterion(
+        anchors[:, None],
+        boxes[:, :, None],
+    )
+
+    # overlap = torch.rand(
+    #     (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
+    #     device=boxes.device,
     # )
 
-    overlap = torch.rand(
-        (boxes.shape[0], boxes.shape[1], anchor.shape[1]),
-        device=boxes.device,
-    )
+    # overlap = torch.rand(
+    #     (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
+    #     device=boxes.device,
+    # )
 
     # Remove all scores that are masked
     overlap[mask] = fill_value
@@ -55,7 +60,7 @@ def match(
     overlap_, _ = overlap.max(dim=1)
     negative = overlap_ < neg_th
 
-    return positive, negative, overlap
+    return positive, negative
 
 
 def mine_negatives(
@@ -287,7 +292,7 @@ class DetectionLoss(torch.nn.Module):
             "depths": predictions[3],
         }
 
-        positives, negatives, _ = match(
+        positives, negatives = match(
             y["boxes"],
             (y["classes"] < 0).squeeze(-1),
             self.anchors,
