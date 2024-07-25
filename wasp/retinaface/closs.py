@@ -211,8 +211,8 @@ def default_losses(variance=None):
         #         masked_loss,
         #         loss_function=torch.nn.SmoothL1Loss(),
         #     ),
-        #     enc_true=lambda x, a: encl(x, a, variances=variance),
-        #     # enc_true=encode,
+        #     # enc_true=lambda x, a: encl(x, a, variances=variance),
+        #     enc_true=encode,
         #     weight=1,
         # ),
         # "depths": WeightedLoss(
