@@ -13,22 +13,35 @@ class PyTorchGpuMonitorCallback(pl.Callback):
     def _start_monitoring(self):
         if self.monitor is None:
             self.monitor = GPUStatMonitor(self.delay, self.display_options)
+            self.monitor.average_stats = []
 
     def _stop_monitoring(self):
         if self.monitor:
             self.monitor.stop()
-            print("")
-            self.monitor.display_average_stats_per_gpu()
+            self._log_average_stats()
             self.monitor = None
 
-    def on_train_batch_start(
-        self, trainer, pl_module, batch, batch_idx, dataloader_idx
-    ):
+    def _log_average_stats(self):
+        for gpu_idx, stats in enumerate(self.monitor.average_stats):
+            for key, value in stats.items():
+                self._log_metric(f"gpu_{gpu_idx}_{key}", value)
+
+    def _log_metric(self, name, value):
+        if logger := self.trainer.logger:
+            # Log the metric using the Lightning logger
+            logger.log_metrics({name: value}, step=self.trainer.global_step)
+
+    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
             self._start_monitoring()
 
     def on_train_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+        self,
+        trainer,
+        pl_module,
+        outputs,
+        batch,
+        batch_idx,
     ):
         if self.log_per_batch:
             self._stop_monitoring()
@@ -41,14 +54,17 @@ class PyTorchGpuMonitorCallback(pl.Callback):
         if not self.log_per_batch:
             self._stop_monitoring()
 
-    def on_validation_batch_start(
-        self, trainer, pl_module, batch, batch_idx, dataloader_idx
-    ):
+    def on_validation_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
             self._start_monitoring()
 
     def on_validation_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+        self,
+        trainer,
+        pl_module,
+        outputs,
+        batch,
+        batch_idx,
     ):
         if self.log_per_batch:
             self._stop_monitoring()
