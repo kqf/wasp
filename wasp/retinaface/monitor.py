@@ -15,21 +15,21 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             self.monitor = GPUStatMonitor(self.delay, self.display_options)
             self.monitor.average_stats = []
 
-    def _stop_monitoring(self):
+    def _stop_monitoring(self, trainer):
         if self.monitor:
             self.monitor.stop()
-            self._log_average_stats()
+            self._log_average_stats(trainer)
             self.monitor = None
 
-    def _log_average_stats(self):
+    def _log_average_stats(self, trainer):
         for gpu_idx, stats in enumerate(self.monitor.average_stats):
-            for key, value in stats.jsonify().items():
+            for key, value in stats.items():
                 self._log_metric(f"gpu_{gpu_idx}_{key}", value)
 
-    def _log_metric(self, name, value):
-        if logger := self.trainer.logger:
+    def _log_metric(self, trainer, name, value):
+        if logger := trainer.logger:
             # Log the metric using the Lightning logger
-            logger.log_metrics({name: value}, step=self.trainer.global_step)
+            logger.log_metrics({name: value}, step=trainer.global_step)
 
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
@@ -44,7 +44,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
         batch_idx,
     ):
         if self.log_per_batch:
-            self._stop_monitoring()
+            self._stop_monitoring(trainer)
 
     def on_epoch_start(self, trainer, pl_module):
         if not self.log_per_batch:
@@ -52,7 +52,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
 
     def on_epoch_end(self, trainer, pl_module):
         if not self.log_per_batch:
-            self._stop_monitoring()
+            self._stop_monitoring(trainer)
 
     def on_validation_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
@@ -67,4 +67,4 @@ class PyTorchGpuMonitorCallback(pl.Callback):
         batch_idx,
     ):
         if self.log_per_batch:
-            self._stop_monitoring()
+            self._stop_monitoring(trainer)
