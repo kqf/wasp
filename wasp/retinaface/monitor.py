@@ -24,7 +24,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
     def _log_average_stats(self, trainer):
         for gpu_idx, stats in enumerate(self.monitor.average_stats):
             for key, value in stats.items():
-                self._log_metric(f"gpu_{gpu_idx}_{key}", value)
+                self._log_metric(trainer, f"gpu_{gpu_idx}_{key}", value)
 
     def _log_metric(self, trainer, name, value):
         if logger := trainer.logger:
