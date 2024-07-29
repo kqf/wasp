@@ -1,6 +1,17 @@
 import pytorch_lightning as pl
 from gpumonitor.monitor import GPUStatMonitor
 
+IGNORE_FIELDS = {
+    "index",
+    "uuid",
+    "name",
+    "temperature.gpu",
+    "fan.speed",
+    "power.draw",
+    "enforced.power.limit",
+    "processes",
+}
+
 
 class PyTorchGpuMonitorCallback(pl.Callback):
     def __init__(self, delay=1, display_options=None, log_per_batch=False):
@@ -22,14 +33,21 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             self.monitor = None
 
     def _log_average_stats(self, trainer):
-        for gpu_idx, stats in enumerate(self.monitor.average_stats):
-            for key, value in stats.items():
-                self._log_metric(trainer, f"gpu_{gpu_idx}_{key}", value)
+        for stats in self.monitor.average_stats:
+            statistics = stats.jsonify()
+            name = f"{statistics['name']}:{statistics['index']}"
+            for key, value in statistics.items():
+                if key in IGNORE_FIELDS:
+                    continue
+                self._log_metric(trainer, f"{name}:{key}", value)
 
     def _log_metric(self, trainer, name, value):
         if logger := trainer.logger:
             # Log the metric using the Lightning logger
-            logger.log_metrics({name: value}, step=trainer.global_step)
+            logger.log_metrics(
+                {name.replace(":", "/"): value},
+                step=trainer.global_step,
+            )
 
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
