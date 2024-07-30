@@ -109,14 +109,14 @@ def select(
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
     y_true_pos = y_true[batch_, obj_]
-    anchor_pos = anchor[batch_, anchor_]
+    anchor_pos = anchor[torch.zeros_like(batch_), anchor_]
 
     if not use_negatives:
         return y_pred_pos, y_true_pos, anchor_pos
 
-    neg = torch.where(negatives)
-    y_pred_neg = y_pred[neg]
-    anchor_neg = anchor[neg]
+    neg_batch_, neg_obj_ = torch.where(negatives)
+    y_pred_neg = y_pred[neg_batch_, neg_obj_]
+    anchor_neg = anchor[torch.zeros_like(neg_batch_), neg_obj_]
 
     # Zero is a background
     y_true_neg_shape = [y_pred_neg.shape[0]]
