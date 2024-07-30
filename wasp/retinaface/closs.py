@@ -104,7 +104,8 @@ def select(
     negatives,
     use_negatives=True,
     # mine_negatives=lambda x, y, n_pos: (x, y),
-    mine_negatives=mine_negatives,
+    # mine_negatives=mine_negatives,
+    mine_negatives=lambda x, y, z, *args: (x, y, z),
 ):
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
