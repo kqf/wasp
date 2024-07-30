@@ -39,12 +39,15 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             for key, value in statistics.items():
                 if key in IGNORE_FIELDS:
                     continue
-                self._log_metric(trainer, f"{name}:{key}", str(value))
+                self._log_metric(trainer, f"{name}:{key}", value)
 
     def _log_metric(self, trainer, name, value):
         if logger := trainer.logger:
             # Log the metric using the Lightning logger
-            logger.log_metrics({name: value}, step=trainer.global_step)
+            logger.log_metrics(
+                {name.replace(":", "/"): value},
+                step=trainer.global_step,
+            )
 
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
         if self.log_per_batch:
