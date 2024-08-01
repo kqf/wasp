@@ -17,7 +17,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
     def __init__(self, delay=1, display_options=None, log_per_batch=False):
         super().__init__()
         self.delay = delay
-        self.display_options = display_options if display_options else {}
+        self.display_options = display_options or {}
         self.log_per_batch = log_per_batch
         self.monitor = None
 
