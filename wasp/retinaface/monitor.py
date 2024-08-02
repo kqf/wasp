@@ -1,15 +1,34 @@
 import pytorch_lightning as pl
 from gpumonitor.monitor import GPUStatMonitor
 
-IGNORE_FIELDS = {
-    "index",
-    "uuid",
-    "name",
-    "temperature.gpu",
-    "fan.speed",
-    "power.draw",
-    "enforced.power.limit",
-    "processes",
+"""
+{'index': 0,
+ 'uuid': 'GPU-de8108cd-fb0b-b55f-d8a5-66d44d674b6a',
+ 'name': 'Tesla T4',
+ 'memory.total': 15360,
+ 'memory.used': 1269,
+ 'memory_free': 14090,
+ 'memory_available': 14090,
+ 'temperature.gpu': 36,
+ 'fan.speed': None,
+ 'utilization.gpu': 27,
+ 'power.draw': 35,
+ 'enforced.power.limit': 70,
+ 'processes': [{'username': 'ubuntu',
+   'command': 'python3.10',
+   'full_command': [/bin/python3.10',
+    '/bin/pytest',
+    '-s',
+    'train.py'],
+   'gpu_memory_usage': 869,
+   'cpu_percent': 99.4,
+   'cpu_memory_usage': 2009829376,
+   'pid': 9493}]}
+"""
+
+REPORT_FIELDS = {
+    "memory.total",
+    "memory.used",
 }
 
 
@@ -36,10 +55,17 @@ class PyTorchGpuMonitorCallback(pl.Callback):
         for stats in self.monitor.average_stats:
             statistics = stats.jsonify()
             name = f"{statistics['name']}:{statistics['index']}"
-            for key, value in statistics.items():
-                if key in IGNORE_FIELDS:
-                    continue
-                self._log_metric(trainer, f"{name}:{key}", value)
+
+            memory_total = statistics.get("memory.total")
+            memory_used = statistics.get("memory.used")
+            if memory_total and memory_used:
+                for key, value in statistics.items():
+                    if key in REPORT_FIELDS:
+                        self._log_metric(trainer, f"{name}:{key}", value)
+
+                # Calculate and log memory fraction
+                memory_frac = memory_used / memory_total
+                self._log_metric(trainer, f"{name}:memory.frac", memory_frac)
 
     def _log_metric(self, trainer, name, value):
         if logger := trainer.logger:
