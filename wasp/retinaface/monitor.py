@@ -1,17 +1,10 @@
 import pytorch_lightning as pl
 from gpumonitor.monitor import GPUStatMonitor
 
-IGNORE_FIELDS = {
-    "index",
-    "uuid",
-    "name",
-    "temperature.gpu",
-    "fan.speed",
-    "power.draw",
-    "enforced.power.limit",
-    "processes",
+REPORT_FIELDS = {
+    "memory.total",
+    "memory.used",
 }
-
 
 class PyTorchGpuMonitorCallback(pl.Callback):
     def __init__(self, delay=1, display_options=None, log_per_batch=False):
@@ -36,10 +29,17 @@ class PyTorchGpuMonitorCallback(pl.Callback):
         for stats in self.monitor.average_stats:
             statistics = stats.jsonify()
             name = f"{statistics['name']}:{statistics['index']}"
-            for key, value in statistics.items():
-                if key in IGNORE_FIELDS:
-                    continue
-                self._log_metric(trainer, f"{name}:{key}", value)
+
+            memory_total = statistics.get("memory.total")
+            memory_used = statistics.get("memory.used")
+            if memory_total and memory_used:
+                for key, value in statistics.items():
+                    if key in REPORT_FIELDS:
+                        self._log_metric(trainer, f"{name}:{key}", value)
+
+                # Calculate and log memory fraction
+                memory_frac = memory_used / memory_total
+                self._log_metric(trainer, f"{name}:memory.frac", memory_frac)
 
     def _log_metric(self, trainer, name, value):
         if logger := trainer.logger:
