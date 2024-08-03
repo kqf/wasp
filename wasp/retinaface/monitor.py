@@ -1,31 +1,6 @@
 import pytorch_lightning as pl
 from gpumonitor.monitor import GPUStatMonitor
 
-"""
-{'index': 0,
- 'uuid': 'GPU-de8108cd-fb0b-b55f-d8a5-66d44d674b6a',
- 'name': 'Tesla T4',
- 'memory.total': 15360,
- 'memory.used': 1269,
- 'memory_free': 14090,
- 'memory_available': 14090,
- 'temperature.gpu': 36,
- 'fan.speed': None,
- 'utilization.gpu': 27,
- 'power.draw': 35,
- 'enforced.power.limit': 70,
- 'processes': [{'username': 'ubuntu',
-   'command': 'python3.10',
-   'full_command': [/bin/python3.10',
-    '/bin/pytest',
-    '-s',
-    'train.py'],
-   'gpu_memory_usage': 869,
-   'cpu_percent': 99.4,
-   'cpu_memory_usage': 2009829376,
-   'pid': 9493}]}
-"""
-
 REPORT_FIELDS = {
     "memory.total",
     "memory.used",
@@ -33,6 +8,31 @@ REPORT_FIELDS = {
 
 
 class PyTorchGpuMonitorCallback(pl.Callback):
+    """
+    {'index': 0,
+    'uuid': 'GPU-de8108cd-fb0b-b55f-d8a5-66d44d674b6a',
+    'name': 'Tesla T4',
+    'memory.total': 15360,
+    'memory.used': 1269,
+    'memory_free': 14090,
+    'memory_available': 14090,
+    'temperature.gpu': 36,
+    'fan.speed': None,
+    'utilization.gpu': 27,
+    'power.draw': 35,
+    'enforced.power.limit': 70,
+    'processes': [{'username': 'ubuntu',
+    'command': 'python3.10',
+    'full_command': [/bin/python3.10',
+        '/bin/pytest',
+        '-s',
+        'train.py'],
+    'gpu_memory_usage': 869,
+    'cpu_percent': 99.4,
+    'cpu_memory_usage': 2009829376,
+    'pid': 9493}]}
+    """
+
     def __init__(self, delay=1, display_options=None, log_per_batch=False):
         super().__init__()
         self.delay = delay
