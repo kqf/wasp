@@ -60,13 +60,13 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             statistics = stats.jsonify()
             name = f"{statistics['name']}:{statistics['index']}"
 
-            # Log only the fields in REPORT_FIELDS
             memory_total = statistics.get("memory.total")
             memory_used = statistics.get("memory.used")
             if memory_total and memory_used:
                 for key, value in statistics.items():
                     if key in REPORT_FIELDS:
-                        self._log_metric(trainer, f"{name}:{key}", value)
+                        # self._log_metric(trainer, f"{name}:{key}", value)
+                        pass
 
                 # Aggregate totals for averages
                 total_memory_total += memory_total
@@ -81,7 +81,8 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             avg_memory_total = total_memory_total / num_gpus
             avg_memory_used = total_memory_used / num_gpus
             avg_memory_frac = avg_memory_used / avg_memory_total
-
+            
+            self._log_metric(trainer, "average:number.gpus", num_gpus)
             self._log_metric(trainer, "average:memory.total", avg_memory_total)
             self._log_metric(trainer, "average:memory.used", avg_memory_used)
             self._log_metric(trainer, "average:memory.frac", avg_memory_frac)
