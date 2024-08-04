@@ -81,7 +81,7 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             avg_memory_total = total_memory_total / num_gpus
             avg_memory_used = total_memory_used / num_gpus
             avg_memory_frac = avg_memory_used / avg_memory_total
-            
+
             self._log_metric(trainer, "average:number.gpus", num_gpus)
             self._log_metric(trainer, "average:memory.total", avg_memory_total)
             self._log_metric(trainer, "average:memory.used", avg_memory_used)
