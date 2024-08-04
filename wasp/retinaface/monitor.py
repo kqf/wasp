@@ -52,6 +52,10 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             self.monitor = None
 
     def _log_average_stats(self, trainer):
+        total_memory_total = 0
+        total_memory_used = 0
+        num_gpus = len(self.monitor.average_stats)
+
         for stats in self.monitor.average_stats:
             statistics = stats.jsonify()
             name = f"{statistics['name']}:{statistics['index']}"
@@ -61,11 +65,27 @@ class PyTorchGpuMonitorCallback(pl.Callback):
             if memory_total and memory_used:
                 for key, value in statistics.items():
                     if key in REPORT_FIELDS:
-                        self._log_metric(trainer, f"{name}:{key}", value)
+                        # self._log_metric(trainer, f"{name}:{key}", value)
+                        pass
 
-                # Calculate and log memory fraction
+                # Aggregate totals for averages
+                total_memory_total += memory_total
+                total_memory_used += memory_used
+
+                # Calculate and log memory fraction per GPU
                 memory_frac = memory_used / memory_total
                 self._log_metric(trainer, f"{name}:memory.frac", memory_frac)
+
+        if num_gpus > 0:
+            # Calculate and log averages across all GPUs
+            avg_memory_total = total_memory_total / num_gpus
+            avg_memory_used = total_memory_used / num_gpus
+            avg_memory_frac = avg_memory_used / avg_memory_total
+            
+            self._log_metric(trainer, "average:number.gpus", num_gpus)
+            self._log_metric(trainer, "average:memory.total", avg_memory_total)
+            self._log_metric(trainer, "average:memory.used", avg_memory_used)
+            self._log_metric(trainer, "average:memory.frac", avg_memory_frac)
 
     def _log_metric(self, trainer, name, value):
         if logger := trainer.logger:
