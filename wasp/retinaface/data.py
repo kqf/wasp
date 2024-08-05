@@ -65,7 +65,8 @@ def to_sample(entry: dict[str, Any]) -> Sample:
 def read_dataset(path: Path | str) -> list[Sample]:
     with open(path) as f:
         df = json.load(f)
-    return [to_sample(x) for x in df]
+    samples = [to_sample(x) for x in df]
+    return [samples[10]] * 12
 
 
 def trimm_boxes(
