@@ -4,7 +4,7 @@ from typing import Callable
 
 import torch
 
-from wasp.retinaface.encode import encode
+from wasp.retinaface.encode import encode, point_form
 
 # from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import iou
@@ -296,7 +296,7 @@ class DetectionLoss(torch.nn.Module):
         positives, negatives = match(
             y["boxes"],
             (y["classes"] < 0).squeeze(-1),
-            self.anchors,
+            point_form(self.anchors),
         )
 
         losses = {}

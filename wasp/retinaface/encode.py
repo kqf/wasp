@@ -18,7 +18,7 @@ def point_form(boxes: torch.Tensor) -> torch.Tensor:
             boxes[..., :2] - boxes[..., 2:] / 2,
             boxes[..., :2] + boxes[..., 2:] / 2,
         ),
-        dim=1,
+        dim=-1,
     )
 
 
