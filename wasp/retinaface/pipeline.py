@@ -13,7 +13,7 @@ from torchvision.ops import nms
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.encode import decode
-from wasp.retinaface.preprocess import compose, normalize
+from wasp.retinaface.preprocess import normalize
 
 
 def prepare_outputs(
@@ -107,10 +107,10 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             FaceDetectionDataset(
                 label_path=self.train_labels,
                 transform=augs.train(self.resolution),
-                preproc=compose(normalize, self.preproc),
+                preproc=normalize,
                 rotate90=False,
             ),
-            batch_size=12,
+            batch_size=1,
             num_workers=12,
             shuffle=True,
             pin_memory=True,
@@ -126,7 +126,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                 preproc=normalize,
                 rotate90=False,
             ),
-            batch_size=12,
+            batch_size=1,
             num_workers=12,
             shuffle=False,
             pin_memory=True,
