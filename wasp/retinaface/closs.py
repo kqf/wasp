@@ -35,16 +35,6 @@ def match(
         boxes[:, :, None],
     )
 
-    # overlap = torch.rand(
-    #     (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
-    #     device=boxes.device,
-    # )
-
-    # overlap = torch.rand(
-    #     (boxes.shape[0], boxes.shape[1], anchors.shape[1]),
-    #     device=boxes.device,
-    # )
-
     # Remove all scores that are masked
     overlap[mask] = fill_value
 
@@ -318,6 +308,7 @@ class DetectionLoss(torch.nn.Module):
                 positives=positives,
                 negatives=negatives,
             )
+            # Plot the images and the selected anchors, here
             losses[name] = subloss(y_pred_, y_true_, anchor_)
 
         losses["loss"] = torch.stack(tuple(losses.values())).sum()
