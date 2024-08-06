@@ -161,6 +161,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     ):  # type: ignore
         images = batch["image"]
         targets = batch["annotation"]
+        targets[0]["images"] = images
 
         out = self.forward(images)
         losses = self.loss(
@@ -196,6 +197,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     ):  # type: ignore
         images = batch["image"]
         targets = batch["annotation"]
+        targets[0]["images"] = images
 
         out = self.forward(images)
         losses = self.loss(
@@ -205,7 +207,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
         for name, loss in losses.items():
             self.log(
-                f"train_{name}",
+                f"valid_{name}",
                 loss,
                 on_step=True,
                 on_epoch=True,
