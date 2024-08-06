@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import torch
 
+
 from wasp.retinaface.encode import decode, encode, point_form
 
 # from wasp.retinaface.encode import encode_landm as encl
