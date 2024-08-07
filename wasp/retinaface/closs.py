@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import torch
 
-from wasp.retinaface.encode import decode, encode, point_form
+from wasp.retinaface.encode import encode, point_form
 
 # from wasp.retinaface.encode import encode_landm as encl
 from wasp.retinaface.matching import iou
@@ -98,15 +98,16 @@ def select(
     use_negatives=True,
     # mine_negatives=lambda x, y, n_pos: (x, y),
     # mine_negatives=mine_negatives,
-    mine_negatives=lambda x, y, z, *args: (x, y, z),
+    mine_negatives=lambda x, y, z, w, *args: (x, y, z, w),
 ):
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
     y_true_pos = y_true[batch_, obj_]
     anchor_pos = anchor[torch.zeros_like(batch_), anchor_]
+    n_pos = y_pred_pos.shape[0]
 
     if not use_negatives:
-        return y_pred_pos, y_true_pos, anchor_pos
+        return y_pred_pos, y_true_pos, anchor_pos, n_pos
 
     neg_batch_, neg_obj_ = torch.where(negatives)
     y_pred_neg = y_pred[neg_batch_, neg_obj_]
@@ -233,7 +234,10 @@ def default_losses(variance=None):
             # .clamp(0, 1.0),
             partial(
                 masked_loss,
-                loss_function=torch.nn.CrossEntropyLoss(reduce="sum"),
+                loss_function=torch.nn.CrossEntropyLoss(
+                    reduce="sum",
+                    weight=torch.tensor([1.0, 1000.0]),
+                ),
             ),
             # enc_true=debug,
             needs_negatives=True,
@@ -319,6 +323,8 @@ class DetectionLoss(torch.nn.Module):
                 if isinstance(loss.loss, torch.nn.Module)
             ]
         )
+        for name, module in self.sublosses.items():
+            self.register_module(name, module.loss.keywords["loss_function"])
         self.register_buffer("anchors", anchors[None])
         self.count = 0
 
@@ -332,7 +338,7 @@ class DetectionLoss(torch.nn.Module):
             ),
             "depths": stack([target["depths"] for target in targets]),
         }
-        images = targets[0]["images"]
+        # images = targets[0]["images"]
         y_pred = {
             "classes": predictions[1],
             "boxes": predictions[0],
@@ -357,7 +363,7 @@ class DetectionLoss(torch.nn.Module):
             # ~> y_true_[n_samples, dim2]
             # ~> anchor_[n_samples, 4]
 
-            y_pred_, y_true_, anchor_ = select(
+            y_pred_, y_true_, anchor_, _ = select(
                 y_pred[name],
                 y[name],
                 self.anchors,
@@ -365,16 +371,15 @@ class DetectionLoss(torch.nn.Module):
                 positives=positives,
                 negatives=negatives,
             )
-            if name == "boxes":
-                print(y_true_)
-                draw_anchors_on_image(
-                    images[0],
-                    point_form(anchor_),
-                    y_true_,
-                    decode(y_pred_, anchor_, [0.1, 0.2]),
-                    f"debug-{self.count}.jpg",
-                )
-
+            # if name == "boxes":
+            #     print(y_true_)
+            #     draw_anchors_on_image(
+            #         images[0],
+            #         point_form(anchor_),
+            #         y_true_,
+            #         decode(y_pred_, anchor_, [0.1, 0.2]),
+            #         f"debug-{self.count}.jpg",
+            #     )
             # Plot the images and the selected anchors, here
             losses[name] = subloss(y_pred_, y_true_, anchor_)
 
