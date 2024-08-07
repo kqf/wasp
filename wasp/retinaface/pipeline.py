@@ -177,6 +177,8 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                 on_epoch=True,
                 logger=True,
                 prog_bar=True,
+                sync_dist=True,
+                batch_size=images.shape[0],
             )
 
         self.log(
@@ -186,6 +188,8 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             on_epoch=True,
             logger=True,
             prog_bar=True,
+            sync_dist=True,
+            batch_size=images.shape[0],
         )
 
         return losses["loss"]
@@ -213,6 +217,8 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                 on_epoch=True,
                 logger=True,
                 prog_bar=True,
+                sync_dist=True,
+                batch_size=images.shape[0],
             )
 
         outputs = prepare_outputs(
@@ -234,6 +240,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             on_step=False,
             on_epoch=True,
             logger=True,
+            sync_dist=True,
         )  # type: ignore
         self.log(
             "mAP",
@@ -241,6 +248,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             on_step=False,
             on_epoch=True,
             logger=True,
+            sync_dist=True,
         )
 
     def _get_current_lr(self) -> torch.Tensor:  # type: ignore
