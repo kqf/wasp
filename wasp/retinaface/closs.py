@@ -196,7 +196,7 @@ def default_losses(variance=None):
         "boxes": WeightedLoss(
             partial(
                 masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(reduction="sum"),
+                loss_function=torch.nn.SmoothL1Loss(reduction="mean"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
@@ -381,7 +381,10 @@ class DetectionLoss(torch.nn.Module):
             #         f"debug-{self.count}.jpg",
             #     )
             # Plot the images and the selected anchors, here
-            losses[name] = subloss(y_pred_, y_true_, anchor_) / max(n_pos_, 1)
+            s = subloss(y_pred_, y_true_, anchor_)
+            if subloss.needs_negatives:
+                s = s / max(n_pos_, 1)
+            losses[name] = s
             if not torch.isfinite(losses[name]).all():
                 print(name, losses[name], y_pred_, y_true_)
 
