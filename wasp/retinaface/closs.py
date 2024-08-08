@@ -186,7 +186,7 @@ def masked_loss(
             0.0, device=data.device, requires_grad=True
         )  # Ensure gradient tracking
 
-    return torch.nan_to_num(loss) / max(data.shape[0], 1)
+    return torch.nan_to_num(loss)
 
 
 def default_losses(variance=None):
@@ -363,7 +363,7 @@ class DetectionLoss(torch.nn.Module):
             # ~> y_true_[n_samples, dim2]
             # ~> anchor_[n_samples, 4]
 
-            y_pred_, y_true_, anchor_, _ = select(
+            y_pred_, y_true_, anchor_, n_pos_ = select(
                 y_pred[name],
                 y[name],
                 self.anchors,
@@ -381,7 +381,7 @@ class DetectionLoss(torch.nn.Module):
             #         f"debug-{self.count}.jpg",
             #     )
             # Plot the images and the selected anchors, here
-            losses[name] = subloss(y_pred_, y_true_, anchor_)
+            losses[name] = subloss(y_pred_, y_true_, anchor_) / n_pos_
 
         losses["loss"] = torch.stack(tuple(losses.values())).sum()
         return losses
