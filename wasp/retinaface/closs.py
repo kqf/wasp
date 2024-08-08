@@ -236,12 +236,12 @@ def default_losses(variance=None):
                 masked_loss,
                 loss_function=torch.nn.CrossEntropyLoss(
                     reduce="sum",
-                    weight=torch.tensor([1.0, 1000.0]),
+                    weight=torch.tensor([1.0, 4.0]),
                 ),
             ),
             # enc_true=debug,
             needs_negatives=True,
-            weight=1.0,
+            weight=10.0,
         ),
     }
 
@@ -381,7 +381,9 @@ class DetectionLoss(torch.nn.Module):
             #         f"debug-{self.count}.jpg",
             #     )
             # Plot the images and the selected anchors, here
-            losses[name] = subloss(y_pred_, y_true_, anchor_) / n_pos_
+            losses[name] = subloss(y_pred_, y_true_, anchor_) / max(n_pos_, 1)
+            if not torch.isfinite(losses[name]).all():
+                print(name, losses[name], y_pred_, y_true_)
 
         losses["loss"] = torch.stack(tuple(losses.values())).sum()
         return losses
