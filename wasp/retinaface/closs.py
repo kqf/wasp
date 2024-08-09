@@ -162,12 +162,12 @@ def masked_loss(
         )  # Ensure gradient tracking
 
     # Create a mask that identifies rows where all elements are not NaN
-    mask = ~torch.isnan(data).any(dim=1)
+    mask = ~torch.isnan(data).any(dim=-1)
 
     try:
         # Apply the mask to select rows from both pred and data
-        data_masked = data[mask, :]
-        pred_masked = pred[mask, :]
+        data_masked = data[mask].squeeze()
+        pred_masked = pred[mask].squeeze()
     except RuntimeError as e:
         print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
         raise e
