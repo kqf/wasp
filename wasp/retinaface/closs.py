@@ -194,6 +194,7 @@ class BetterRegression(torch.nn.SmoothL1Loss):
         return super().forward(*args, **kwargs)
 
 
+
 def default_losses(variance=None):
     variance = variance or [0.1, 0.2]
 
