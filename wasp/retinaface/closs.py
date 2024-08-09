@@ -161,19 +161,19 @@ def masked_loss(
             0.0, device=data.device, requires_grad=True
         )  # Ensure gradient tracking
 
-    mask = ~torch.isnan(data)
+    # Create a mask that identifies rows where all elements are not NaN
+    mask = ~torch.isnan(data).any(dim=1)
 
     try:
-        data_masked = data[mask]
-        pred_masked = pred[mask]
+        # Apply the mask to select rows from both pred and data
+        data_masked = data[mask, :]
+        pred_masked = pred[mask, :]
     except RuntimeError as e:
         print(f"===> {pred.shape=}, {data.shape=}, {mask.shape=}")
         raise e
 
-    loss = loss_function(
-        pred_masked,
-        data_masked,
-    )
+    loss = loss_function(pred_masked, data_masked)
+
     if data_masked.numel() == 0:
         return torch.tensor(
             0.0, device=data.device, requires_grad=True
@@ -189,6 +189,11 @@ def masked_loss(
     return torch.nan_to_num(loss)
 
 
+class BetterRegression(torch.nn.SmoothL1Loss):
+    def forward(self, *args, **kwargs):
+        return super().forward(*args, **kwargs)
+
+
 def default_losses(variance=None):
     variance = variance or [0.1, 0.2]
 
@@ -196,7 +201,7 @@ def default_losses(variance=None):
         "boxes": WeightedLoss(
             partial(
                 masked_loss,
-                loss_function=torch.nn.SmoothL1Loss(reduction="mean"),
+                loss_function=BetterRegression(reduction="mean"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=1,
