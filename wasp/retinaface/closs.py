@@ -389,9 +389,7 @@ class DetectionLoss(torch.nn.Module):
             # Plot the images and the selected anchors, here
 
             s = subloss(y_pred_, y_true_, anchor_)
-            if subloss.needs_negatives:
-                s = s / max(n_pos_, 1)
-            losses[name] = s
+            losses[name] = s / max(n_pos_, 1)
             if not torch.isfinite(losses[name]).all():
                 print(name, losses[name], y_pred_, y_true_)
 
