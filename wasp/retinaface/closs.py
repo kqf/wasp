@@ -387,6 +387,7 @@ class DetectionLoss(torch.nn.Module):
             #         f"debug-{self.count}.jpg",
             #     )
             # Plot the images and the selected anchors, here
+
             s = subloss(y_pred_, y_true_, anchor_)
             if subloss.needs_negatives:
                 s = s / max(n_pos_, 1)
