@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import numpy as np
@@ -227,12 +228,17 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             targets=batch["annotation"],
             prior_box=self.prior_box,
         )
-        for perimage in outputs:
-            self.metric_fn.add(*perimage)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            for perimage in outputs:
+                self.metric_fn.add(*perimage)
         return batch
 
     def on_validation_epoch_end(self) -> None:
-        average_precision = self.metric_fn.value(iou_thresholds=0.5)["mAP"]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            average_precision = self.metric_fn.value(iou_thresholds=0.5)["mAP"]
+
         self.metric_fn.reset()
         self.log(
             "epoch",
