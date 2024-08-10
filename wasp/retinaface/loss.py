@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from functools import partial
+from typing import Dict
 
 import torch
 import torch.nn.functional as F
@@ -154,7 +155,7 @@ class MultiBoxLoss(nn.Module):
         self.priors = priors
         self.weights = weights
 
-    def forward(self, predictions: T4, targets: torch.Tensor) -> T4:
+    def process(self, predictions: T4, targets: torch.Tensor) -> T4:
         """Multibox Loss.
 
         Args:
@@ -234,18 +235,12 @@ class MultiBoxLoss(nn.Module):
 
         return loss_l, loss_c, loss_landm, loss_dpth
 
-    def full_forward(
+    def forward(
         self,
         predictions: T4,
         targets: torch.Tensor,
-    ) -> tuple[
-        torch.Tensor,
-        torch.Tensor,
-        torch.Tensor,
-        torch.Tensor,
-        torch.Tensor,
-    ]:
-        localization, classification, landmarks, depths = self(
+    ) -> Dict[str, torch.Tensor]:
+        localization, classification, landmarks, depths = self.process(
             predictions,
             targets,
         )
@@ -257,4 +252,12 @@ class MultiBoxLoss(nn.Module):
             + self.weights.depths * depths
         )
 
-        return total, localization, classification, landmarks, depths
+        output = {
+            "loss": total,
+            "boxes": self.weights.localization * localization,
+            "classes": self.weights.classification * classification,
+            "landmarks": self.weights.landmarks * landmarks,
+            "depths": self.weights.depths * depths,
+        }
+
+        return output
