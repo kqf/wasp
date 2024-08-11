@@ -61,8 +61,8 @@ def mine_negatives(
     y_true: torch.Tensor,
     anchors: torch.Tensor,
     n_positive: int,
-    neg_pos_ratio: int = 10,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    neg_pos_ratio: int = 5,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
     # Compute the classification loss using cross_entropy
     loss = torch.nn.functional.cross_entropy(
         y_pred,
@@ -86,7 +86,7 @@ def mine_negatives(
         )
     )
 
-    return y_pred[total], y_true[total], anchors[total]
+    return y_pred[total], y_true[total], anchors[total], n_positive
 
 
 def select(
@@ -97,8 +97,8 @@ def select(
     negatives,
     use_negatives=True,
     # mine_negatives=lambda x, y, n_pos: (x, y),
-    # mine_negatives=mine_negatives,
-    mine_negatives=lambda x, y, z, w, *args: (x, y, z, w),
+    mine_negatives=mine_negatives,
+    # mine_negatives=lambda x, y, z, w, *args: (x, y, z, w),
 ):
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
@@ -242,12 +242,12 @@ def default_losses(variance=None):
                 masked_loss,
                 loss_function=torch.nn.CrossEntropyLoss(
                     reduce="sum",
-                    weight=torch.tensor([1, 1000.0]),
+                    weight=torch.tensor([1, 5.0]),
                 ),
             ),
             # enc_true=debug,
             needs_negatives=True,
-            weight=10.0,
+            weight=1.0,
         ),
     }
 
@@ -355,6 +355,7 @@ class DetectionLoss(torch.nn.Module):
         positives, negatives = match(
             y["boxes"],
             (y["classes"] < 0).squeeze(-1),
+            # torch.isnan(y["classes"]).squeeze(-1),
             point_form(self.anchors),
         )
 
