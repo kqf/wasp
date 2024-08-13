@@ -253,7 +253,7 @@ def default_losses(variance=None):
 
 
 @torch.no_grad()
-def stack(tensors, pad_value=-1) -> torch.Tensor:
+def stack(tensors, pad_value=np.nan) -> torch.Tensor:
     max_length = max(tensor.shape[0] for tensor in tensors)
 
     # Pad each tensor to the maximum length
@@ -354,8 +354,8 @@ class DetectionLoss(torch.nn.Module):
 
         positives, negatives = match(
             y["boxes"],
-            (y["classes"] < 0).squeeze(-1),
-            # torch.isnan(y["classes"]).squeeze(-1),
+            # (y["classes"] < 0).squeeze(-1),
+            torch.isnan(y["classes"]).squeeze(-1),
             point_form(self.anchors),
         )
 
