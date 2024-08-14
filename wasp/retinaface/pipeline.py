@@ -162,7 +162,8 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
     ):  # type: ignore
         images = batch["image"]
         targets = batch["annotation"]
-        targets[0]["images"] = images
+        # Don't provide images
+        # targets[0]["images"] = images
 
         out = self.forward(images)
         losses = self.loss(
