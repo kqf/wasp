@@ -128,7 +128,9 @@ class RetinaFace(nn.Module):
         super().__init__()
 
         if name.lower() == "resnet50":
-            backbone = models.resnet50(pretrained=pretrained)
+            backbone = models.resnet50(
+                weights=models.ResNet50_Weights.IMAGENET1K_V1,
+            )
         elif name.lower() == "resnet18":
             backbone = models.resnet18(weights=None)
         elif name.lower() == "mobilenet_v2":

@@ -33,7 +33,7 @@ def match(
     priors: torch.Tensor,  # [n_anchors, 4]
     threshold: float,
 ) -> tuple[torch.Tensor, torch.Tensor] | tuple[None, None]:
-    overlaps = iou(boxes, point_form(priors))  # [n_obj, n_anchors]
+    overlaps = iou(boxes[:, None], point_form(priors))  # [n_obj, n_anchors]
 
     # (Bipartite Matching)
     best_prior_overlap, best_prior_idx = overlaps.max(

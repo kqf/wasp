@@ -1,9 +1,7 @@
-import os
 from dataclasses import dataclass
 from functools import partial
 from typing import Callable
 
-import cv2
 import numpy as np
 import torch
 
@@ -61,8 +59,8 @@ def mine_negatives(
     y_true: torch.Tensor,
     anchors: torch.Tensor,
     n_positive: int,
-    neg_pos_ratio: int = 10,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    neg_pos_ratio: int = 5,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
     # Compute the classification loss using cross_entropy
     loss = torch.nn.functional.cross_entropy(
         y_pred,
@@ -86,7 +84,7 @@ def mine_negatives(
         )
     )
 
-    return y_pred[total], y_true[total], anchors[total]
+    return y_pred[total], y_true[total], anchors[total], n_positive
 
 
 def select(
@@ -97,8 +95,8 @@ def select(
     negatives,
     use_negatives=True,
     # mine_negatives=lambda x, y, n_pos: (x, y),
-    # mine_negatives=mine_negatives,
-    mine_negatives=lambda x, y, z, w, *args: (x, y, z, w),
+    mine_negatives=mine_negatives,
+    # mine_negatives=lambda x, y, z, w, *args: (x, y, z, w),
 ):
     batch_, obj_, anchor_ = torch.where(positives)
     y_pred_pos = y_pred[batch_, anchor_]
@@ -242,18 +240,18 @@ def default_losses(variance=None):
                 masked_loss,
                 loss_function=torch.nn.CrossEntropyLoss(
                     reduce="sum",
-                    weight=torch.tensor([1, 1000.0]),
+                    weight=torch.tensor([1, 5.0]),
                 ),
             ),
             # enc_true=debug,
             needs_negatives=True,
-            weight=10.0,
+            weight=1.0,
         ),
     }
 
 
 @torch.no_grad()
-def stack(tensors, pad_value=-1) -> torch.Tensor:
+def stack(tensors, pad_value=np.nan) -> torch.Tensor:
     max_length = max(tensor.shape[0] for tensor in tensors)
 
     # Pad each tensor to the maximum length
@@ -264,57 +262,6 @@ def stack(tensors, pad_value=-1) -> torch.Tensor:
         padded.append(torch.nn.functional.pad(t, padding, value=pad_value))
 
     return torch.stack(padded)
-
-
-def denormalize(image):
-    mean = torch.tensor(
-        [0.485, 0.456, 0.406],
-        dtype=image.dtype,
-        device=image.device,
-    )
-    std = torch.tensor(
-        [0.229, 0.224, 0.225],
-        dtype=image.dtype,
-        device=image.device,
-    )
-
-    # Reverse normalization: x' = (x * std) + mean
-    image = (image * std[:, None, None]) + mean[:, None, None]
-    image = image.clamp(0, 1)  # Clamping to [0, 1] range
-    return image * 255.0
-
-
-def draw_anchors_on_image(image, anchors, y_true_, y_pred_, odir):
-    image = denormalize(image).permute(1, 2, 0).cpu().numpy().astype(np.uint8)
-    anchors = anchors.cpu().numpy()
-
-    # Convert image from torch (C, H, W) to OpenCV (H, W, C) and BGR
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    height, width, _ = image.shape
-
-    def rectangle(image, box, color):
-        pt1 = (int(box[0] * width), int(box[1] * height))
-        pt2 = (int(box[2] * width), int(box[3] * height))
-        return cv2.rectangle(image, pt1, pt2, color, 2)
-
-    # Draw each anchor box on the image
-    for i, box in enumerate(anchors):
-        image = rectangle(image, box, color=(255, 255, 255))
-
-    for i, box in enumerate(y_true_):
-        image = rectangle(image, box, color=(0, 0, 0))
-
-    for i, box in enumerate(y_pred_):
-        image = rectangle(image, box, color=(255, 0, 0))
-
-    # Save the image
-    cv2.imwrite(odir, image)
-
-
-def draw_anchors(images, anchors, odir="anchors"):
-    os.makedirs(odir, exist_ok=True)
-    for i, (image, anchors) in enumerate(zip(images, anchors)):
-        draw_anchors_on_image(image, anchors, f"{odir}/image-{i}-anchors.jpg")
 
 
 class DetectionLoss(torch.nn.Module):
@@ -354,7 +301,8 @@ class DetectionLoss(torch.nn.Module):
 
         positives, negatives = match(
             y["boxes"],
-            (y["classes"] < 0).squeeze(-1),
+            # (y["classes"] < 0).squeeze(-1),
+            torch.isnan(y["classes"]).squeeze(-1),
             point_form(self.anchors),
         )
 
@@ -387,10 +335,9 @@ class DetectionLoss(torch.nn.Module):
             #         f"debug-{self.count}.jpg",
             #     )
             # Plot the images and the selected anchors, here
+
             s = subloss(y_pred_, y_true_, anchor_)
-            if subloss.needs_negatives:
-                s = s / max(n_pos_, 1)
-            losses[name] = s
+            losses[name] = s / max(n_pos_, 1)
             if not torch.isfinite(losses[name]).all():
                 print(name, losses[name], y_pred_, y_true_)
 
