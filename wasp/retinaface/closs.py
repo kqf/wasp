@@ -279,10 +279,8 @@ class DetectionLoss(torch.nn.Module):
         for name, module in self.sublosses.items():
             self.register_module(name, module.loss.keywords["loss_function"])
         self.register_buffer("anchors", anchors[None])
-        self.count = 0
 
     def forward(self, predictions, targets):
-        self.count += 1
         y = {
             "classes": stack([target["labels"] for target in targets]).long(),
             "boxes": stack([target["boxes"] for target in targets]),
