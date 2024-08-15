@@ -12,7 +12,8 @@ from wasp.retinaface.checkpoint import BestModelCheckpoint
 from wasp.retinaface.closs import DetectionLoss
 from wasp.retinaface.logger import build_mlflow
 from wasp.retinaface.model import RetinaFace
-from wasp.retinaface.monitor import PyTorchGpuMonitorCallback
+
+# from wasp.retinaface.monitor import PyTorchGpuMonitorCallback
 from wasp.retinaface.pipeline import RetinaFacePipeline
 from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.priors import priorbox
@@ -100,7 +101,7 @@ def main(
                 refresh_rate=100,
             ),
             # DeviceStatsMonitor(), ~
-            PyTorchGpuMonitorCallback(delay=0.5, log_per_batch=True),
+            # PyTorchGpuMonitorCallback(delay=0.5, log_per_batch=True),
         ],
     )
 
