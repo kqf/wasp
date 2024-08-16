@@ -239,7 +239,6 @@ def default_losses(variance=None):
                 masked_loss,
                 loss_function=torch.nn.CrossEntropyLoss(
                     reduce="sum",
-                    weight=torch.tensor([1, 5.0]),
                 ),
             ),
             # enc_true=debug,
