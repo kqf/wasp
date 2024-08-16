@@ -202,7 +202,7 @@ def default_losses(variance=None):
                 loss_function=BetterRegression(reduction="none"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
-            weight=1,
+            weight=2,
         ),
         # "keypoints": WeightedLoss(
         #     partial(
