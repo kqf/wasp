@@ -126,6 +126,7 @@ def mine_negatives(
     # Hard Negative Mining
     loss_c[positive.view(-1)] = 0  # filter out positive boxes for now
     loss_c = loss_c.view(n_batch, -1)
+    print(loss_c)
     _, loss_idx = loss_c.sort(1, descending=True)
     _, idx_rank = loss_idx.sort(1)
     num_pos = positive.long().sum(1, keepdim=True)
