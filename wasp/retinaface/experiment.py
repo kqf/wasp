@@ -42,7 +42,7 @@ def main():
         image_size=resolution,
     )
 
-    loss_fn = MultiBoxLoss(anchors=priors)
+    loss_fn = DetectionLoss(anchors=priors)
     preprocessing = partial(preprocess, img_dim=resolution[0])
 
     # Initialize optimizer and scheduler
