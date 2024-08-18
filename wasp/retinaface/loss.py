@@ -253,12 +253,10 @@ class MultiBoxLoss(nn.Module):
             + self.weights.depths * depths
         )
 
-        output = {
+        return {
             "loss": total,
             "boxes": self.weights.localization * localization,
             "classes": self.weights.classification * classification,
             "landmarks": self.weights.landmarks * landmarks,
             "depths": self.weights.depths * depths,
         }
-
-        return output
