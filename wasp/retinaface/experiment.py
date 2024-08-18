@@ -6,8 +6,10 @@ from torch.cuda.amp import GradScaler, autocast
 from torch.utils.data import DataLoader
 
 import wasp.retinaface.augmentations as augs
-from wasp.retinaface.closs import DetectionLoss
+
+# from wasp.retinaface.closs import DetectionLoss
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
+from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.preprocess import compose, normalize, preprocess
 from wasp.retinaface.priors import priorbox
@@ -40,7 +42,7 @@ def main():
         image_size=resolution,
     )
 
-    loss_fn = DetectionLoss(anchors=priors)
+    loss_fn = MultiBoxLoss(anchors=priors)
     preprocessing = partial(preprocess, img_dim=resolution[0])
 
     # Initialize optimizer and scheduler
