@@ -204,7 +204,7 @@ class MultiBoxLoss(nn.Module):
                 dpths_t[i] = 0
                 continue
 
-            label_t[i] = labels.clip(0, 2)  # type: ignore
+            label_t[i] = labels  # [num_priors] top class label prior
             boxes_t[i] = encode(box_gt[matched], priors, self.variance)
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
             dpths_t[i] = depths_gt[matched]
