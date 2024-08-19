@@ -6,8 +6,7 @@ from torch.cuda.amp import GradScaler, autocast
 from torch.utils.data import DataLoader
 
 import wasp.retinaface.augmentations as augs
-
-# from wasp.retinaface.closs import DetectionLoss
+from wasp.retinaface.closs import DetectionLoss
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 
 # from wasp.retinaface.loss import MultiBoxLoss
