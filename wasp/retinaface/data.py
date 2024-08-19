@@ -237,7 +237,7 @@ def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
             "labels": torch.from_numpy(sample["annotation"]["labels"]).float(),
             "depths": torch.from_numpy(sample["annotation"]["depths"]).float(),
         }
-
+        # print(annotations["labels"].min(), annotations["labels"].max())
         annotation.append(annotations)
         file_names.append(sample["file_name"])
 
