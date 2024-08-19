@@ -126,7 +126,6 @@ def mine_negatives(
     # Hard Negative Mining
     loss_c[positive.view(-1)] = 0  # filter out positive boxes for now
     loss_c = loss_c.view(n_batch, -1)
-    print(loss_c)
     _, loss_idx = loss_c.sort(1, descending=True)
     _, idx_rank = loss_idx.sort(1)
     num_pos = positive.long().sum(1, keepdim=True)
@@ -205,7 +204,7 @@ class MultiBoxLoss(nn.Module):
                 dpths_t[i] = 0
                 continue
 
-            label_t[i] = labels  # [num_priors] top class label prior
+            label_t[i] = labels.clip(0, 2)  # type: ignore
             boxes_t[i] = encode(box_gt[matched], priors, self.variance)
             kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
             dpths_t[i] = depths_gt[matched]
