@@ -9,7 +9,8 @@ import wasp.retinaface.augmentations as augs
 
 # from wasp.retinaface.closs import DetectionLoss
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
-from wasp.retinaface.loss import MultiBoxLoss
+
+# from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.preprocess import compose, normalize, preprocess
 from wasp.retinaface.priors import priorbox
