@@ -18,14 +18,26 @@ def match_positives(score: torch.Tensor, pos_th: float) -> torch.Tensor:
     return max_overlap & (score > pos_th)
 
 
+def force_anchors(score: torch.Tensor) -> torch.Tensor:
+    # Identify the best matching anchor for each object
+    _, best_anchor_indices = score.max(dim=2)
+
+    # Create a tensor to store the forced matches
+    forced_matches = torch.zeros_like(score, dtype=torch.bool)
+
+    # Ensure each object has at least one anchor match (the best match)
+    forced_matches.scatter_(2, best_anchor_indices.unsqueeze(2), 1)
+    return forced_matches
+
+
 def match(
     boxes: torch.Tensor,  # [batch_size, n_obj, 4]
     mask: torch.Tensor,  # [batch_size, n_obj]
     anchors: torch.Tensor,  # [batch_size, n_anchors, 4]
     on_image=None,  # [batch_size, n_anchors]
     criterion: Callable = iou,
-    pos_th: float = 0.5,
-    neg_th: float = 0.5,
+    pos_th: float = 0.35,
+    neg_th: float = 0.35,
     fill_value: int = -1,
 ):
     # criterion([batch_size, 1, n_anchors, 4], [batch_size, n_obj, 1, 4])
@@ -39,6 +51,8 @@ def match(
     overlap[mask] = fill_value
 
     positive = match_positives(overlap, pos_th)
+    # forced_positives = force_anchors(overlap)
+    # positive = positive | forced_positives
 
     # Check if within image
     if on_image is not None:
@@ -58,7 +72,7 @@ def mine_negatives(
     y_true: torch.Tensor,
     anchors: torch.Tensor,
     n_positive: int,
-    neg_pos_ratio: int = 5,
+    neg_pos_ratio: int = 7,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
     # Compute the classification loss using cross_entropy
     loss = torch.nn.functional.cross_entropy(
@@ -332,8 +346,8 @@ class DetectionLoss(torch.nn.Module):
             # Plot the images and the selected anchors, here
 
             s = subloss(y_pred_, y_true_, anchor_)
-            if name == "classes":
-                print(f"{y_pred_.shape=}, {y_true_.shape=}, {n_pos_=}")
+            # if name == "classes":
+            #     print(f"{y_pred_.shape=}, {y_true_.shape=}, {n_pos_=}")
             losses[name] = s / max(n_pos_, 1)
             if not torch.isfinite(losses[name]).all():
                 print(name, losses[name], y_pred_, y_true_)
