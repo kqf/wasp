@@ -200,12 +200,6 @@ def masked_loss(
     return torch.nan_to_num(loss)
 
 
-class BetterRegression(torch.nn.SmoothL1Loss):
-    def forward(self, *args, **kwargs):
-        loss = super().forward(*args, **kwargs)
-        return loss.mean(dim=-1).sum()
-
-
 def default_losses(variance=None):
     variance = variance or [0.1, 0.2]
 
@@ -213,7 +207,7 @@ def default_losses(variance=None):
         "boxes": WeightedLoss(
             partial(
                 masked_loss,
-                loss_function=BetterRegression(reduction="none"),
+                loss_function=torch.nn.SmoothL1Loss(reduction="sum"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
             weight=2,
