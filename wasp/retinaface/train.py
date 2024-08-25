@@ -9,10 +9,10 @@ from environs import Env
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
-
-# from wasp.retinaface.closs import DetectionLoss
+from wasp.retinaface.closs import DetectionLoss
 from wasp.retinaface.logger import build_mlflow
-from wasp.retinaface.loss import MultiBoxLoss
+
+# from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
 
 # from wasp.retinaface.monitor import PyTorchGpuMonitorCallback
@@ -71,9 +71,9 @@ def main(
             T_mult=2,
         ),
         # 64, n_pos=8
-        loss=MultiBoxLoss(priors=priors),
+        # loss=MultiBoxLoss(priors=priors),
         # 48, n_pos=8
-        # loss=DetectionLoss(anchors=priors),
+        loss=DetectionLoss(anchors=priors),
     )
 
     Path("./retinaface-results").mkdir(
