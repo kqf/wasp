@@ -210,7 +210,7 @@ def default_losses(variance=None):
                 loss_function=torch.nn.SmoothL1Loss(reduction="sum"),
             ),
             enc_true=lambda x, a: encode(x, a, variances=variance),
-            weight=2,
+            weight=10,
         ),
         # "keypoints": WeightedLoss(
         #     partial(
