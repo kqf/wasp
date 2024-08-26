@@ -1,5 +1,6 @@
 from functools import partial
 
+import numpy as np
 import torch
 import torchvision
 from environs import Env
@@ -9,6 +10,7 @@ from torchvision.models.detection import _utils as det_utils
 from torchvision.models.detection import ssdlite320_mobilenet_v3_large
 from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
 from torchvision.models.detection.ssdlite import SSDLiteHead
+from torchvision.ops import nms
 
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
@@ -23,6 +25,48 @@ def get_transform(train):
     if train:
         transforms.append(torchvision.transforms.RandomHorizontalFlip(0.5))
     return torchvision.transforms.Compose(transforms)
+
+
+def ssd_loss(losses: dict):
+    total = sum(loss for loss in losses.values())
+    return {
+        "loss": total,
+        "classes": losses["classification"],
+        "boxes": losses["bbox_regression"],
+    }
+
+
+def prepare_outputs(
+    images,
+    out,
+    targets,
+    prior_box,
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    total = []
+    for batch_id, target in enumerate(targets):
+        preds = out[batch_id]
+        boxes = preds["boxes"]
+        scores = preds["scores"]
+        # labels = preds["labels"]
+
+        # do NMS
+        keep = nms(boxes, scores, 0.4)
+        boxes = boxes[keep, :].cpu().numpy()
+        scores = scores[keep].cpu().numpy()
+        candidates = np.concatenate(
+            (boxes, scores.reshape(-1, 1), scores.reshape(-1, 1)),
+            axis=1,
+        )
+        candidates[:, -2] = 0
+
+        boxes_gt = target["boxes"].cpu().numpy()
+        labels_gt = target["labels"].cpu().numpy()
+        gts = np.zeros((boxes_gt.shape[0], 7), dtype=np.float32)
+        gts[:, :4] = boxes_gt[:, :4]  # * scale[None, :].cpu().numpy()
+        gts[:, 4] = np.where(labels_gt[:, -1] > 0, 0, 1)
+        total.append((candidates, gts))
+
+    return total
 
 
 def build_model(
