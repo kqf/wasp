@@ -81,6 +81,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         build_optimizer,
         build_scheduler,
         loss,
+        prepare_outputs=prepare_outputs,
     ) -> None:
         super().__init__()
         self.train_labels = train_labels
@@ -97,6 +98,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             async_mode=False,
             num_classes=1,
         )
+        self.prepare_outputs = prepare_outputs
 
     def forward(
         self, batch: torch.Tensor
@@ -223,7 +225,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                 batch_size=images.shape[0],
             )
 
-        outputs = prepare_outputs(
+        outputs = self.prepare_outputs(
             images=images,
             out=out,
             targets=batch["annotation"],
