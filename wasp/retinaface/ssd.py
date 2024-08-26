@@ -1,7 +1,6 @@
 from functools import partial
 
 import numpy as np
-
 import torch
 import torchvision
 from environs import Env
@@ -11,7 +10,7 @@ from torchvision.models.detection import _utils as det_utils
 from torchvision.models.detection import ssdlite320_mobilenet_v3_large
 from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
 from torchvision.models.detection.ssdlite import SSDLiteHead
-
+from torchvision.ops import nms
 
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
@@ -68,7 +67,6 @@ def prepare_outputs(
         total.append((candidates, gts))
 
     return total
-
 
 
 def build_model(
