@@ -9,16 +9,19 @@ from environs import Env
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
-from wasp.retinaface.closs import DetectionLoss
-from wasp.retinaface.logger import build_mlflow
 
-# from wasp.retinaface.loss import MultiBoxLoss
-from wasp.retinaface.model import RetinaFace
+# from wasp.retinaface.closs import DetectionLoss
+from wasp.retinaface.logger import build_mlflow
 
 # from wasp.retinaface.monitor import PyTorchGpuMonitorCallback
 from wasp.retinaface.pipeline import RetinaFacePipeline
 from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.priors import priorbox
+from wasp.retinaface.ssd import build_model
+
+# from wasp.retinaface.loss import MultiBoxLoss
+# from wasp.retinaface.model import RetinaFace
+
 
 # from gpumonitor.callbacks.lightning import PyTorchGpuMonitorCallback
 
@@ -30,20 +33,21 @@ env.read_env()
 def main(
     train_labels: str = None,
     valid_labels: str = None,
-    resolution: tuple[int, int] = (640, 480),
+    resolution: tuple[int, int] = (320, 320),
     epochs: int = 20,
 ) -> None:
     pl.trainer.seed_everything(137)
-    model = RetinaFace(
-        name="Resnet50",
-        pretrained=True,
-        return_layers={
-            "layer2": 1,
-            "layer3": 2,
-            "layer4": 3,
-        },
-        out_channels=256,
-    )
+    # model = RetinaFace(
+    #     name="Resnet50",
+    #     pretrained=True,
+    #     return_layers={
+    #         "layer2": 1,
+    #         "layer3": 2,
+    #         "layer4": 3,
+    #     },
+    #     out_channels=256,
+    # )
+    model = build_model()
 
     priors = priorbox(
         min_sizes=[[16, 32], [64, 128], [256, 512]],
@@ -73,7 +77,8 @@ def main(
         # 64, n_pos=8
         # loss=MultiBoxLoss(priors=priors),
         # 48, n_pos=8
-        loss=DetectionLoss(anchors=priors),
+        # loss=DetectionLoss(anchors=priors),
+        loss=model.loss,
     )
 
     Path("./retinaface-results").mkdir(

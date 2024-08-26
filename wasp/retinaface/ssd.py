@@ -27,13 +27,32 @@ def get_transform(train):
     return torchvision.transforms.Compose(transforms)
 
 
-def ssd_loss(losses: dict):
-    total = sum(loss for loss in losses.values())
-    return {
-        "loss": total,
-        "classes": losses["classification"],
-        "boxes": losses["bbox_regression"],
-    }
+def convert(key, value):
+    if key == "labels":
+        return value.squeeze(1).to(torch.int64)
+    return value
+
+
+class SSDModel(torch.nn.Module):
+    def __init__(self, model):
+        super().__init__()
+        self.model = model
+
+    def forward(self, x):
+        return x
+
+    def loss(self, batch, targets):
+        targets = [
+            {key: convert(key, value) for key, value in entry.items()}
+            for entry in targets
+        ]
+        losses: dict = self.model(batch, targets)
+        total = sum(loss for loss in losses.values())
+        return {
+            "loss": total,
+            "classes": losses["classification"],
+            "boxes": losses["bbox_regression"],
+        }
 
 
 def prepare_outputs(
@@ -72,7 +91,7 @@ def prepare_outputs(
 def build_model(
     resolution=(320, 320),
     num_classes=2,
-):
+) -> SSDModel:
     # Load pre-trained model
     model = ssdlite320_mobilenet_v3_large(
         weights=SSDLite320_MobileNet_V3_Large_Weights.DEFAULT,
@@ -92,7 +111,7 @@ def build_model(
         num_classes,
         partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.03),
     )
-    return model
+    return SSDModel(model)
 
 
 def build_dataloader(resolution):
