@@ -42,11 +42,15 @@ class SSDModel(torch.nn.Module):
         return x
 
     def loss(self, batch, targets):
-        targets = [
-            {key: convert(key, value) for key, value in entry.items()}
-            for entry in targets
-        ]
-        losses: dict = self.model(batch, targets)
+        converted = []
+        for entry in targets:
+            boxes = entry["boxes"]
+            v = (boxes[:, 2:] > (boxes[:, :2] + 0.01)).any(-1)
+            converted.append(
+                {key: convert(key, value)[v] for key, value in entry.items()}
+            )
+
+        losses: dict = self.model(batch, converted)
         total = sum(loss for loss in losses.values())
         return {
             "loss": total,
