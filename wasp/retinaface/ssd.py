@@ -3,6 +3,7 @@ from functools import partial
 import numpy as np
 import torch
 import torchvision
+import tqdm
 from environs import Env
 from torch.utils.data import DataLoader
 from torchvision.models.detection import SSDLite320_MobileNet_V3_Large_Weights
@@ -133,9 +134,9 @@ def build_dataloader(resolution):
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=6,
-        num_workers=1,
-        shuffle=True,
+        batch_size=12,
+        num_workers=10,
+        shuffle=False,
         pin_memory=True,
         drop_last=False,
         collate_fn=detection_collate,
@@ -168,21 +169,18 @@ def main(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    def convert(key, value):
-        if key == "labels":
-            return value.to(device).squeeze(1).to(torch.int64)
-        return value.to(device)
-
-    for epoch in range(num_epochs):
+    for epoch in tqdm.tqdm(range(num_epochs)):
         model.train()
-        for batch in data_loader:
+        for batch in tqdm.tqdm(data_loader):
             images = batch["image"].to(device)
             targets = [
-                {key: convert(key, value) for key, value in entry.items()}
+                {key: value.to(device) for key, value in entry.items()}
                 for entry in batch["annotation"]
             ]
 
-            loss_dict = model(images, targets)
+            _ = model(images)  # noqa
+            loss_dict = model.loss(images, targets)
+
             losses = sum(loss for loss in loss_dict.values())
 
             optimizer.zero_grad()
