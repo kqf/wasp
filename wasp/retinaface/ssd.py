@@ -46,7 +46,7 @@ class SSDModel(torch.nn.Module):
         converted = []
         for entry in targets:
             boxes = entry["boxes"]
-            v = (boxes[:, 2:] > (boxes[:, :2] + 0.01)).all(-1)
+            v = (boxes[:, 2:] > boxes[:, :2]).all(-1)
             converted.append(
                 {key: convert(key, value)[v] for key, value in entry.items()}
             )
