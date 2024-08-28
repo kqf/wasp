@@ -79,6 +79,7 @@ def main(
         # 48, n_pos=8
         # loss=DetectionLoss(anchors=priors),
         loss=model.loss,
+        prepare_outputs=model.prepare_outputs,
     )
 
     Path("./retinaface-results").mkdir(
