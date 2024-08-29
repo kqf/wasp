@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Any, Optional
 
 import numpy as np
 import torch
@@ -8,9 +9,14 @@ from environs import Env
 from torch.utils.data import DataLoader
 from torchvision.models.detection import SSDLite320_MobileNet_V3_Large_Weights
 from torchvision.models.detection import _utils as det_utils
-from torchvision.models.detection import ssdlite320_mobilenet_v3_large
 from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
-from torchvision.models.detection.ssdlite import SSDLiteHead
+from torchvision.models.detection.ssdlite import (
+    SSD,
+    MobileNet_V3_Large_Weights,
+    SSDLiteHead,
+    _mobilenet_extractor,
+    mobilenet_v3_large,
+)
 from torchvision.ops import nms
 
 import wasp.retinaface.augmentations as augs
@@ -129,28 +135,95 @@ def prepare_outputs(
     return total
 
 
+def load_with_mismatch(model, pretrained_state_dict):
+    model_state_dict = model.state_dict()
+
+    for name, pretrained_param in pretrained_state_dict.items():
+        if name in model_state_dict:
+            if "classification_head" in name:
+                continue
+
+            model_param = model_state_dict[name]
+            if pretrained_param.shape != model_param.shape:
+                ns = model_param.shape
+                expanded = pretrained_param
+                for dim in range(len(ns)):
+                    if pretrained_param.shape[dim] != ns[dim]:
+                        repeats = ns[dim] // pretrained_param.shape[dim]
+                        expanded = expanded.repeat_interleave(repeats, dim=dim)
+                pretrained_param = expanded
+            model_state_dict[name] = pretrained_param.clone()
+
+    model.load_state_dict(model_state_dict)
+    return model
+
+
+def ssdlite320_mobilenet_v3_large_custom(
+    *,
+    size: tuple[int, int],
+    weights: Optional[SSDLite320_MobileNet_V3_Large_Weights] = None,
+    progress: bool = True,
+    num_classes: Optional[int] = None,
+    weights_backbone: Optional[
+        MobileNet_V3_Large_Weights
+    ] = MobileNet_V3_Large_Weights.IMAGENET1K_V1,
+) -> SSD:
+    weights = SSDLite320_MobileNet_V3_Large_Weights.verify(weights)
+    weights_backbone = MobileNet_V3_Large_Weights.verify(weights_backbone)
+    # Enable reduced tail if no pretrained backbone is selected.
+    # See Table 6 of MobileNetV3 paper.
+    reduce_tail = weights_backbone is None
+
+    norm_layer = partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.03)
+    backbone = mobilenet_v3_large(
+        weights=weights_backbone,
+        progress=progress,
+        norm_layer=norm_layer,
+        reduced_tail=reduce_tail,
+    )
+    backbone = _mobilenet_extractor(
+        backbone,
+        6,
+        norm_layer,
+    )
+
+    anchor_generator = DefaultBoxGenerator(
+        [[2, 3] for _ in range(6)], min_ratio=0.2, max_ratio=0.95
+    )
+    out_channels = det_utils.retrieve_out_channels(backbone, size)
+    num_anchors = anchor_generator.num_anchors_per_location()
+
+    defaults = {
+        "score_thresh": 0.001,
+        "nms_thresh": 0.55,
+        "detections_per_img": 300,
+        "topk_candidates": 300,
+        # Rescale the input in a way compatible to the backbone:
+        # The following mean/std rescale the data from [0, 1] to [-1, 1]
+        "image_mean": [0.5, 0.5, 0.5],
+        "image_std": [0.5, 0.5, 0.5],
+    }
+    kwargs: Any = {**defaults}
+    model = SSD(
+        backbone,
+        anchor_generator,
+        size,
+        num_classes,
+        head=SSDLiteHead(out_channels, num_anchors, num_classes, norm_layer),
+        **kwargs,
+    )
+    return load_with_mismatch(model, weights.get_state_dict(progress=progress))
+
+
 def build_model(
     resolution=(320, 320),
     num_classes=2,
 ) -> SSDModel:
     # Load pre-trained model
-    model = ssdlite320_mobilenet_v3_large(
+    model = ssdlite320_mobilenet_v3_large_custom(
         weights=SSDLite320_MobileNet_V3_Large_Weights.DEFAULT,
-    )
-    anchor_generator = DefaultBoxGenerator(
-        [[2, 3] for _ in range(6)], min_ratio=0.2, max_ratio=0.95
-    )
-    size = (320, 320)
-    out_channels = det_utils.retrieve_out_channels(model.backbone, size)
-    num_anchors = anchor_generator.num_anchors_per_location()
-    if len(out_channels) != len(anchor_generator.aspect_ratios):
-        raise ValueError("Wrong aspect ratio")
-
-    model.head = SSDLiteHead(
-        out_channels,
-        num_anchors,
-        num_classes,
-        partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.03),
+        size=resolution,
+        num_classes=num_classes,
     )
     return SSDModel(model)
 
