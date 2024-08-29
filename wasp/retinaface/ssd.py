@@ -28,10 +28,12 @@ def get_transform(train):
     return torchvision.transforms.Compose(transforms)
 
 
-def convert(key, value):
+def convert(key, value, mask):
     if key == "labels":
-        return value.squeeze(1).to(torch.int64)
-    return value
+        return value.squeeze(1).to(torch.int64)[mask]
+    if key == "images":
+        return value
+    return value[mask]
 
 
 class SSDModel(torch.nn.Module):
@@ -40,24 +42,58 @@ class SSDModel(torch.nn.Module):
         self.model = model
 
     def forward(self, x):
-        return x
+        if not self.model.training:
+            return x, self.model(x)
+        return x, None
 
-    def loss(self, batch, targets):
+    def loss(self, batch_outs, targets):
+        batch, _ = batch_outs
         converted = []
         for entry in targets:
             boxes = entry["boxes"]
-            v = (boxes[:, 2:] > boxes[:, :2]).all(-1)
+            mask = (boxes[:, 2:] > boxes[:, :2]).all(-1)
             converted.append(
-                {key: convert(key, value)[v] for key, value in entry.items()}
+                {k: convert(k, v, mask) for k, v in entry.items()},
             )
 
-        losses: dict = self.model(batch, converted)
+        if self.model.training:
+            losses: dict = self.model(batch, converted)
+        else:
+            self.model.train()
+            with torch.no_grad():
+                losses: dict = self.model(batch, converted)
+            self.model.eval()
+
         total = sum(loss for loss in losses.values())
         return {
             "loss": total,
             "classes": losses["classification"],
             "boxes": losses["bbox_regression"],
         }
+
+    def prepare_outputs(self, images, out, targets, prior_box):
+        _, out = out
+        total = []
+        image_height = images.shape[2]
+        image_width = images.shape[3]
+        scale = np.tile([image_width, image_height], 2)
+        for preds, labels in zip(out, targets):
+            boxes = preds["boxes"].cpu().numpy()
+            scores = preds["scores"].cpu().numpy()
+            candidates = np.concatenate(
+                (boxes, scores.reshape(-1, 1), scores.reshape(-1, 1)),
+                axis=1,
+            )
+            candidates[:, -2] = 0
+
+            boxes_gt = labels["boxes"].cpu().numpy()
+            labels_gt = labels["labels"].cpu().numpy()
+            gts = np.zeros((boxes_gt.shape[0], 7), dtype=np.float32)
+            gts[:, :4] = boxes_gt[:, :4] * scale[None, :]
+            gts[:, 4] = np.where(labels_gt[:, -1] > 0, 0, 1)
+            total.append((candidates, gts))
+
+        return total
 
 
 def prepare_outputs(
