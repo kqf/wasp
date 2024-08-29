@@ -33,7 +33,7 @@ env.read_env()
 def main(
     train_labels: str = None,
     valid_labels: str = None,
-    resolution: tuple[int, int] = (320, 320),
+    resolution: tuple[int, int] = (640, 480),
     epochs: int = 20,
 ) -> None:
     pl.trainer.seed_everything(137)
