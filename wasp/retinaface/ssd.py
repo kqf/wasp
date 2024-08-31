@@ -221,7 +221,7 @@ def build_model(
     # Load pre-trained model
     model = ssdlite320_mobilenet_v3_large_custom(
         weights=SSDLite320_MobileNet_V3_Large_Weights.DEFAULT,
-        size=resolution,
+        size=resolution[::-1],
         num_classes=num_classes,
     )
     return SSDModel(model)
