@@ -26,9 +26,10 @@ from wasp.retinaface.preprocess import compose, normalize, preprocess
 
 # Transformations adjusted for 640x640 images
 def get_transform(train):
-    transforms = []
-    transforms.append(torchvision.transforms.Resize((640, 480)))
-    transforms.append(torchvision.transforms.ToTensor())
+    transforms = [
+        torchvision.transforms.Resize((640, 480)),
+        torchvision.transforms.ToTensor(),
+    ]
     if train:
         transforms.append(torchvision.transforms.RandomHorizontalFlip(0.5))
     return torchvision.transforms.Compose(transforms)
@@ -37,9 +38,7 @@ def get_transform(train):
 def convert(key, value, mask):
     if key == "labels":
         return value.squeeze(1).to(torch.int64)[mask]
-    if key == "images":
-        return value
-    return value[mask]
+    return value if key == "images" else value[mask]
 
 
 class SSDModel(torch.nn.Module):
@@ -48,9 +47,7 @@ class SSDModel(torch.nn.Module):
         self.model = model
 
     def forward(self, x):
-        if not self.model.training:
-            return x, self.model(x)
-        return x, None
+        return (x, None) if self.model.training else (x, self.model(x))
 
     def loss(self, batch_outs, targets):
         batch, _ = batch_outs
@@ -72,7 +69,7 @@ class SSDModel(torch.nn.Module):
             # Don't do anything with losses
             losses = {"classification": 0, "bbox_regression": 0}
 
-        total = sum(loss for loss in losses.values())
+        total = sum(losses.values())
         return {
             "loss": total,
             "classes": losses["classification"],
@@ -243,7 +240,7 @@ def build_dataloader(resolution):
         rotate90=False,
     )
 
-    train_loader = DataLoader(
+    return DataLoader(
         train_dataset,
         batch_size=12,
         num_workers=10,
@@ -252,7 +249,6 @@ def build_dataloader(resolution):
         drop_last=False,
         collate_fn=detection_collate,
     )
-    return train_loader
 
 
 def main(
@@ -292,7 +288,7 @@ def main(
             _ = model(images)  # noqa
             loss_dict = model.loss(images, targets)
 
-            losses = sum(loss for loss in loss_dict.values())
+            losses = sum(loss_dict.values())
 
             optimizer.zero_grad()
             losses.backward()
