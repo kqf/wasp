@@ -62,22 +62,10 @@ def to_sample(entry: dict[str, Any]) -> Sample:
     )
 
 
-def clean_sample(sample: Sample) -> Sample:
-    cleaned = []
-    for annotation in sample.annotations:
-        # Only correct bboxes
-        if annotation.bbox[2:] <= annotation.bbox[:2]:
-            continue
-        cleaned.append(annotation)
-    sample.annotations = cleaned
-    return sample
-
-
 def read_dataset(path: Path | str) -> list[Sample]:
     with open(path) as f:
         df = json.load(f)
-    samples = [clean_sample(to_sample(x)) for x in df]
-    return [sample for sample in samples if sample.annotations]
+    return [to_sample(x) for x in df]
 
 
 def trimm_boxes(
