@@ -17,7 +17,6 @@ from torchvision.models.detection.ssdlite import (
     _mobilenet_extractor,
     mobilenet_v3_large,
 )
-from torchvision.ops import nms
 
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
@@ -99,39 +98,6 @@ class SSDModel(torch.nn.Module):
             total.append((candidates, gts))
 
         return total
-
-
-def prepare_outputs(
-    images,
-    out,
-    targets,
-    prior_box,
-) -> list[tuple[np.ndarray, np.ndarray]]:
-    total = []
-    for batch_id, target in enumerate(targets):
-        preds = out[batch_id]
-        boxes = preds["boxes"]
-        scores = preds["scores"]
-        # labels = preds["labels"]
-
-        # do NMS
-        keep = nms(boxes, scores, 0.4)
-        boxes = boxes[keep, :].cpu().numpy()
-        scores = scores[keep].cpu().numpy()
-        candidates = np.concatenate(
-            (boxes, scores.reshape(-1, 1), scores.reshape(-1, 1)),
-            axis=1,
-        )
-        candidates[:, -2] = 0
-
-        boxes_gt = target["boxes"].cpu().numpy()
-        labels_gt = target["labels"].cpu().numpy()
-        gts = np.zeros((boxes_gt.shape[0], 7), dtype=np.float32)
-        gts[:, :4] = boxes_gt[:, :4]  # * scale[None, :].cpu().numpy()
-        gts[:, 4] = np.where(labels_gt[:, -1] > 0, 0, 1)
-        total.append((candidates, gts))
-
-    return total
 
 
 def load_with_mismatch(model, pretrained_state_dict):
