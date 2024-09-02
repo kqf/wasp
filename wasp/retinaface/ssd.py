@@ -62,10 +62,10 @@ class SSDModel(torch.nn.Module):
         if self.model.training:
             losses: dict = self.model(batch, converted)
         else:
-            # self.model.train()
-            # with torch.no_grad():
-            #     losses: dict = self.model(batch, converted)
-            # self.model.eval()
+            self.model.train()
+            with torch.no_grad():
+                losses: dict = self.model(batch, converted)
+            self.model.eval()
             # Don't do anything with losses
             losses = {"classification": 0, "bbox_regression": 0}
 
