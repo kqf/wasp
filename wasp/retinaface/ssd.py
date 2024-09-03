@@ -165,8 +165,8 @@ def ssdlite320_mobilenet_v3_large_custom(
         "topk_candidates": 300,
         # Rescale the input in a way compatible to the backbone:
         # The following mean/std rescale the data from [0, 1] to [-1, 1]
-        "image_mean": [0.5, 0.5, 0.5],
-        "image_std": [0.5, 0.5, 0.5],
+        "image_mean": [0.0, 0.0, 0.0],
+        "image_std": [1.0, 1.0, 1.0],
     }
     kwargs: Any = {**defaults}
     model = SSD(
