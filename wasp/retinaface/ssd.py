@@ -153,14 +153,16 @@ def ssdlite320_mobilenet_v3_large_custom(
     )
 
     anchor_generator = DefaultBoxGenerator(
-        [[2, 3] for _ in range(6)], min_ratio=0.2, max_ratio=0.95
+        [[2, 3] for _ in range(6)],
+        min_ratio=0.2,
+        max_ratio=0.95,
     )
     out_channels = det_utils.retrieve_out_channels(backbone, size)
     num_anchors = anchor_generator.num_anchors_per_location()
 
     defaults = {
-        "score_thresh": 0.001,
-        "nms_thresh": 0.55,
+        "score_thresh": 0.5,
+        "nms_thresh": 0.5,
         "detections_per_img": 300,
         "topk_candidates": 300,
         # Rescale the input in a way compatible to the backbone:
