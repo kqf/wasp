@@ -66,7 +66,7 @@ class SSDModel(torch.nn.Module):
                 losses: dict = self.model(batch, converted)
             self.model.eval()
             # Don't do anything with losses
-            losses = {"classification": 0, "bbox_regression": 0}
+            # losses = {"classification": 0, "bbox_regression": 0}
 
         total = sum(losses.values())
         return {
