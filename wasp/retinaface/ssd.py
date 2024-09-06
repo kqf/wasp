@@ -161,7 +161,7 @@ def ssdlite320_mobilenet_v3_large_custom(
     num_anchors = anchor_generator.num_anchors_per_location()
 
     defaults = {
-        "score_thresh": 0.5,
+        "score_thresh": 0.1,
         "nms_thresh": 0.4,
         "detections_per_img": 300,
         "topk_candidates": 300,
