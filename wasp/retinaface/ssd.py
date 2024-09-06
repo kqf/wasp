@@ -162,7 +162,7 @@ def ssdlite320_mobilenet_v3_large_custom(
 
     defaults = {
         "score_thresh": 0.5,
-        "nms_thresh": 0.5,
+        "nms_thresh": 0.4,
         "detections_per_img": 300,
         "topk_candidates": 300,
         # Rescale the input in a way compatible to the backbone:
