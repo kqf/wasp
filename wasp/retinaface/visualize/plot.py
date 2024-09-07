@@ -71,8 +71,12 @@ def denormalize(image):
     return image * 255.0
 
 
+def to_image(image):
+    return denormalize(image).permute(1, 2, 0).cpu().numpy().astype(np.uint8)
+
+
 def draw_anchors_on_image(image, anchors, y_true_, y_pred_, odir):
-    image = denormalize(image).permute(1, 2, 0).cpu().numpy().astype(np.uint8)
+    image = to_image(image)
     anchors = anchors.cpu().numpy()
 
     # Convert image from torch (C, H, W) to OpenCV (H, W, C) and BGR
