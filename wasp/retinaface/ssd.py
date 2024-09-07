@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Any, Optional
 
+import cv2
 import numpy as np
 import torch
 import torchvision
@@ -19,8 +20,9 @@ from torchvision.models.detection.ssdlite import (
 )
 
 import wasp.retinaface.augmentations as augs
-from wasp.retinaface.data import FaceDetectionDataset, detection_collate
+from wasp.retinaface.data import Annotation, FaceDetectionDataset, detection_collate
 from wasp.retinaface.preprocess import compose, normalize, preprocess
+from wasp.retinaface.visualize.plot import plot, to_image
 
 
 # Transformations adjusted for 640x640 images
@@ -97,6 +99,12 @@ class SSDModel(torch.nn.Module):
             gts[:, 4] = np.where(labels_gt[:, -1] > 0, 0, 1)
             total.append((candidates, gts))
 
+        # vis = plot(
+        #     image=to_image(images[-1]),
+        #     annotations=[Annotation(bbox, tuple()) for bbox in boxes],
+        # )
+        # cv2.imwrite("debug.jpg", vis)
+
         return total
 
 
@@ -161,7 +169,7 @@ def ssdlite320_mobilenet_v3_large_custom(
     num_anchors = anchor_generator.num_anchors_per_location()
 
     defaults = {
-        "score_thresh": 0.1,
+        "score_thresh": 0.9,
         "nms_thresh": 0.4,
         "detections_per_img": 300,
         "topk_candidates": 300,
@@ -169,6 +177,7 @@ def ssdlite320_mobilenet_v3_large_custom(
         # The following mean/std rescale the data from [0, 1] to [-1, 1]
         "image_mean": [0.0, 0.0, 0.0],
         "image_std": [1.0, 1.0, 1.0],
+        "_skip_resize": True,
     }
     kwargs: Any = {**defaults}
     model = SSD(
