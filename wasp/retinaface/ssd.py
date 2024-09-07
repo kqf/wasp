@@ -20,7 +20,11 @@ from torchvision.models.detection.ssdlite import (
 )
 
 import wasp.retinaface.augmentations as augs
-from wasp.retinaface.data import Annotation, FaceDetectionDataset, detection_collate
+from wasp.retinaface.data import (
+    Annotation,
+    FaceDetectionDataset,
+    detection_collate,
+)
 from wasp.retinaface.preprocess import compose, normalize, preprocess
 from wasp.retinaface.visualize.plot import plot, to_image
 
