@@ -20,11 +20,7 @@ from torchvision.models.detection.ssdlite import (
 )
 
 import wasp.retinaface.augmentations as augs
-from wasp.retinaface.data import (
-    Annotation,
-    FaceDetectionDataset,
-    detection_collate,
-)
+from wasp.retinaface.data import Annotation, FaceDetectionDataset, detection_collate
 from wasp.retinaface.preprocess import compose, normalize, preprocess
 from wasp.retinaface.visualize.plot import plot, to_image
 
@@ -173,7 +169,7 @@ def ssdlite320_mobilenet_v3_large_custom(
     num_anchors = anchor_generator.num_anchors_per_location()
 
     defaults = {
-        "score_thresh": 0.9,
+        "score_thresh": 0.5,
         "nms_thresh": 0.4,
         "detections_per_img": 300,
         "topk_candidates": 300,
