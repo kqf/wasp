@@ -1,7 +1,6 @@
 from functools import partial
 from typing import Any, Optional
 
-import cv2
 import numpy as np
 import torch
 import torchvision
@@ -20,9 +19,8 @@ from torchvision.models.detection.ssdlite import (
 )
 
 import wasp.retinaface.augmentations as augs
-from wasp.retinaface.data import Annotation, FaceDetectionDataset, detection_collate
+from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.preprocess import compose, normalize, preprocess
-from wasp.retinaface.visualize.plot import plot, to_image
 
 
 # Transformations adjusted for 640x640 images
@@ -40,6 +38,19 @@ def convert(key, value, mask):
     if key == "labels":
         return value.squeeze(1).to(torch.int64)[mask]
     return value if key == "images" else value[mask]
+
+
+def vis_outputs(images, boxes):
+    import cv2
+
+    from wasp.retinaface.data import Annotation
+    from wasp.retinaface.visualize.plot import plot, to_image
+
+    vis = plot(
+        image=to_image(images[-1]),
+        annotations=[Annotation(bbox, ()) for bbox in boxes],
+    )
+    cv2.imwrite("debug.jpg", vis)
 
 
 class SSDModel(torch.nn.Module):
@@ -99,12 +110,8 @@ class SSDModel(torch.nn.Module):
             gts[:, 4] = np.where(labels_gt[:, -1] > 0, 0, 1)
             total.append((candidates, gts))
 
-        # vis = plot(
-        #     image=to_image(images[-1]),
-        #     annotations=[Annotation(bbox, tuple()) for bbox in boxes],
-        # )
-        # cv2.imwrite("debug.jpg", vis)
-
+        # Uncomment to debug the plots
+        # vis_outputs(images, boxes)
         return total
 
 
