@@ -13,7 +13,9 @@ from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
 from torchvision.models.detection.ssdlite import (
     SSD,
     MobileNet_V3_Large_Weights,
+    SSDLiteClassificationHead,
     SSDLiteHead,
+    SSDLiteRegressionHead,
     _mobilenet_extractor,
     mobilenet_v3_large,
 )
@@ -38,6 +40,45 @@ def convert(key, value, mask):
     if key == "labels":
         return value.squeeze(1).to(torch.int64)[mask]
     return value if key == "images" else value[mask]
+
+
+class SSDPure(torch.nn.Module):
+    def __init__(self, resolution, n_classes):
+        self.super().__init__()
+        self.n_classes = n_classes
+        weights_backbone = MobileNet_V3_Large_Weights.IMAGENET1K_V1
+
+        norm_layer = partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.03)
+        backbone = mobilenet_v3_large(
+            weights=weights_backbone,
+            progress=True,
+            norm_layer=norm_layer,
+            reduced_tail=False,
+        )
+        backbone = _mobilenet_extractor(
+            backbone,
+            6,
+            norm_layer,
+        )
+        out_channels = det_utils.retrieve_out_channels(backbone, resolution)
+        self.classification_head = SSDLiteClassificationHead(
+            in_channels=out_channels,
+            num_anchors=2,
+            norm_layer=norm_layer,
+            num_classes=n_classes,
+        )
+        self.regression_head = SSDLiteRegressionHead(
+            in_channels=out_channels,
+            num_anchors=2,
+            norm_layer=norm_layer,
+        )
+
+    def forward(self, images):
+        features = self.backbone(images)
+        features = list(features.values())
+        classes = self.classification_head(features)
+        boxes = self.regression_head(features)
+        return boxes, classes
 
 
 def vis_outputs(images, boxes):
