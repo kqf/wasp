@@ -61,6 +61,7 @@ class SSDPure(torch.nn.Module):
             norm_layer,
         )
         out_channels = det_utils.retrieve_out_channels(backbone, resolution)
+        out_channels = [672]
         num_anchors = [2 for _ in out_channels]
         self.classification_head = SSDLiteClassificationHead(
             in_channels=out_channels,
@@ -77,6 +78,8 @@ class SSDPure(torch.nn.Module):
     def forward(self, images):
         features = self.backbone(images)
         features = list(features.values())
+        for f in features:
+            print("fff~", f.shape)
         classes = self.classification_head(features)
         boxes = self.regression_head(features)
         return boxes, classes
