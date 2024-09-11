@@ -12,14 +12,14 @@ from wasp.retinaface.checkpoint import BestModelCheckpoint
 
 # from wasp.retinaface.closs import DetectionLoss
 from wasp.retinaface.logger import build_mlflow
+from wasp.retinaface.loss import MultiBoxLoss
 
 # from wasp.retinaface.monitor import PyTorchGpuMonitorCallback
 from wasp.retinaface.pipeline import RetinaFacePipeline
 from wasp.retinaface.preprocess import preprocess
 from wasp.retinaface.priors import priorbox
-from wasp.retinaface.ssd import build_model
+from wasp.retinaface.ssd import SSDPure
 
-# from wasp.retinaface.loss import MultiBoxLoss
 # from wasp.retinaface.model import RetinaFace
 
 
@@ -47,7 +47,8 @@ def main(
     #     },
     #     out_channels=256,
     # )
-    model = build_model()
+    # model = build_model()
+    model = SSDPure(resolution, n_classes=2)
 
     priors = priorbox(
         min_sizes=[[16, 32], [64, 128], [256, 512]],
@@ -75,11 +76,10 @@ def main(
             T_mult=2,
         ),
         # 64, n_pos=8
-        # loss=MultiBoxLoss(priors=priors),
+        loss=MultiBoxLoss(priors=priors),
         # 48, n_pos=8
         # loss=DetectionLoss(anchors=priors),
-        loss=model.loss,
-        prepare_outputs=model.prepare_outputs,
+        # prepare_outputs=model.prepare_outputs,
     )
 
     Path("./retinaface-results").mkdir(
