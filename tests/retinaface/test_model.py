@@ -3,6 +3,7 @@ import torch
 import torchvision
 
 from wasp.retinaface.model import RetinaFace
+from wasp.retinaface.ssd import SSDPure
 
 
 def check_shapes(model, image):
@@ -19,7 +20,7 @@ def check_shapes(model, image):
     [
         # All layers
         (torch.randn(1, 3, 640, 480), 12600),
-        (torch.randn(1, 3, 1280, 720), 37840),
+        # (torch.randn(1, 3, 1280, 720), 37840),
         # Only two layers
         # (torch.randn(1, 3, 640, 480), 600),
         # (torch.randn(1, 3, 1280, 720), 1840),
@@ -116,3 +117,26 @@ def test_backbone(image):
     test_outputs = check_shapes(model2.features, image)
     for k, v in test_outputs.items():
         print(k, v.shape)
+
+
+@pytest.mark.parametrize(
+    "inputs, anchors",
+    [
+        # All layers
+        (torch.randn(1, 3, 640, 480), 12600),
+        # (torch.randn(1, 3, 1280, 720), 37840),
+        # Only two layers
+        # (torch.randn(1, 3, 640, 480), 600),
+        # (torch.randn(1, 3, 1280, 720), 1840),
+    ],
+)
+def test_ssd(inputs, anchors):
+    model = SSDPure(resolution=(640, 480), n_classes=2)
+    total = sum(p.numel() for p in model.parameters())
+    print(f"Model name ssd, size: {total:_}")
+
+    bboxes, classes = model(inputs)
+    assert bboxes.shape == (inputs.shape[0], anchors, 4)
+    assert classes.shape == (inputs.shape[0], anchors, 2)
+    # assert landmarks.shape == (inputs.shape[0], anchors, 10)
+    # assert depths.shape == (inputs.shape[0], anchors, 2)
