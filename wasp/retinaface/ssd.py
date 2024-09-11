@@ -44,7 +44,7 @@ def convert(key, value, mask):
 
 class SSDPure(torch.nn.Module):
     def __init__(self, resolution, n_classes):
-        self.super().__init__()
+        super().__init__()
         self.n_classes = n_classes
         weights_backbone = MobileNet_V3_Large_Weights.IMAGENET1K_V1
 
@@ -55,21 +55,22 @@ class SSDPure(torch.nn.Module):
             norm_layer=norm_layer,
             reduced_tail=False,
         )
-        backbone = _mobilenet_extractor(
+        self.backbone = _mobilenet_extractor(
             backbone,
             6,
             norm_layer,
         )
         out_channels = det_utils.retrieve_out_channels(backbone, resolution)
+        num_anchors = [2 for _ in out_channels]
         self.classification_head = SSDLiteClassificationHead(
             in_channels=out_channels,
-            num_anchors=2,
+            num_anchors=num_anchors,
             norm_layer=norm_layer,
             num_classes=n_classes,
         )
         self.regression_head = SSDLiteRegressionHead(
             in_channels=out_channels,
-            num_anchors=2,
+            num_anchors=num_anchors,
             norm_layer=norm_layer,
         )
 
