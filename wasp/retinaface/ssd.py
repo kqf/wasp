@@ -55,7 +55,7 @@ class SSDPure(torch.nn.Module):
             norm_layer=norm_layer,
             reduced_tail=False,
         )
-        backbone = _mobilenet_extractor(
+        self.backbone = _mobilenet_extractor(
             backbone,
             6,
             norm_layer,
