@@ -123,7 +123,7 @@ def test_backbone(image):
     "inputs, anchors",
     [
         # All layers
-        (torch.randn(1, 3, 640, 480), 12600),
+        (torch.randn(1, 3, 640, 640), 12600),
         # (torch.randn(1, 3, 1280, 720), 37840),
         # Only two layers
         # (torch.randn(1, 3, 640, 480), 600),
@@ -143,9 +143,11 @@ def test_ssd(inputs, anchors):
     )
     num_anchors = anchor_generator.num_anchors_per_location()
     print(num_anchors)
-
+    featture_sizes = [40, 40], [20, 20], [10, 10], [5, 5], [3, 3], [2, 2]
+    anchors = anchor_generator._grid_default_boxes(featture_sizes, [640, 640])
+    n_anchors = anchors.shape[0]
     bboxes, classes = model(inputs)
-    # assert bboxes.shape == (inputs.shape[0], anchors, 4)
-    # assert classes.shape == (inputs.shape[0], anchors, 2)
-    # assert landmarks.shape == (inputs.shape[0], anchors, 10)
-    # assert depths.shape == (inputs.shape[0], anchors, 2)
+    assert bboxes.shape == (inputs.shape[0], n_anchors, 4)
+    assert classes.shape == (inputs.shape[0], n_anchors, 2)
+    # assert landmarks.shape == (inputs.shape[0], n_anchors, 10)
+    # assert depths.shape == (inputs.shape[0], n_anchors, 2)
