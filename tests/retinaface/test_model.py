@@ -123,7 +123,7 @@ def test_backbone(image):
     "inputs, anchors",
     [
         # All layers
-        (torch.randn(1, 3, 640, 480), 12600),
+        (torch.randn(1, 3, 640, 640), 12600),
         # (torch.randn(1, 3, 1280, 720), 37840),
         # Only two layers
         # (torch.randn(1, 3, 640, 480), 600),
@@ -131,12 +131,23 @@ def test_backbone(image):
     ],
 )
 def test_ssd(inputs, anchors):
-    model = SSDPure(resolution=(640, 480), n_classes=2)
+    model = SSDPure(resolution=(640, 640), n_classes=2)
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
+    from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
 
+    anchor_generator = DefaultBoxGenerator(
+        [[2, 3] for _ in range(6)],
+        min_ratio=0.2,
+        max_ratio=0.95,
+    )
+    num_anchors = anchor_generator.num_anchors_per_location()
+    print(num_anchors)
+    featture_sizes = [40, 40], [20, 20], [10, 10], [5, 5], [3, 3], [2, 2]
+    anchors = anchor_generator._grid_default_boxes(featture_sizes, [640, 640])
+    n_anchors = anchors.shape[0]
     bboxes, classes = model(inputs)
-    assert bboxes.shape == (inputs.shape[0], anchors, 4)
-    assert classes.shape == (inputs.shape[0], anchors, 2)
-    # assert landmarks.shape == (inputs.shape[0], anchors, 10)
-    # assert depths.shape == (inputs.shape[0], anchors, 2)
+    assert bboxes.shape == (inputs.shape[0], n_anchors, 4)
+    assert classes.shape == (inputs.shape[0], n_anchors, 2)
+    # assert landmarks.shape == (inputs.shape[0], n_anchors, 10)
+    # assert depths.shape == (inputs.shape[0], n_anchors, 2)

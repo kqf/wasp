@@ -62,7 +62,7 @@ class SSDPure(torch.nn.Module):
         )
         out_channels = det_utils.retrieve_out_channels(backbone, resolution)
         out_channels = [672]
-        num_anchors = [2 for _ in out_channels]
+        num_anchors = [6 for _ in out_channels]
         self.classification_head = SSDLiteClassificationHead(
             in_channels=out_channels,
             num_anchors=num_anchors,
