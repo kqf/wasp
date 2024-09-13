@@ -1,6 +1,7 @@
 import pytest
 import torch
 import torchvision
+from torchvision.models.detection.ssdlite import ssdlite320_mobilenet_v3_large
 
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.ssd import SSDPure, ssdlite320_mobilenet_v3_large_custom
@@ -131,17 +132,22 @@ def test_backbone(image):
     ],
 )
 def test_ssd(inputs, anchors):
-    resolution = inputs.shape[:-2]
+    resolution = inputs.shape[-2:]
     print(resolution)
-    ref = ssdlite320_mobilenet_v3_large_custom(
-        size=resolution, num_classes=2
+    ref = ssdlite320_mobilenet_v3_large(
+        pretrained=False, num_classes=2
     )  # Change num_classes as needed
     total = sum(p.numel() for p in ref.parameters())
     ref.eval()
+
     print(f"Model name ssd, size: {total:_}")
     ref(inputs)
 
     model = SSDPure(resolution=resolution, n_classes=2)
+    model.backbone = ref.backbone
+    model.classification_head = ref.head.classification_head
+    model.regression_head = ref.head.regression_head
+
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
     from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
