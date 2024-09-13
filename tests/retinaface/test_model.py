@@ -1,6 +1,7 @@
 import pytest
 import torch
 import torchvision
+from torchvision.models.detection.ssdlite import ssdlite320_mobilenet_v3_large
 
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.ssd import SSDPure, ssdlite320_mobilenet_v3_large_custom
@@ -131,15 +132,22 @@ def test_backbone(image):
     ],
 )
 def test_ssd(inputs, anchors):
-    ref = ssdlite320_mobilenet_v3_large_custom(
-        size=(320, 320), num_classes=2
+    resolution = inputs.shape[-2:]
+    print(resolution)
+    ref = ssdlite320_mobilenet_v3_large(
+        pretrained=False, num_classes=2
     )  # Change num_classes as needed
     total = sum(p.numel() for p in ref.parameters())
     ref.eval()
+
     print(f"Model name ssd, size: {total:_}")
     ref(inputs)
 
-    model = SSDPure(resolution=(640, 640), n_classes=2)
+    model = SSDPure(resolution=resolution, n_classes=2)
+    model.backbone = ref.backbone
+    model.classification_head = ref.head.classification_head
+    model.regression_head = ref.head.regression_head
+
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
     from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
@@ -152,7 +160,7 @@ def test_ssd(inputs, anchors):
     num_anchors = anchor_generator.num_anchors_per_location()
     print(num_anchors)
     featture_sizes = [40, 40], [20, 20], [10, 10], [5, 5], [3, 3], [2, 2]
-    anchors = anchor_generator._grid_default_boxes(featture_sizes, [640, 640])
+    anchors = anchor_generator._grid_default_boxes(featture_sizes, resolution)
     n_anchors = anchors.shape[0]
     bboxes, classes = model(inputs)
     assert bboxes.shape == (inputs.shape[0], n_anchors, 4)
