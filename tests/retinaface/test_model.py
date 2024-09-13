@@ -3,7 +3,7 @@ import torch
 import torchvision
 
 from wasp.retinaface.model import RetinaFace
-from wasp.retinaface.ssd import SSDPure
+from wasp.retinaface.ssd import SSDPure, ssdlite320_mobilenet_v3_large_custom
 
 
 def check_shapes(model, image):
@@ -123,7 +123,7 @@ def test_backbone(image):
     "inputs, anchors",
     [
         # All layers
-        (torch.randn(1, 3, 640, 640), 12600),
+        (torch.randn(1, 3, 320, 320), 12600),
         # (torch.randn(1, 3, 1280, 720), 37840),
         # Only two layers
         # (torch.randn(1, 3, 640, 480), 600),
@@ -131,6 +131,14 @@ def test_backbone(image):
     ],
 )
 def test_ssd(inputs, anchors):
+    ref = ssdlite320_mobilenet_v3_large_custom(
+        size=(320, 320), num_classes=2
+    )  # Change num_classes as needed
+    total = sum(p.numel() for p in ref.parameters())
+    ref.eval()
+    print(f"Model name ssd, size: {total:_}")
+    ref(inputs)
+
     model = SSDPure(resolution=(640, 640), n_classes=2)
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")

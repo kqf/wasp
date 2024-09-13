@@ -60,9 +60,13 @@ class SSDPure(torch.nn.Module):
             6,
             norm_layer,
         )
-        out_channels = det_utils.retrieve_out_channels(backbone, resolution)
-        out_channels = [672]
+        out_channels = det_utils.retrieve_out_channels(
+            self.backbone,
+            resolution,
+        )
         num_anchors = [6 for _ in out_channels]
+        print(f"{out_channels=}")
+        print(f"{num_anchors=}")
         self.classification_head = SSDLiteClassificationHead(
             in_channels=out_channels,
             num_anchors=num_anchors,
@@ -186,7 +190,9 @@ def load_with_mismatch(model, pretrained_state_dict):
 def ssdlite320_mobilenet_v3_large_custom(
     *,
     size: tuple[int, int],
-    weights: Optional[SSDLite320_MobileNet_V3_Large_Weights] = None,
+    weights: Optional[
+        SSDLite320_MobileNet_V3_Large_Weights
+    ] = SSDLite320_MobileNet_V3_Large_Weights.COCO_V1,
     progress: bool = True,
     num_classes: Optional[int] = None,
     weights_backbone: Optional[
@@ -198,6 +204,7 @@ def ssdlite320_mobilenet_v3_large_custom(
     # Enable reduced tail if no pretrained backbone is selected.
     # See Table 6 of MobileNetV3 paper.
     reduce_tail = weights_backbone is None
+    print(f"{reduce_tail=}")
 
     norm_layer = partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.03)
     backbone = mobilenet_v3_large(
@@ -218,7 +225,9 @@ def ssdlite320_mobilenet_v3_large_custom(
         max_ratio=0.95,
     )
     out_channels = det_utils.retrieve_out_channels(backbone, size)
+    print(f"{out_channels=}")
     num_anchors = anchor_generator.num_anchors_per_location()
+    print(f"{num_anchors=}")
 
     defaults = {
         "score_thresh": 0.5,
