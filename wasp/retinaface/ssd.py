@@ -42,6 +42,17 @@ def convert(key, value, mask):
     return value if key == "images" else value[mask]
 
 
+def build_priors(resolution):
+    # This is build for 640x640 resolution
+    anchor_generator = DefaultBoxGenerator(
+        [[2, 3] for _ in range(6)],
+        min_ratio=0.2,
+        max_ratio=0.95,
+    )
+    featture_sizes = [40, 40], [20, 20], [10, 10], [5, 5], [3, 3], [2, 2]
+    return anchor_generator._grid_default_boxes(featture_sizes, resolution)
+
+
 class SSDPure(torch.nn.Module):
     def __init__(self, resolution, n_classes):
         super().__init__()
@@ -78,15 +89,28 @@ class SSDPure(torch.nn.Module):
             num_anchors=num_anchors,
             norm_layer=norm_layer,
         )
+        self.landmarks_head = SSDLiteClassificationHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            num_classes=10,
+        )
+
+        self.distances_head = SSDLiteClassificationHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            num_classes=2,
+        )
 
     def forward(self, images):
         features = self.backbone(images)
         features = list(features.values())
-        for f in features:
-            print("fff~", f.shape)
         classes = self.classification_head(features)
         boxes = self.regression_head(features)
-        return boxes, classes
+        landmarks = self.landmarks_head(features)
+        distances = self.distances_head(features)
+        return boxes, classes, landmarks, distances
 
 
 def vis_outputs(images, boxes):
