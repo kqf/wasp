@@ -46,6 +46,6 @@ def test_main(annotations):
     main(
         train_labels=str(annotations),
         valid_labels=str(annotations),
-        resolution=(256, 256),
+        resolution=(640, 640),
         epochs=1,
     )
