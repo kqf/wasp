@@ -42,6 +42,17 @@ def convert(key, value, mask):
     return value if key == "images" else value[mask]
 
 
+def build_priors(resolution):
+    # This is build for 640x640 resolution
+    anchor_generator = DefaultBoxGenerator(
+        [[2, 3] for _ in range(6)],
+        min_ratio=0.2,
+        max_ratio=0.95,
+    )
+    featture_sizes = [40, 40], [20, 20], [10, 10], [5, 5], [3, 3], [2, 2]
+    return anchor_generator._grid_default_boxes(featture_sizes, resolution)
+
+
 class SSDPure(torch.nn.Module):
     def __init__(self, resolution, n_classes):
         super().__init__()
