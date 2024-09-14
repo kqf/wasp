@@ -89,15 +89,28 @@ class SSDPure(torch.nn.Module):
             num_anchors=num_anchors,
             norm_layer=norm_layer,
         )
+        self.landmarks_head = SSDLiteClassificationHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            num_classes=10,
+        )
+
+        self.distances_head = SSDLiteClassificationHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            num_classes=2,
+        )
 
     def forward(self, images):
         features = self.backbone(images)
         features = list(features.values())
-        for f in features:
-            print("fff~", f.shape)
         classes = self.classification_head(features)
         boxes = self.regression_head(features)
-        return boxes, classes
+        landmarks = self.landmarks_head(features)
+        distances = self.distances_head(features)
+        return boxes, classes, landmarks, distances
 
 
 def vis_outputs(images, boxes):
