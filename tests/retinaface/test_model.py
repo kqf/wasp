@@ -145,6 +145,7 @@ def test_ssd(inputs, anchors):
 
     model = SSDPure(resolution=resolution, n_classes=2)
     model.eval()
+
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
     from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
