@@ -53,31 +53,9 @@ def build_priors(resolution):
     return anchor_generator._grid_default_boxes(featture_sizes, resolution)
 
 
-class SSDPure(torch.nn.Module):
-    def __init__(self, resolution, n_classes):
+class SSDPureHead(torch.nn.Module):
+    def __init__(self, out_channels, num_anchors, norm_layer, n_classes):
         super().__init__()
-        self.n_classes = n_classes
-        weights_backbone = MobileNet_V3_Large_Weights.IMAGENET1K_V1
-
-        norm_layer = partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.03)
-        backbone = mobilenet_v3_large(
-            weights=weights_backbone,
-            progress=True,
-            norm_layer=norm_layer,
-            reduced_tail=False,
-        )
-        self.backbone = _mobilenet_extractor(
-            backbone,
-            6,
-            norm_layer,
-        )
-        out_channels = det_utils.retrieve_out_channels(
-            self.backbone,
-            resolution,
-        )
-        num_anchors = [6 for _ in out_channels]
-        print(f"{out_channels=}")
-        print(f"{num_anchors=}")
         self.classification_head = SSDLiteClassificationHead(
             in_channels=out_channels,
             num_anchors=num_anchors,
@@ -103,14 +81,52 @@ class SSDPure(torch.nn.Module):
             num_classes=2,
         )
 
-    def forward(self, images):
-        features = self.backbone(images)
-        features = list(features.values())
+    def forward(self, features):
         classes = self.classification_head(features)
         boxes = self.regression_head(features)
         landmarks = self.landmarks_head(features)
         distances = self.distances_head(features)
         return boxes, classes, landmarks, distances
+
+
+class SSDPure(torch.nn.Module):
+    def __init__(self, resolution, n_classes):
+        super().__init__()
+        self.n_classes = n_classes
+        weights_backbone = MobileNet_V3_Large_Weights.IMAGENET1K_V1
+
+        norm_layer = partial(torch.nn.BatchNorm2d, eps=0.001, momentum=0.03)
+        backbone = mobilenet_v3_large(
+            weights=weights_backbone,
+            progress=True,
+            norm_layer=norm_layer,
+            reduced_tail=False,
+        )
+        self.backbone = _mobilenet_extractor(
+            backbone,
+            6,
+            norm_layer,
+        )
+        out_channels = det_utils.retrieve_out_channels(
+            self.backbone,
+            resolution,
+        )
+        num_anchors = [6 for _ in out_channels]
+        self.head = SSDPureHead(
+            out_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            n_classes=n_classes,
+        )
+        load_with_mismatch(
+            self,
+            SSDLite320_MobileNet_V3_Large_Weights.COCO_V1.get_state_dict(True),
+        )
+
+    def forward(self, images):
+        features = self.backbone(images)
+        features = list(features.values())
+        return self.head(features)
 
 
 def vis_outputs(images, boxes):
