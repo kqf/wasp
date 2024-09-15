@@ -106,7 +106,7 @@ def confidence_loss(
     # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
     num_pos = positive.long().sum(1, keepdim=True)
     n = max(num_pos.data.sum().float(), 1)  # type: ignore
-    print(f"{conf_p.shape=}, {targets_weighted.shape=}, {n=}")
+    # print(f"{conf_p.shape=}, {targets_weighted.shape=}, {n=}")
     return loss_c / n
 
 
