@@ -148,8 +148,8 @@ def test_ssd(inputs, anchors):
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
     n_anchors = build_priors(resolution).shape[0]
-    bboxes, classes = model(inputs)
+    bboxes, classes, landmarks, depths = model(inputs)
     assert bboxes.shape == (inputs.shape[0], n_anchors, 4)
     assert classes.shape == (inputs.shape[0], n_anchors, 2)
-    # assert landmarks.shape == (inputs.shape[0], n_anchors, 10)
-    # assert depths.shape == (inputs.shape[0], n_anchors, 2)
+    assert landmarks.shape == (inputs.shape[0], n_anchors, 10)
+    assert depths.shape == (inputs.shape[0], n_anchors, 2)
