@@ -141,8 +141,8 @@ class MultiBoxLoss(nn.Module):
         weights: LossWeights = LossWeights(
             localization=2,
             classification=1,
-            landmarks=1,
-            depths=4,
+            landmarks=0,
+            depths=0,
         ),
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
