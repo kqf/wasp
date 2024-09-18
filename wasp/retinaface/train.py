@@ -61,7 +61,7 @@ def main(
 
     pipeline = RetinaFacePipeline(
         train_labels=train_labels or env.str("TRAIN_LABEL_PATH"),
-        valid_labels=valid_labels or env.str("VALID_LABEL_PATH"),
+        valid_labels=valid_labels or env.str("TRAIN_LABEL_PATH"),
         model=model,
         resolution=resolution,
         preprocessing=partial(preprocess, img_dim=resolution[0]),
