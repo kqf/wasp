@@ -109,7 +109,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.train_labels,
-                transform=augs.train(self.resolution),
+                transform=augs.valid(self.resolution),
                 preproc=normalize,
                 rotate90=False,
             ),
