@@ -89,7 +89,7 @@ class SSDPureHead(torch.nn.Module):
         return boxes, classes, landmarks, distances
 
 
-      class RetinaNetPureHead(torch.nn.Module):
+class RetinaNetPureHead(torch.nn.Module):
     def __init__(self, out_channels, num_anchors, norm_layer, n_classes):
         super().__init__()
         from torchvision.models.detection.retinanet import (
@@ -132,11 +132,19 @@ class SSDPureHead(torch.nn.Module):
 
 class RetinaNetPure(torch.nn.Module):
     def __init__(self, resolution, n_classes):
-        from torchvision.models.detection.retinanet.backbone_utils import (
+        super().__init__()
+        from torchvision.models.detection.backbone_utils import (
             _resnet_fpn_extractor,
         )
         from torchvision.models.resnet import ResNet50_Weights, resnet50
-        from torchvision.ops.feature_pyramid_network import LastLevelP6P7
+        from torchvision.ops.feature_pyramid_network import (
+            ExtraFPNBlock,
+            LastLevelP6P7,
+        )
+
+        class IdentityFPNBlock(ExtraFPNBlock):
+            def forward(self, results, x, names):
+                return results
 
         backbone = resnet50(
             weights=ResNet50_Weights.IMAGENET1K_V1,
@@ -144,22 +152,24 @@ class RetinaNetPure(torch.nn.Module):
             norm_layer=torch.nn.BatchNorm2d,
         )
         # skip P2 because it generates too many anchors
-        backbone = _resnet_fpn_extractor(
+        self.backbone = _resnet_fpn_extractor(
             backbone,
             5,
             returned_layers=[2, 3, 4],
-            extra_blocks=LastLevelP6P7(256, 256),
         )
+
         self.head = RetinaNetPureHead(
-            backbone.out_channels,
-            [2 for _ in backbone.out_channels],
+            self.backbone.out_channels,
             2,
+            n_classes=n_classes,
             norm_layer=partial(torch.nn.GroupNorm, 32),
         )
 
     def forward(self, images):
         features = self.backbone(images)
-        features = list(features.values())
+        for name, feature in features.items():
+            print(name, feature.shape)
+        features = list(features.values())[:-1]
         return self.head(features)
 
 

@@ -1,10 +1,13 @@
+from typing import Literal
+
 import pytest
 import torch
 import torchvision
 from torchvision.models.detection.ssdlite import ssdlite320_mobilenet_v3_large
 
 from wasp.retinaface.model import RetinaFace
-from wasp.retinaface.ssd import SSDPure, build_priors
+from wasp.retinaface.priors import priorbox
+from wasp.retinaface.ssd import RetinaNetPure, SSDPure, build_priors
 
 
 def check_shapes(model, image):
@@ -36,7 +39,13 @@ def check_shapes(model, image):
         # ("mobilenet_v3_small", {"3": 1, "8": 2, "10": 3}, [24, 48, 96]),
     ],
 )
-def test_retinaface(inputs, anchors, name, return_layers, in_channels):
+def test_retinaface(
+    inputs: torch.Tensor,
+    anchors: Literal[12600],
+    name: Literal["resnet18"],
+    return_layers: dict[str, int],
+    in_channels: int,
+):
     model = RetinaFace(
         name=name,
         pretrained=False,
@@ -62,7 +71,7 @@ def test_retinaface(inputs, anchors, name, return_layers, in_channels):
         # torch.randn(1, 3, 1280, 720),
     ],
 )
-def test_backbone(image):
+def test_backbone(image: torch.Tensor):
     model = torchvision.models.resnet50(weights=None)
     output = model(image)
     print(output.shape)
@@ -131,23 +140,30 @@ def test_backbone(image):
         # (torch.randn(1, 3, 1280, 720), 1840),
     ],
 )
-def test_ssd(inputs, anchors):
+def test_ssd(inputs: torch.Tensor, anchors: Literal[12600]):
     resolution = inputs.shape[-2:]
     print(resolution)
-    ref = ssdlite320_mobilenet_v3_large(
-        pretrained=False, num_classes=2
-    )  # Change num_classes as needed
-    total = sum(p.numel() for p in ref.parameters())
-    ref.eval()
+    # ref = ssdlite320_mobilenet_v3_large(
+    #     pretrained=False, num_classes=2
+    # )  # Change num_classes as needed
+    # total = sum(p.numel() for p in ref.parameters())
+    # ref.eval()
 
-    print(f"Model name ssd, size: {total:_}")
-    ref(inputs)
+    # print(f"Model name ssd, size: {total:_}")
+    # ref(inputs)
 
-    model = SSDPure(resolution=resolution, n_classes=2)
+    # model = SSDPure(resolution=resolution, n_classes=2)
+    model = RetinaNetPure(resolution=resolution, n_classes=2)
     model.eval()
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
-    n_anchors = build_priors(resolution).shape[0]
+    # n_anchors = build_priors(resolution).shape[0]
+    n_anchors = priorbox(
+        min_sizes=[[16, 32], [64, 128], [256, 512]],
+        steps=[8, 16, 32],
+        clip=False,
+        image_size=resolution,
+    ).shape[0]
     bboxes, classes, landmarks, depths = model(inputs)
     assert bboxes.shape == (inputs.shape[0], n_anchors, 4)
     assert classes.shape == (inputs.shape[0], n_anchors, 2)
