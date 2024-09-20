@@ -89,7 +89,7 @@ class SSDPureHead(torch.nn.Module):
         return boxes, classes, landmarks, distances
 
 
-class RetinaNetPureHead(torch.nn.Module):
+      class RetinaNetPureHead(torch.nn.Module):
     def __init__(self, out_channels, num_anchors, norm_layer, n_classes):
         super().__init__()
         from torchvision.models.detection.retinanet import (
