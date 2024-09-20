@@ -89,6 +89,80 @@ class SSDPureHead(torch.nn.Module):
         return boxes, classes, landmarks, distances
 
 
+class RetinaNetPureHead(torch.nn.Module):
+    def __init__(self, out_channels, num_anchors, norm_layer, n_classes):
+        super().__init__()
+        from torchvision.models.detection.retinanet import (
+            RetinaNetClassificationHead,
+            RetinaNetRegressionHead,
+        )
+
+        self.classification_head = RetinaNetClassificationHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            num_classes=n_classes,
+        )
+        self.regression_head = RetinaNetRegressionHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+        )
+        self.landmarks_head = RetinaNetClassificationHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            num_classes=10,
+        )
+
+        self.distances_head = RetinaNetClassificationHead(
+            in_channels=out_channels,
+            num_anchors=num_anchors,
+            norm_layer=norm_layer,
+            num_classes=2,
+        )
+
+    def forward(self, features):
+        classes = self.classification_head(features)
+        boxes = self.regression_head(features)
+        landmarks = self.landmarks_head(features)
+        distances = self.distances_head(features)
+        return boxes, classes, landmarks, distances
+
+
+class RetinaNetPure(torch.nn.Module):
+    def __init__(self, resolution, n_classes):
+        from torchvision.models.detection.retinanet.backbone_utils import (
+            _resnet_fpn_extractor,
+        )
+        from torchvision.models.resnet import ResNet50_Weights, resnet50
+        from torchvision.ops.feature_pyramid_network import LastLevelP6P7
+
+        backbone = resnet50(
+            weights=ResNet50_Weights.IMAGENET1K_V1,
+            progress=True,
+            norm_layer=torch.nn.BatchNorm2d,
+        )
+        # skip P2 because it generates too many anchors
+        backbone = _resnet_fpn_extractor(
+            backbone,
+            5,
+            returned_layers=[2, 3, 4],
+            extra_blocks=LastLevelP6P7(256, 256),
+        )
+        self.head = RetinaNetPureHead(
+            backbone.out_channels,
+            [2 for _ in backbone.out_channels],
+            2,
+            norm_layer=partial(torch.nn.GroupNorm, 32),
+        )
+
+    def forward(self, images):
+        features = self.backbone(images)
+        features = list(features.values())
+        return self.head(features)
+
+
 class SSDPure(torch.nn.Module):
     def __init__(self, resolution, n_classes):
         super().__init__()
