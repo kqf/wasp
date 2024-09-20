@@ -19,7 +19,8 @@ from wasp.retinaface.pipeline import RetinaFacePipeline
 from wasp.retinaface.preprocess import preprocess
 
 # from wasp.retinaface.priors import priorbox
-from wasp.retinaface.ssd import SSDPure, build_priors
+from wasp.retinaface.priors import priorbox
+from wasp.retinaface.ssd import RetinaNetPure, SSDPure, build_priors
 
 # from wasp.retinaface.model import RetinaFace
 
@@ -49,14 +50,15 @@ def main(
     #     out_channels=256,
     # )
     # model = build_model()
-    model = SSDPure(resolution, n_classes=2)
+    # model = SSDPure(resolution, n_classes=2)
+    model = RetinaNetPure(resolution, n_classes=2)
 
-    # priors = priorbox(
-    #     min_sizes=[[16, 32], [64, 128], [256, 512]],
-    #     steps=[8, 16, 32],
-    #     clip=False,
-    #     image_size=resolution,
-    # )
+    priors = priorbox(
+        min_sizes=[[16, 32], [64, 128], [256, 512]],
+        steps=[8, 16, 32],
+        clip=False,
+        image_size=resolution,
+    )
     priors = build_priors(resolution)
 
     pipeline = RetinaFacePipeline(
@@ -68,7 +70,7 @@ def main(
         priorbox=priors,
         build_optimizer=partial(
             torch.optim.Adam,
-            lr=0.01,
+            # lr=0.01,
             # weight_decay=0.0001,
             # momentum=0.9,
         ),
