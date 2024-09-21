@@ -3,11 +3,10 @@ from typing import Literal
 import pytest
 import torch
 import torchvision
-from torchvision.models.detection.ssdlite import ssdlite320_mobilenet_v3_large
 
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.priors import priorbox
-from wasp.retinaface.ssd import RetinaNetPure, SSDPure, build_priors
+from wasp.retinaface.ssd import RetinaNetPure
 
 
 def check_shapes(model, image):
@@ -159,8 +158,8 @@ def test_ssd(inputs: torch.Tensor, anchors: Literal[12600]):
     print(f"Model name ssd, size: {total:_}")
     # n_anchors = build_priors(resolution).shape[0]
     n_anchors = priorbox(
-        min_sizes=[[16, 32], [64, 128], [256, 512]],
-        steps=[8, 16, 32],
+        min_sizes=[[16, 32], [64, 128], [256, 512], [1024, 2048]],
+        steps=[8, 16, 32, 64],
         clip=False,
         image_size=resolution,
     ).shape[0]

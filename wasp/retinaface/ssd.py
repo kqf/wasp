@@ -137,14 +137,6 @@ class RetinaNetPure(torch.nn.Module):
             _resnet_fpn_extractor,
         )
         from torchvision.models.resnet import ResNet50_Weights, resnet50
-        from torchvision.ops.feature_pyramid_network import (
-            ExtraFPNBlock,
-            LastLevelP6P7,
-        )
-
-        class IdentityFPNBlock(ExtraFPNBlock):
-            def forward(self, results, x, names):
-                return results
 
         backbone = resnet50(
             weights=ResNet50_Weights.IMAGENET1K_V1,
@@ -167,9 +159,7 @@ class RetinaNetPure(torch.nn.Module):
 
     def forward(self, images):
         features = self.backbone(images)
-        for name, feature in features.items():
-            print(name, feature.shape)
-        features = list(features.values())[:-1]
+        features = list(features.values())
         return self.head(features)
 
 
