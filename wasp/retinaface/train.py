@@ -59,7 +59,7 @@ def main(
         clip=False,
         image_size=resolution,
     )
-    priors = build_priors(resolution)
+    # priors = build_priors(resolution)
 
     pipeline = RetinaFacePipeline(
         train_labels=train_labels or env.str("TRAIN_LABEL_PATH"),
