@@ -136,6 +136,9 @@ class RetinaNetPure(torch.nn.Module):
         from torchvision.models.detection.backbone_utils import (
             _resnet_fpn_extractor,
         )
+        from torchvision.models.detection.retinanet import (
+            RetinaNet_ResNet50_FPN_V2_Weights,
+        )
         from torchvision.models.resnet import ResNet50_Weights, resnet50
 
         backbone = resnet50(
@@ -155,6 +158,10 @@ class RetinaNetPure(torch.nn.Module):
             2,
             n_classes=n_classes,
             norm_layer=partial(torch.nn.GroupNorm, 32),
+        )
+        load_with_mismatch(
+            self,
+            RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1.get_state_dict(True),
         )
 
     def forward(self, images):
