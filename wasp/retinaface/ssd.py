@@ -192,7 +192,7 @@ class SSDPure(torch.nn.Module):
             self.backbone,
             resolution,
         )
-        num_anchors = [6 for _ in out_channels]
+        num_anchors = [2 for _ in out_channels]
         self.head = SSDPureHead(
             out_channels=out_channels,
             num_anchors=num_anchors,
@@ -206,7 +206,7 @@ class SSDPure(torch.nn.Module):
 
     def forward(self, images):
         features = self.backbone(images)
-        features = list(features.values())
+        features = list(features.values())[:-3]
         return self.head(features)
 
 

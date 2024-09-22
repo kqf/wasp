@@ -6,7 +6,7 @@ import torchvision
 
 from wasp.retinaface.model import RetinaFace
 from wasp.retinaface.priors import priorbox
-from wasp.retinaface.ssd import RetinaNetPure
+from wasp.retinaface.ssd import RetinaNetPure, SSDPure
 
 
 def check_shapes(model, image):
@@ -151,15 +151,15 @@ def test_ssd(inputs: torch.Tensor, anchors: Literal[12600]):
     # print(f"Model name ssd, size: {total:_}")
     # ref(inputs)
 
-    # model = SSDPure(resolution=resolution, n_classes=2)
-    model = RetinaNetPure(resolution=resolution, n_classes=2)
+    model = SSDPure(resolution=resolution, n_classes=2)
+    # model = RetinaNetPure(resolution=resolution, n_classes=2)
     model.eval()
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
     # n_anchors = build_priors(resolution).shape[0]
     n_anchors = priorbox(
-        min_sizes=[[16, 32], [64, 128], [256, 512], [1024, 2048]],
-        steps=[8, 16, 32, 64],
+        min_sizes=[[64, 128], [256, 512], [1024, 2048]],
+        steps=[16, 32, 64],
         clip=False,
         image_size=resolution,
     ).shape[0]
