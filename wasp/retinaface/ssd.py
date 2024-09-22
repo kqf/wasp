@@ -10,13 +10,15 @@ from torch.utils.data import DataLoader
 from torchvision.models.detection import SSDLite320_MobileNet_V3_Large_Weights
 from torchvision.models.detection import _utils as det_utils
 from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
-from torchvision.models.detection.ssdlite import (SSD,
-                                                  MobileNet_V3_Large_Weights,
-                                                  SSDLiteClassificationHead,
-                                                  SSDLiteHead,
-                                                  SSDLiteRegressionHead,
-                                                  _mobilenet_extractor,
-                                                  mobilenet_v3_large)
+from torchvision.models.detection.ssdlite import (
+    SSD,
+    MobileNet_V3_Large_Weights,
+    SSDLiteClassificationHead,
+    SSDLiteHead,
+    SSDLiteRegressionHead,
+    _mobilenet_extractor,
+    mobilenet_v3_large,
+)
 
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
@@ -91,7 +93,9 @@ class RetinaNetPureHead(torch.nn.Module):
     def __init__(self, out_channels, num_anchors, norm_layer, n_classes):
         super().__init__()
         from torchvision.models.detection.retinanet import (
-            RetinaNetClassificationHead, RetinaNetRegressionHead)
+            RetinaNetClassificationHead,
+            RetinaNetRegressionHead,
+        )
 
         self.classification_head = RetinaNetClassificationHead(
             in_channels=out_channels,
@@ -129,10 +133,12 @@ class RetinaNetPureHead(torch.nn.Module):
 class RetinaNetPure(torch.nn.Module):
     def __init__(self, resolution, n_classes):
         super().__init__()
-        from torchvision.models.detection.backbone_utils import \
-            _resnet_fpn_extractor
-        from torchvision.models.detection.retinanet import \
-            RetinaNet_ResNet50_FPN_V2_Weights
+        from torchvision.models.detection.backbone_utils import (
+            _resnet_fpn_extractor,
+        )
+        from torchvision.models.detection.retinanet import (
+            RetinaNet_ResNet50_FPN_V2_Weights,
+        )
         from torchvision.models.resnet import ResNet50_Weights, resnet50
 
         backbone = resnet50(
