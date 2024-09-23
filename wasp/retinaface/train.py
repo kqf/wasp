@@ -6,7 +6,7 @@ import torch
 from environs import Env
 
 # from pytorch_lightning.callbacks import DeviceStatsMonitor
-from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks import ModelPruning, TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 
@@ -32,6 +32,21 @@ env = Env()
 env.read_env()
 
 
+def download_pretrained_state_dict(run_id):
+    import mlflow
+
+    run = mlflow.get_run(run_id=run_id)
+    mlflow.artifacts.download_artifacts(
+        artifact_uri=f"{run.info.artifact_uri}/checkpoints/",
+        dst_path="pretrain-model/",
+    )
+
+    # Load the state dictionary using pickle
+    with open("pretrain-model/best.pth", "rb") as f:
+        state_dict = torch.load(f)
+    return state_dict
+
+
 def main(
     train_labels: str = None,
     valid_labels: str = None,
@@ -54,12 +69,11 @@ def main(
     # model = RetinaNetPure(resolution, n_classes=2)
 
     priors = priorbox(
-        min_sizes=[[64, 128], [256, 512], [1024, 2048]],
-        steps=[16, 32, 64],
+        min_sizes=[[16, 32], [64, 128], [256, 512]],
+        steps=[8, 16, 32],
         clip=False,
         image_size=resolution,
     )
-    # priors = build_priors(resolution)
 
     pipeline = RetinaFacePipeline(
         train_labels=train_labels or env.str("TRAIN_LABEL_PATH"),
@@ -85,6 +99,13 @@ def main(
         # loss=DetectionLoss(anchors=priors),
         # prepare_outputs=model.prepare_outputs,
     )
+
+    # Check only when the cuda is available
+    if torch.cuda.is_available():
+        state_dict = download_pretrained_state_dict(
+            "8cffe4838b0346a5ae4fe0f832fc3a38",
+        )
+        pipeline.model.load_state_dict(state_dict)
 
     Path("./retinaface-results").mkdir(
         exist_ok=True,
@@ -112,6 +133,14 @@ def main(
             ),
             TQDMProgressBar(
                 refresh_rate=100,
+            ),
+            ModelPruning(
+                pruning_fn="l1_unstructured",
+                parameters_to_prune=[
+                    (pipeline.model.backbone, "weight"),
+                ],
+                amount=0.5,
+                use_global_unstructured=True,
             ),
             # DeviceStatsMonitor(), ~
             # PyTorchGpuMonitorCallback(delay=0.5, log_per_batch=True),
