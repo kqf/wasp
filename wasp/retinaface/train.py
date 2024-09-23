@@ -6,7 +6,7 @@ import torch
 from environs import Env
 
 # from pytorch_lightning.callbacks import DeviceStatsMonitor
-from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks import ModelPruning, TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 
@@ -133,6 +133,14 @@ def main(
             ),
             TQDMProgressBar(
                 refresh_rate=100,
+            ),
+            ModelPruning(
+                pruning_fn="l1_unstructured",
+                parameters_to_prune=[
+                    (pipeline.model.backbone, "weight"),
+                ],
+                amount=0.5,
+                use_global_unstructured=True,
             ),
             # DeviceStatsMonitor(), ~
             # PyTorchGpuMonitorCallback(delay=0.5, log_per_batch=True),
