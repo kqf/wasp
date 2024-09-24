@@ -112,6 +112,12 @@ def main(
         parents=True,
     )
 
+    parameters_to_prune = [
+        (module, "weight")
+        for _, module in pipeline.model.backbone.named_modules()
+        if isinstance(module, torch.nn.Conv2d)
+    ]
+
     trainer = pl.Trainer(
         # gpus=4,
         # amp_level=O1,
@@ -136,9 +142,7 @@ def main(
             ),
             ModelPruning(
                 pruning_fn="l1_unstructured",
-                parameters_to_prune=[
-                    (pipeline.model.backbone, "weight"),
-                ],
+                parameters_to_prune=parameters_to_prune,
                 amount=0.5,
                 use_global_unstructured=True,
             ),
