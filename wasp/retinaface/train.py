@@ -35,16 +35,13 @@ env.read_env()
 def download_pretrained_state_dict(run_id):
     import mlflow
 
-    run = mlflow.get_run(run_id=run_id)
     mlflow.artifacts.download_artifacts(
-        artifact_uri=f"{run.info.artifact_uri}/checkpoints/",
-        dst_path="pretrain-model/",
+        run_id=run_id,
+        artifact_path="checkpoints/best.pth",
+        dst_path=f"{run_id}-pretrain-model.pth",
     )
 
-    # Load the state dictionary using pickle
-    with open("pretrain-model/best.pth", "rb") as f:
-        state_dict = torch.load(f)
-    return state_dict
+    return torch.load(f"{run_id}-pretrain-model.pth")
 
 
 def main(
