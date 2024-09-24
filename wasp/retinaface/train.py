@@ -37,7 +37,6 @@ def download_pretrained_state_dict(run_id):
 
     mlflow.artifacts.download_artifacts(
         run_id=run_id,
-        artifact_path="checkpoints/best.pth",
         dst_path=f"{run_id}-pretrain-model",
     )
 
