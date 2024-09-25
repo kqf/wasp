@@ -43,7 +43,6 @@ def download_pretrained_state_dict(run_id):
 
     # Ensure the destination directory exists
     os.makedirs(dst_path, exist_ok=True)
-
     # Download the artifacts
     mlflow.artifacts.download_artifacts(
         run_id=run_id,
@@ -54,6 +53,7 @@ def download_pretrained_state_dict(run_id):
     # Construct the full path to the expected file
     file_path = os.path.join(dst_path, "best.pth")
     print(f"Checking for downloaded file at: {file_path}")
+    print(f"The file exists: {os.path.exists(file_path)=}")
 
     # Inspect the directory to see what's there
     print(f"Contents of '{dst_path}':")
@@ -61,12 +61,8 @@ def download_pretrained_state_dict(run_id):
         for file in files:
             print(f" - {file}")  # List each file found
 
-    for _, _, files in os.walk("."):
-        for file in files:
-            print(f" -> {file}")  # List each file found
-
     # Load and return the state dict
-    return torch.load(file_path)
+    return torch.load(f"./{file_path}")
 
 
 def main(
