@@ -33,14 +33,40 @@ env.read_env()
 
 
 def download_pretrained_state_dict(run_id):
-    import mlflow
+    import os
 
+    import mlflow
+    import torch
+
+    # Define the destination path based on the run_id
+    dst_path = f"{run_id}-pretrain-model"
+
+    # Ensure the destination directory exists
+    os.makedirs(dst_path, exist_ok=True)
+
+    # Download the artifacts
     mlflow.artifacts.download_artifacts(
         run_id=run_id,
-        dst_path=f"{run_id}-pretrain-model",
+        artifact_path="checkpoints/best.pth",
+        dst_path=dst_path,
     )
 
-    return torch.load(f"{run_id}-pretrain-model/best.pth")
+    # Construct the full path to the expected file
+    file_path = os.path.join(dst_path, "best.pth")
+    print(f"Checking for downloaded file at: {file_path}")
+
+    # Inspect the directory to see what's there
+    print(f"Contents of '{dst_path}':")
+    for _, _, files in os.walk(dst_path):
+        for file in files:
+            print(f" - {file}")  # List each file found
+
+    for _, _, files in os.walk("."):
+        for file in files:
+            print(f" -> {file}")  # List each file found
+
+    # Load and return the state dict
+    return torch.load(file_path)
 
 
 def main(
