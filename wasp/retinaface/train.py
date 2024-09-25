@@ -43,7 +43,6 @@ def download_pretrained_state_dict(run_id):
 
     # Ensure the destination directory exists
     os.makedirs(dst_path, exist_ok=True)
-
     # Download the artifacts
     mlflow.artifacts.download_artifacts(
         run_id=run_id,
