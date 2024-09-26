@@ -48,7 +48,6 @@ def download_pretrained_state_dict(run_id):
     )
     return torch.load(f"./{local}/checkpoints/best.pth")
 
-
 def main(
     train_labels: str = None,
     valid_labels: str = None,
