@@ -104,9 +104,7 @@ def main(
 
     # Check only when the cuda is available
     if torch.cuda.is_available():
-        state_dict = download_pretrained_state_dict(
-            "8cffe4838b0346a5ae4fe0f832fc3a38",
-        )
+        state_dict = torch.load("best.pth")
         pipeline.model.load_state_dict(state_dict)
 
     Path("./retinaface-results").mkdir(
