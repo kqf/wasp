@@ -166,7 +166,7 @@ class RetinaNetPure(torch.nn.Module):
 
     def forward(self, images):
         features = self.backbone(images)
-        features = list(features.values()[:-1])
+        features = list(features.values())[:-1]
         return self.head(features)
 
 
