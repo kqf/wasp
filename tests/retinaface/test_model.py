@@ -43,7 +43,7 @@ def test_retinaface(
     anchors: Literal[12600],
     name: Literal["resnet18"],
     return_layers: dict[str, int],
-    in_channels: int,
+    in_channels: list[int],
 ):
     model = RetinaFace(
         name=name,
@@ -152,7 +152,6 @@ def test_ssd(inputs: torch.Tensor, anchors: Literal[12600]):
     # ref(inputs)
 
     model = SSDPure(resolution=resolution, n_classes=2)
-    # model = RetinaNetPure(resolution=resolution, n_classes=2)
     model.eval()
     total = sum(p.numel() for p in model.parameters())
     print(f"Model name ssd, size: {total:_}")
@@ -168,3 +167,16 @@ def test_ssd(inputs: torch.Tensor, anchors: Literal[12600]):
     assert classes.shape == (inputs.shape[0], n_anchors, 2)
     assert landmarks.shape == (inputs.shape[0], n_anchors, 10)
     assert depths.shape == (inputs.shape[0], n_anchors, 2)
+
+
+@pytest.mark.parametrize(
+    "resolution",
+    [
+        [640, 480],
+    ],
+)
+def test_compare_model_sizes(resolution):
+    model = RetinaNetPure(resolution=resolution, n_classes=2)
+    total = sum(p.numel() for p in model.parameters())
+    model.eval()
+    print(f"Model name ssd, size: {total:_}")
