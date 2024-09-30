@@ -16,13 +16,15 @@ class BestModelCheckpoint(ModelCheckpoint):
         if trainer.global_rank != 0:
             return
 
-        desired_path = os.path.join(self.dirpath, "best.pth")  # type: ignore
-        os.makedirs(os.path.dirname(desired_path), exist_ok=True)
+        local = f"{self.dirpath}/best.pth"
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+
+        checkpoint = pl_module.model
         if os.path.exists(self.best_model_path):
             checkpoint = torch.load(self.best_model_path)
-            pl_module.load_state_dict(checkpoint["state_dict"])
-        # else save last
-        torch.save(pl_module.model.state_dict(), desired_path)  # type: ignore
+
+        torch.save(checkpoint.state_dict(), local)  # type: ignore
+        torch.save(checkpoint, local.replace("best.pth", "full-best.pth"))
 
         logger = trainer.logger
         if not isinstance(logger, MLFlowLogger):
@@ -30,6 +32,6 @@ class BestModelCheckpoint(ModelCheckpoint):
 
         logger.experiment.log_artifact(
             run_id=logger.run_id,
-            local_path=desired_path,
+            local_path=local,
             artifact_path="checkpoints",
         )
