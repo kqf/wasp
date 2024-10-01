@@ -143,7 +143,7 @@ def main(
             ModelPruning(
                 pruning_fn="l1_unstructured",
                 parameters_to_prune=parameters_to_prune,
-                amount=0.8,
+                amount=0.7,
                 use_global_unstructured=True,
             ),
             # DeviceStatsMonitor(), ~
