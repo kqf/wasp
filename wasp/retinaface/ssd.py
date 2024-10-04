@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Any, Optional
 
 import torch
 import torchvision
@@ -11,10 +10,8 @@ from torchvision.models.detection import _utils as det_utils
 from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
 from torchvision.models.detection.backbone_utils import _resnet_fpn_extractor
 from torchvision.models.detection.ssdlite import (
-    SSD,
     MobileNet_V3_Large_Weights,
     SSDLiteClassificationHead,
-    SSDLiteHead,
     SSDLiteRegressionHead,
     _mobilenet_extractor,
     mobilenet_v3_large,
