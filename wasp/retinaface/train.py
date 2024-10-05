@@ -54,6 +54,7 @@ def main(
     valid_labels: str = None,
     resolution: tuple[int, int] = (640, 640),
     epochs: int = 20,
+    precision: int = 16,
 ) -> None:
     pl.trainer.seed_everything(137)
     # model = RetinaFace(
@@ -126,7 +127,7 @@ def main(
         strategy="ddp_find_unused_parameters_true",
         num_sanity_val_steps=0,
         benchmark=True,
-        precision=16,
+        precision=precision,
         sync_batchnorm=torch.cuda.is_available(),
         logger=build_mlflow(),
         callbacks=[

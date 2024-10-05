@@ -48,4 +48,5 @@ def test_main(annotations):
         valid_labels=str(annotations),
         resolution=(640, 640),
         epochs=1,
+        precision=32,
     )
