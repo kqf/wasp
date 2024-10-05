@@ -19,11 +19,11 @@ class BestModelCheckpoint(ModelCheckpoint):
         local = f"{self.dirpath}/best.pth"
         os.makedirs(os.path.dirname(local), exist_ok=True)
 
-        checkpoint = pl_module.model
+        checkpoint = pl_module.model.state_dict()
         if os.path.exists(self.best_model_path):
             checkpoint = torch.load(self.best_model_path)
 
-        torch.save(checkpoint.state_dict(), local)  # type: ignore
+        torch.save(checkpoint, local)  # type: ignore
         torch.save(checkpoint, local.replace("best.pth", "full-best.pth"))
 
         logger = trainer.logger
