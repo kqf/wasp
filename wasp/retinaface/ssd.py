@@ -7,7 +7,6 @@ from environs import Env
 from torch.utils.data import DataLoader
 from torchvision.models.detection import SSDLite320_MobileNet_V3_Large_Weights
 from torchvision.models.detection import _utils as det_utils
-from torchvision.models.detection.anchor_utils import DefaultBoxGenerator
 from torchvision.models.detection.backbone_utils import _resnet_fpn_extractor
 from torchvision.models.detection.ssdlite import (
     MobileNet_V3_Large_Weights,
@@ -31,23 +30,6 @@ def get_transform(train):
     if train:
         transforms.append(torchvision.transforms.RandomHorizontalFlip(0.5))
     return torchvision.transforms.Compose(transforms)
-
-
-def convert(key, value, mask):
-    if key == "labels":
-        return value.squeeze(1).to(torch.int64)[mask]
-    return value if key == "images" else value[mask]
-
-
-def build_priors(resolution):
-    # This is build for 640x640 resolution
-    anchor_generator = DefaultBoxGenerator(
-        [[2, 3] for _ in range(6)],
-        min_ratio=0.2,
-        max_ratio=0.95,
-    )
-    featture_sizes = [40, 40], [20, 20], [10, 10], [5, 5], [3, 3], [2, 2]
-    return anchor_generator._grid_default_boxes(featture_sizes, resolution)
 
 
 class SSDPureHead(torch.nn.Module):
