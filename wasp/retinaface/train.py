@@ -142,10 +142,13 @@ def main(
                 refresh_rate=100,
             ),
             ModelPruning(
-                pruning_fn="l1_unstructured",
+                pruning_fn="ln_structured",
                 parameters_to_prune=parameters_to_prune,
                 amount=0.4,
-                use_global_unstructured=True,
+                pruning_norm=1,
+                pruning_dim=1,
+                # use_global_unstructured=True,
+                use_global_unstructured=False,
             ),
             # DeviceStatsMonitor(), ~
             # PyTorchGpuMonitorCallback(delay=0.5, log_per_batch=True),
