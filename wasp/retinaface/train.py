@@ -146,7 +146,7 @@ def main(
                 parameters_to_prune=parameters_to_prune,
                 amount=0.1,
                 pruning_norm=1,
-                pruning_dim=2,
+                pruning_dim=1,
                 # use_global_unstructured=True,
                 use_global_unstructured=False,
             ),
