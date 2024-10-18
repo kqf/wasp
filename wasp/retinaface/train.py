@@ -94,7 +94,7 @@ def main(
         build_scheduler=partial(
             torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
             T_0=10,
-            T_mult=2,
+            T_mult=4,
         ),
         # 64, n_pos=8
         loss=MultiBoxLoss(priors=priors),
