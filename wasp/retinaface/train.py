@@ -87,7 +87,7 @@ def main(
         priorbox=priors,
         build_optimizer=partial(
             torch.optim.Adam,
-            lr=0.0002,
+            lr=0.00002,
             # weight_decay=0.0001,
             # momentum=0.9,
         ),
