@@ -88,8 +88,8 @@ def main(
         build_optimizer=partial(
             torch.optim.Adam,
             lr=0.000001,
-            # weight_decay=0.0001,
-            # momentum=0.9,
+            weight_decay=0.0001,
+            momentum=0.9,
         ),
         build_scheduler=partial(
             torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
