@@ -86,7 +86,7 @@ def main(
         preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,
         build_optimizer=partial(
-            torch.optim.Adam,
+            torch.optim.AdamW,
             lr=0.000002,
             # weight_decay=0.0001,
             # momentum=0.9,
