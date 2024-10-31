@@ -147,8 +147,8 @@ def main(
                 amount=0.3,
                 pruning_norm=2,
                 pruning_dim=1,
-                # use_global_unstructured=True,
-                use_global_unstructured=False,
+                use_global_unstructured=True,
+                # use_global_unstructured=False,
             ),
             # DeviceStatsMonitor(), ~
             # PyTorchGpuMonitorCallback(delay=0.5, log_per_batch=True),
