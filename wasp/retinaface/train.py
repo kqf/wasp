@@ -144,8 +144,8 @@ def main(
             ModelPruning(
                 pruning_fn="ln_structured",
                 parameters_to_prune=parameters_to_prune,
-                amount=0.2,
-                pruning_norm=1,
+                amount=0.3,
+                pruning_norm=2,
                 # pruning_dim=1,
                 use_global_unstructured=False,
                 # use_global_unstructured=False,
