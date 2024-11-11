@@ -22,6 +22,8 @@ lightning_logs
 .fake-mlflow
 *.pth
 *.ckpt
+*.mov
+*.mp4
 
 # Include
 !requirements.txt
