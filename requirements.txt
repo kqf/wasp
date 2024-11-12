@@ -2,6 +2,7 @@ numpy
 onnx
 onnxruntime
 opencv-python
+opencv-contrib-python
 matplotlib
 scikit-image
 nptyping
