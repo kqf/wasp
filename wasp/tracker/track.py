@@ -2,31 +2,24 @@ import cv2
 
 
 def main():
-    cap = cv2.VideoCapture("sample.mp4")
+    cap = cv2.VideoCapture("test.mov")
+    roi = 1031, 721, 200, 138
+    # tracker = cv2.TrackerCSRT_create()
+    # tracker.init(frame, roi)
 
-    if not cap.isOpened():
-        print("Error: Could not open video.")
-        exit()
-
-    ret, frame = cap.read()
-    if not ret:
-        print("Error: Could not read the first frame.")
-        exit()
-
-    roi = cv2.selectROI(
-        "Select ROI", frame, fromCenter=False, showCrosshair=True
-    )
-    cv2.destroyWindow("Select ROI")
-
-    tracker = cv2.TrackerCSRT_create()
-    tracker.init(frame, roi)
-
+    start_frame, stop_frame = 120, 500
+    frame_count = -1
     while True:
         ret, frame = cap.read()
         if not ret:
             break
+        frame_count += 1
 
-        success, roi = tracker.update(frame)
+        if frame_count < start_frame or frame_count > stop_frame:
+            continue
+
+        # success, roi = tracker.update(frame)
+        success = False
 
         if success:
             (x, y, w, h) = tuple(map(int, roi))
