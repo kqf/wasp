@@ -4,8 +4,7 @@ import cv2
 def main():
     cap = cv2.VideoCapture("test.mov")
     roi = 1031, 721, 200, 138
-    # tracker = cv2.TrackerCSRT_create()
-    # tracker.init(frame, roi)
+    tracker = cv2.TrackerCSRT_create()
 
     start_frame, stop_frame = 120, 500
     frame_count = -1
@@ -18,7 +17,10 @@ def main():
         if frame_count < start_frame or frame_count > stop_frame:
             continue
 
-        # success, roi = tracker.update(frame)
+        if frame_count == start_frame:
+            tracker.init(frame, roi)
+
+        success, roi = tracker.update(frame)
         success = False
 
         if success:
