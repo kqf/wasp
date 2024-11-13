@@ -20,8 +20,12 @@ def main():
         if frame_count == start_frame:
             tracker.init(frame, roi)
 
+        roi_old = roi
         success, roi = tracker.update(frame)
-        success = False
+        # success = False
+
+        if not success:
+            tracker.init(frame, roi_old)
 
         if success:
             (x, y, w, h) = tuple(map(int, roi))
