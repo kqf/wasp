@@ -21,6 +21,7 @@ def main():
         if frame_count == start_frame:
             tracker.init(frame, roi)
 
+        roi_old = roi
         success, roi = tracker.update(frame)
         # success = False
 
