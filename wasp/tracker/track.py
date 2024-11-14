@@ -60,7 +60,7 @@ def main():
             continue
 
         if frame_count == segment.start_frame:
-            print(cv2.selectROI("select the area", frame))
+            # print(cv2.selectROI("select the area", frame))
             tracker.init(frame, segment.roi)
 
         success, roi = tracker.update(frame)
