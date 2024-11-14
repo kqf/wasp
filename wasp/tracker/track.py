@@ -1,12 +1,37 @@
+from dataclasses import dataclass
+from typing import Callable
+
 import cv2
+
+
+@dataclass
+class Segment:
+    start_frame: int
+    stop_frame: int
+    last_frame: int
+    roi: tuple[float, float, float, float]
+    tracker: Callable
+
+    def within(self, frame_count):
+        return self.start_frame <= frame_count < self.stop_frame
+
+
+SEGMENTS = {
+    "sky": Segment(
+        120,
+        1000,
+        last_frame=580,
+        roi=(1031.0, 721.0, 200.0, 138.0),
+        tracker=cv2.legacy.TrackerMOSSE_create,
+    ),
+}
 
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    roi = 1031, 721, 200, 138
-    tracker = cv2.legacy.TrackerMOSSE_create()
-
-    start_frame, stop_frame = 120, 1000
+    segment = SEGMENTS["sky"]
+    tracker = segment.tracker()
+    roi = segment.roi
     frame_count = -1
     while True:
         ret, frame = cap.read()
@@ -15,11 +40,11 @@ def main():
         frame_count += 1
         print(f"Current frame count {frame_count}", roi)
 
-        if frame_count < start_frame or frame_count > stop_frame:
+        if not segment.within(frame_count):
             continue
 
-        if frame_count == start_frame:
-            tracker.init(frame, roi)
+        if frame_count == segment.start_frame:
+            tracker.init(frame, segment.roi)
 
         roi_old = roi
         success, roi = tracker.update(frame)
@@ -43,7 +68,7 @@ def main():
             )
 
         cv2.imshow("Object Tracking", frame)
-        cv2.waitKey(1)
+        cv2.waitKey()
 
     cap.release()
     cv2.destroyAllWindows()
