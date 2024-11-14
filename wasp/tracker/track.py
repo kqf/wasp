@@ -24,12 +24,29 @@ SEGMENTS = {
         roi=(1031.0, 721.0, 200.0, 138.0),
         tracker=cv2.legacy.TrackerMOSSE_create,
     ),
+    "sky-slimmer": Segment(
+        120,
+        1000,
+        last_frame=580,
+        roi=(1048, 744, 160, 96),
+        # tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker=cv2.TrackerCSRT_create,
+    ),
+    "mixed": Segment(
+        580,
+        1000,
+        last_frame=667,
+        # roi=(897, 449, 32, 18),
+        roi=(890, 435, 29, 36),
+        # tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker=cv2.TrackerCSRT_create,
+    ),
 }
 
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["sky"]
+    segment = SEGMENTS["sky-slimmer"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
@@ -44,9 +61,9 @@ def main():
             continue
 
         if frame_count == segment.start_frame:
+            # print(cv2.selectROI("select the area", frame))
             tracker.init(frame, segment.roi)
 
-        roi_old = roi
         success, roi = tracker.update(frame)
         # success = False
 
