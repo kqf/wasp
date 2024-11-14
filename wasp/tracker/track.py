@@ -4,15 +4,16 @@ import cv2
 def main():
     cap = cv2.VideoCapture("test.mov")
     roi = 1031, 721, 200, 138
-    tracker = cv2.TrackerCSRT_create()
+    tracker = cv2.legacy.TrackerMOSSE_create()
 
-    start_frame, stop_frame = 120, 500
+    start_frame, stop_frame = 120, 1000
     frame_count = -1
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         frame_count += 1
+        print(f"Current frame count {frame_count}", roi)
 
         if frame_count < start_frame or frame_count > stop_frame:
             continue
@@ -24,8 +25,8 @@ def main():
         success, roi = tracker.update(frame)
         # success = False
 
-        if not success:
-            tracker.init(frame, roi_old)
+        # if not success:
+        # tracker.init(frame, roi_old)
 
         if success:
             (x, y, w, h) = tuple(map(int, roi))
@@ -42,9 +43,7 @@ def main():
             )
 
         cv2.imshow("Object Tracking", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        cv2.waitKey(1)
 
     cap.release()
     cv2.destroyAllWindows()
