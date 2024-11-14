@@ -46,6 +46,7 @@ def main():
         if frame_count == segment.start_frame:
             tracker.init(frame, segment.roi)
 
+        roi_old = roi
         success, roi = tracker.update(frame)
         # success = False
 
