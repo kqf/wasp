@@ -29,12 +29,13 @@ SEGMENTS = {
         1000,
         last_frame=580,
         roi=(1048, 744, 160, 96),
-        tracker=cv2.legacy.TrackerMOSSE_create,
+        # tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker=cv2.TrackerCSRT_create,
     ),
     "mixed": Segment(
         580,
         1000,
-        last_frame=580,
+        last_frame=667,
         # roi=(897, 449, 32, 18),
         roi=(890, 435, 29, 36),
         # tracker=cv2.legacy.TrackerMOSSE_create,
@@ -45,7 +46,7 @@ SEGMENTS = {
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["mixed"]
+    segment = SEGMENTS["sky-slimmer"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
