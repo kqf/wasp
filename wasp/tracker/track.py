@@ -35,8 +35,10 @@ SEGMENTS = {
         580,
         1000,
         last_frame=580,
-        roi=(1048, 744, 160, 96),
-        tracker=cv2.legacy.TrackerMOSSE_create,
+        # roi=(897, 449, 32, 18),
+        roi=(890, 435, 29, 36),
+        # tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker=cv2.TrackerCSRT_create,
     ),
 }
 
