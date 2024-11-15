@@ -50,12 +50,21 @@ SEGMENTS = {
         # tracker=cv2.legacy.TrackerMOSSE_create,
         tracker=cv2.TrackerCSRT_create,
     ),
+    "after-hard-field-b": Segment(
+        734,
+        1000,
+        last_frame=830,
+        # roi=(897, 449, 32, 18),
+        roi=(536, 333, 49, 36),
+        # tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker=cv2.legacy.TrackerBoosting_create,
+    ),
 }
 
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["after-hard-field"]
+    segment = SEGMENTS["after-hard-field-b"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
