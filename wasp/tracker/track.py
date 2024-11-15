@@ -41,12 +41,21 @@ SEGMENTS = {
         # tracker=cv2.legacy.TrackerMOSSE_create,
         tracker=cv2.TrackerCSRT_create,
     ),
+    "after-hard-field": Segment(
+        734,
+        1000,
+        last_frame=830,
+        # roi=(897, 449, 32, 18),
+        roi=(536, 333, 49, 36),
+        # tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker=cv2.TrackerCSRT_create,
+    ),
 }
 
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["sky-slimmer"]
+    segment = SEGMENTS["after-hard-field"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
@@ -65,10 +74,6 @@ def main():
             tracker.init(frame, segment.roi)
 
         success, roi = tracker.update(frame)
-        # success = False
-
-        # if not success:
-        # tracker.init(frame, roi_old)
 
         if success:
             (x, y, w, h) = tuple(map(int, roi))
