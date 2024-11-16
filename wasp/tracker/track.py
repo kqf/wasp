@@ -132,16 +132,13 @@ class KalmanFilter:
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["mixed"]
+    segment = SEGMENTS["sky"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
 
     # Initialize Kalman Filter with the initial ROI
-    kalman_filter = KalmanFilter(roi)
-
-    # Initialize the tracker
-    tracker.init(cap.read()[1], segment.roi)
+    # kalman_filter = KalmanFilter(roi)
 
     while True:
         ret, frame = cap.read()
@@ -152,20 +149,19 @@ def main():
         if not segment.within(frame_count):
             continue
 
-        success, roi = tracker.update(frame)
-        if success:
-            # Use Kalman Filter to smooth and validate the tracker output
-            x, y, w, h = kalman_filter.smooth_and_validate(roi)
-        else:
-            # If tracking fails, use the Kalman prediction
-            x, y, w, h = kalman_filter.predict()
+        if frame_count == segment.start_frame:
+            # print(cv2.selectROI("select the area", frame))
+            tracker.init(frame, segment.roi)
 
-        # Draw the bounding box
+        success, roi = tracker.update(frame)
+        x, y, w, h = map(int, roi)
+
+        # Draw the original tracker's bounding box
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if not success:
             cv2.putText(
                 frame,
-                "Tracking failed - using prediction",
+                "Tracking failed",
                 (50, 50),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.75,
@@ -173,9 +169,14 @@ def main():
                 2,
             )
 
+        # Use Kalman Filter to smooth and validate the tracker's output
+        # kx, ky, kw, kh = kalman_filter.smooth_and_validate(roi)
+
+        # Draw the Kalman Filter's smoothed bounding box
+        # cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
+
         cv2.imshow("Object Tracking", frame)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        cv2.waitKey()
 
     cap.release()
     cv2.destroyAllWindows()
