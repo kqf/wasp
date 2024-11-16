@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 import cv2
+import numpy as np
 
 
 @dataclass
@@ -62,35 +63,109 @@ SEGMENTS = {
 }
 
 
+class KalmanFilter:
+    def __init__(self, initial_roi):
+        self.kf = cv2.KalmanFilter(
+            4, 2
+        )  # 4 dynamic params (x, y, dx, dy), 2 measured params (x, y)
+        self.kf.measurementMatrix = np.array(
+            [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+            ],
+            np.float32,
+        )
+        self.kf.transitionMatrix = np.array(
+            [
+                [1, 0, 1, 0],
+                [0, 1, 0, 1],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ],
+            np.float32,
+        )
+        self.kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.03
+
+        # Extract initial upper-left corner and size from the ROI
+        x, y, w, h = initial_roi
+        self.w, self.h = w, h
+        self.prev_x, self.prev_y = x, y
+
+        # Initialize the Kalman Filter with the initial measurement
+        self.correct(x, y)
+
+    def predict(self):
+        predicted = self.kf.predict()
+        x = int(predicted[0]) - self.w // 2
+        y = int(predicted[1]) - self.h // 2
+        return x, y, self.w, self.h
+
+    def correct(self, x, y):
+        measurement = np.array([[np.float32(x)], [np.float32(y)]])
+        self.kf.correct(measurement)
+
+    def smooth_and_validate(self, roi):
+        x, y, w, h = map(int, roi)
+        self.w, self.h = w, h  # Update width and height with the latest ROI
+        center_x = x + w // 2
+        center_y = y + h // 2
+
+        # Calculate velocity (change in position)
+        velocity_x = center_x - (self.prev_x + self.w // 2)
+        velocity_y = center_y - (self.prev_y + self.h // 2)
+
+        # Check for sudden, unrealistic jumps
+        if abs(velocity_x) > 50 or abs(velocity_y) > 50:
+            # Use Kalman prediction if the jump is too large
+            x, y, w, h = self.predict()
+        else:
+            # Update Kalman Filter with the new position
+            self.correct(center_x, center_y)
+            x = center_x - w // 2
+            y = center_y - h // 2
+
+        # Update previous position
+        self.prev_x, self.prev_y = x, y
+
+        return x, y, self.w, self.h
+
+
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["after-hard-field-b"]
+    segment = SEGMENTS["mixed"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
+
+    # Initialize Kalman Filter with the initial ROI
+    kalman_filter = KalmanFilter(roi)
+
+    # Initialize the tracker
+    tracker.init(cap.read()[1], segment.roi)
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         frame_count += 1
-        print(f"Current frame count {frame_count}", roi)
 
         if not segment.within(frame_count):
             continue
 
-        if frame_count == segment.start_frame:
-            # print(cv2.selectROI("select the area", frame))
-            tracker.init(frame, segment.roi)
-
         success, roi = tracker.update(frame)
-
         if success:
-            (x, y, w, h) = tuple(map(int, roi))
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            # Use Kalman Filter to smooth and validate the tracker output
+            x, y, w, h = kalman_filter.smooth_and_validate(roi)
         else:
+            # If tracking fails, use the Kalman prediction
+            x, y, w, h = kalman_filter.predict()
+
+        # Draw the bounding box
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        if not success:
             cv2.putText(
                 frame,
-                "Tracking failed",
+                "Tracking failed - using prediction",
                 (50, 50),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.75,
@@ -99,7 +174,8 @@ def main():
             )
 
         cv2.imshow("Object Tracking", frame)
-        cv2.waitKey()
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
     cap.release()
     cv2.destroyAllWindows()
