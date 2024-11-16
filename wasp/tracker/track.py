@@ -87,12 +87,7 @@ class KalmanFilter:
         self.kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.03
 
         # Extract initial upper-left corner and size from the ROI
-        x, y, w, h = initial_roi
-        self.w, self.h = w, h
-        self.prev_x, self.prev_y = x, y
-
-        # Initialize the Kalman Filter with the initial measurement
-        self.correct(x, y)
+        self.correct(initial_roi)
 
     def predict(self):
         predicted = self.kf.predict()
@@ -100,9 +95,19 @@ class KalmanFilter:
         y = int(predicted[1]) - self.h // 2
         return x, y, self.w, self.h
 
-    def correct(self, x, y):
-        measurement = np.array([[np.float32(x)], [np.float32(y)]])
+    def correct(self, roi):
+        x, y, w, h = map(int, roi)
+        center_x = x + w // 2
+        center_y = y + h // 2
+        measurement = np.array(
+            [
+                [np.float32(center_x)],
+                [np.float32(center_y)],
+            ],
+        )
         self.kf.correct(measurement)
+        self.w = w
+        self.h = h
 
     def smooth_and_validate(self, roi):
         x, y, w, h = map(int, roi)
@@ -136,12 +141,9 @@ def main():
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
+    kalman_filter = None
 
     # Initialize Kalman Filter with the initial ROI
-    kalman_filter = KalmanFilter(roi)
-
-    # Initialize the tracker
-    tracker.init(cap.read()[1], segment.roi)
 
     while True:
         ret, frame = cap.read()
@@ -152,20 +154,22 @@ def main():
         if not segment.within(frame_count):
             continue
 
-        success, roi = tracker.update(frame)
-        if success:
-            # Use Kalman Filter to smooth and validate the tracker output
-            x, y, w, h = kalman_filter.smooth_and_validate(roi)
-        else:
-            # If tracking fails, use the Kalman prediction
-            x, y, w, h = kalman_filter.predict()
+        if frame_count == segment.start_frame:
+            # print(cv2.selectROI("select the area", frame))
+            tracker.init(frame, segment.roi)
+            kalman_filter = KalmanFilter(segment.roi)
 
-        # Draw the bounding box
+        if frame_count % 2 == 0:
+            kalman_filter.correct(roi)
+        success, roi = tracker.update(frame)
+        x, y, w, h = map(int, roi)
+
+        # Draw the original tracker's bounding box
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if not success:
             cv2.putText(
                 frame,
-                "Tracking failed - using prediction",
+                "Tracking failed",
                 (50, 50),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.75,
@@ -173,9 +177,13 @@ def main():
                 2,
             )
 
+        # Use Kalman Filter to smooth and validate the tracker's output
+        kx, ky, kw, kh = kalman_filter.predict()
+        # Draw the Kalman Filter's smoothed bounding box
+        cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
+
         cv2.imshow("Object Tracking", frame)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        cv2.waitKey(1)
 
     cap.release()
     cv2.destroyAllWindows()
