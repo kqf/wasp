@@ -159,7 +159,7 @@ def main():
             tracker.init(frame, segment.roi)
             kalman_filter = KalmanFilter(segment.roi)
 
-        if frame_count % 2 == 0:
+        if frame_count % 4 == 0:
             kalman_filter.correct(roi)
         success, roi = tracker.update(frame)
         x, y, w, h = map(int, roi)
