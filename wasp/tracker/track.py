@@ -84,7 +84,7 @@ SEGMENTS = {
         1000,
         last_frame=667,
         # roi=(897, 449, 32, 18),
-        roi=(890, 435, 29, 36),
+        roi=(896, 445, 16, 15),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
         tracker=TemplateMatchingTracker,
@@ -237,10 +237,10 @@ def main():
             tracker.init(frame, segment.roi)
             kalman_filter = ExtendedKalmanFilter(segment.roi)
 
-        if frame_count % 4 == 0:
-            kalman_filter.correct(roi)
+        kalman_filter.correct(roi)
         success, roi = tracker.update(frame)
         x, y, w, h = map(int, roi)
+        # success = True
 
         # Draw the original tracker's bounding box
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -261,7 +261,7 @@ def main():
         cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
 
         cv2.imshow("Object Tracking", frame)
-        cv2.waitKey(1)
+        cv2.waitKey()
 
     cap.release()
     cv2.destroyAllWindows()
