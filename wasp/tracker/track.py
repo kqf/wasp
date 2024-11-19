@@ -240,6 +240,19 @@ class ExtendedKalmanFilter(KalmanFilter):
         return super().predict()
 
 
+def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
+    x, y, w, h = bbox
+    roi = frame[y : y + h, x : x + w]
+    scale = min(max_size / w, max_size / h)
+    new_width = int(w * scale)
+    new_height = int(h * scale)
+    resized_roi = cv2.resize(roi, (new_width, new_height))
+    frame_height, frame_width = frame.shape[:2]
+    o_y = frame_height - new_height - 10
+    frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
+    return frame
+
+
 def main():
     cap = cv2.VideoCapture("test.mov")
     segment = SEGMENTS["mixed"]
@@ -262,7 +275,7 @@ def main():
         if frame_count == segment.start_frame:
             # print(cv2.selectROI("select the area", frame))
             tracker.init(frame, segment.roi)
-            kalman_filter = ExtendedKalmanFilter(segment.roi)
+            kalman_filter = KalmanFilter(segment.roi)
 
         kalman_filter.correct(roi)
         success, roi = tracker.update(frame)
@@ -286,7 +299,8 @@ def main():
         kx, ky, kw, kh = kalman_filter.predict()
         # Draw the Kalman Filter's smoothed bounding box
         cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
-        tracker.draw_corners(frame)
+        # tracker.draw_corners(frame)
+        overlay_bbox_on_frame(frame, roi)
 
         cv2.imshow("Object Tracking", frame)
         cv2.waitKey()
