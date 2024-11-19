@@ -21,6 +21,7 @@ class TemplateMatchingTracker:
     def __init__(self, n=3):
         self.initialized = False
         self.n = n
+        self.corners = []  # Class variable to store corners
 
     def init(self, frame, roi):
         x, y, w, h = map(int, roi)
@@ -60,7 +61,33 @@ class TemplateMatchingTracker:
 
         self.last_position = (x, y, w, h)
 
+        # Define the corners of the bounding box
+        self.corners = [
+            (x, y),  # top_left
+            (x + w, y),  # top_right
+            (x, y + h),  # bottom_left
+            (x + w, y + h),  # bottom_right
+        ]
+
         return True, (x, y, w, h)
+
+    def draw_corners(self, frame):
+        """Draws the corners on the given frame."""
+        if not self.corners:
+            raise RuntimeError("No corners available to draw. Call `update`")
+
+        # Draw the bounding box and the corners
+        for corner in self.corners:
+            cv2.circle(frame, corner, 5, (0, 0, 255), -1)
+
+        # Optionally, you can draw a bounding box
+        top_left, top_right, bottom_left, bottom_right = self.corners
+        cv2.line(frame, top_left, top_right, (0, 255, 0), 2)  # Green lines
+        cv2.line(frame, top_right, bottom_right, (0, 255, 0), 2)
+        cv2.line(frame, bottom_right, bottom_left, (0, 255, 0), 2)
+        cv2.line(frame, bottom_left, top_left, (0, 255, 0), 2)
+
+        return frame
 
 
 SEGMENTS = {
@@ -259,6 +286,7 @@ def main():
         kx, ky, kw, kh = kalman_filter.predict()
         # Draw the Kalman Filter's smoothed bounding box
         cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
+        tracker.draw_corners(frame)
 
         cv2.imshow("Object Tracking", frame)
         cv2.waitKey()
