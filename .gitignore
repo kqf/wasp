@@ -27,3 +27,4 @@ lightning_logs
 
 # Include
 !requirements.txt
+*.png

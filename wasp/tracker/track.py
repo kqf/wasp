@@ -111,7 +111,7 @@ SEGMENTS = {
         1000,
         last_frame=667,
         # roi=(897, 449, 32, 18),
-        roi=(896, 445, 16, 15),
+        roi=(896, 446, 16, 17),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
         tracker=TemplateMatchingTracker,
@@ -281,6 +281,9 @@ def main():
         success, roi = tracker.update(frame)
         x, y, w, h = map(int, roi)
         # success = True
+        if 588 <= frame_count <= 591:
+            cv2.imwrite(f"{frame_count}.png", frame)
+        # print(frame_count, roi)
 
         # Draw the original tracker's bounding box
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
