@@ -49,6 +49,21 @@ def extract_features_small(image, bounding_box):
     return points
 
 
+def draw_features(image, points):
+    if points is not None:
+        return image
+
+    for point in points:
+        cv2.circle(
+            image,
+            (int(point[0]), int(point[1])),
+            1,
+            (0, 255, 0),
+            -1,
+        )
+    return image
+
+
 samples = {
     "588.png": (863, 432, 16, 17),
     "589.png": (858, 430, 16, 17),
@@ -75,16 +90,8 @@ def main():
     for sample, bounding_box in samples.items():
         image = cv2.imread(sample)
         points = extract_features_small(image, bounding_box)
+        draw_features(image, points)
 
-        if points is not None:
-            for point in points:
-                cv2.circle(
-                    image,
-                    (int(point[0]), int(point[1])),
-                    1,
-                    (0, 255, 0),
-                    -1,
-                )
         overlay_bbox_on_frame(image, bounding_box)
 
         cv2.imshow("Feature Points", image)
