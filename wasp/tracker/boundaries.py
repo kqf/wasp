@@ -51,14 +51,16 @@ def extract_features_small(image, bounding_box):
 
 def draw_features(image, points):
     if points is not None:
-        for point in points:
-            cv2.circle(
-                image,
-                (int(point[0]), int(point[1])),
-                1,
-                (0, 255, 0),
-                -1,
-            )
+        return image
+
+    for point in points:
+        cv2.circle(
+            image,
+            (int(point[0]), int(point[1])),
+            1,
+            (0, 255, 0),
+            -1,
+        )
     return image
 
 
