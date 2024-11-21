@@ -50,7 +50,7 @@ def extract_features_small(image, bounding_box):
 
 
 def draw_features(image, points):
-    if points is not None:
+    if points is None:
         return image
 
     for point in points:
