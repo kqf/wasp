@@ -4,6 +4,8 @@ from typing import Callable
 import cv2
 import numpy as np
 
+from wasp.tracker.boundaries import visualize_features
+
 
 @dataclass
 class Segment:
@@ -303,6 +305,7 @@ def main():
         # Draw the Kalman Filter's smoothed bounding box
         cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
         # tracker.draw_corners(frame)
+        visualize_features(frame, roi)
         overlay_bbox_on_frame(frame, roi)
 
         cv2.imshow("Object Tracking", frame)

@@ -50,7 +50,7 @@ def extract_features_small(image, bounding_box):
 
 
 def draw_features(image, points):
-    if points is not None:
+    if points is None:
         return image
 
     for point in points:
@@ -62,6 +62,11 @@ def draw_features(image, points):
             -1,
         )
     return image
+
+
+def visualize_features(image, bounding_box):
+    points = extract_features_small(image, bounding_box)
+    return draw_features(image, points)
 
 
 samples = {
