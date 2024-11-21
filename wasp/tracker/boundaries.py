@@ -64,6 +64,11 @@ def draw_features(image, points):
     return image
 
 
+def visualize_features(image, bounding_box):
+    points = extract_features_small(image, bounding_box)
+    return draw_features(image, points)
+
+
 samples = {
     "588.png": (863, 432, 16, 17),
     "589.png": (858, 430, 16, 17),
