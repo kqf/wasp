@@ -10,16 +10,77 @@ def extract_features(image, bounding_box):
 
     edges = cv2.Canny(roi_gray, 100, 200)
 
-    corners = cv2.goodFeaturesToTrack(
-        edges, maxCorners=100, qualityLevel=0.01, minDistance=10
+    contours, _ = cv2.findContours(
+        edges,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_NONE,
+    )
+    largest_contour = max(contours, key=cv2.contourArea)
+
+    points = largest_contour.reshape(-1, 2)
+    points[:, 0] += x
+    points[:, 1] += y
+
+    return points
+
+
+def draw_ellipse(image, ellipse, color=(0, 255, 0), thickness=2):
+    if not ellipse:
+        return image
+
+    center, axes, angle = ellipse
+
+    center = tuple(map(int, center))
+    axes = tuple(map(int, axes))
+
+    return cv2.ellipse(image, center, axes, angle, 0, 360, color, thickness)
+
+
+def extract_features_with_ellipse(image, bounding_box, prior_ellipse=None):
+    x, y, w, h = bounding_box
+    roi = image[y : y + h, x : x + w]
+    roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(roi_gray, 100, 200)
+    contours, _ = cv2.findContours(
+        edges,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_NONE,
     )
 
-    if corners is not None:
-        corners = corners.reshape(-1, 2)
-        corners[:, 0] += x
-        corners[:, 1] += y
+    for contour in contours:
+        contour[:, 0, 0] += x
+        contour[:, 0, 1] += y
 
-    return corners
+    if prior_ellipse:
+        prior_center, prior_axes, _ = prior_ellipse
+        prior_major_axis = max(prior_axes)
+        selected_contour = min(
+            contours,
+            key=lambda c: (
+                np.linalg.norm(prior_center - np.mean(c[:, 0, :], axis=0))
+                if np.linalg.norm(prior_center - np.mean(c[:, 0, :], axis=0))
+                <= prior_major_axis
+                else float("inf")
+            ),
+            default=None,
+        )
+    else:
+        bbox_center = np.array([x + w / 2, y + h / 2])
+        selected_contour = min(
+            contours,
+            key=lambda c: max(
+                0,
+                cv2.pointPolygonTest(c, tuple(bbox_center), True),
+            ),
+            default=None,
+        )
+
+    ellipse = (
+        cv2.fitEllipse(selected_contour)
+        if selected_contour is not None and len(selected_contour) >= 5
+        else None
+    )
+    return selected_contour.reshape(-1, 2), ellipse
 
 
 def extract_features_small(image, bounding_box):
@@ -76,9 +137,15 @@ def draw_features(image, points):
     return image
 
 
-def visualize_features(image, bounding_box):
-    points = extract_features_small(image, bounding_box)
-    return draw_features(image, points)
+def visualize_features(image, bounding_box, ellipse=None):
+    # points = extract_features_small(image, bounding_box)
+    points, ellipse = extract_features_with_ellipse(
+        image,
+        bounding_box,
+        ellipse,
+    )
+    draw_ellipse(image, ellipse)
+    return draw_features(image, points), ellipse
 
 
 samples = {
