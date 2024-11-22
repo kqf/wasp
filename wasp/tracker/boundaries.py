@@ -33,15 +33,27 @@ def extract_features_small(image, bounding_box):
         cv2.CHAIN_APPROX_NONE,
     )
 
-    largest_contour = max(contours, key=cv2.contourArea)
-    # convex_hull = cv2.convexHull(largest_contour)
+    min_area = 10
+    max_area = (w - 1) * (h - 1)
+
+    def is_bounding_box_contour(contour, bounding_box):
+        x, y, w, h = bounding_box
+        x_min, y_min, w_contour, h_contour = cv2.boundingRect(contour)
+        return abs(w_contour - w) < 5 and abs(h_contour - h) < 5
+
+    filtered_contours = [
+        contour
+        for contour in contours
+        if min_area < cv2.contourArea(contour) < max_area
+        and not is_bounding_box_contour(contour, bounding_box)
+    ]
+
+    if filtered_contours:
+        largest_contour = max(filtered_contours, key=cv2.contourArea)
+    else:
+        return np.array([])  # Return empty if no valid contours
+
     points = largest_contour.reshape(-1, 2)
-
-    # points = []
-    # for contour in contours:
-    #     points.extend(point[0] for point in contour)
-
-    points = np.array(points)
     if points.size > 0:
         points[:, 0] += x
         points[:, 1] += y
