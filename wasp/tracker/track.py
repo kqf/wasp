@@ -105,8 +105,8 @@ SEGMENTS = {
         1000,
         last_frame=580,
         roi=(1048, 744, 160, 96),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.TrackerCSRT_create,
+        tracker=cv2.legacy.TrackerMOSSE_create,
+        # tracker=cv2.TrackerCSRT_create,
     ),
     "mixed": Segment(
         580,
@@ -257,11 +257,12 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["mixed"]
+    segment = SEGMENTS["sky-slimmer"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
     kalman_filter = None
+    ellipse = None
 
     # Initialize Kalman Filter with the initial ROI
 
@@ -281,6 +282,7 @@ def main():
 
         kalman_filter.correct(roi)
         success, roi = tracker.update(frame)
+        roi = tuple(map(int, roi))
         x, y, w, h = map(int, roi)
         # success = True
         if 588 <= frame_count <= 591:
@@ -300,13 +302,14 @@ def main():
                 2,
             )
 
+        # tracker.draw_corners(frame)
+        frame, ellipse = visualize_features(frame, roi, ellipse)
+        overlay_bbox_on_frame(frame, roi)
+
         # Use Kalman Filter to smooth and validate the tracker's output
         kx, ky, kw, kh = kalman_filter.predict()
         # Draw the Kalman Filter's smoothed bounding box
         cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
-        # tracker.draw_corners(frame)
-        visualize_features(frame, roi)
-        overlay_bbox_on_frame(frame, roi)
 
         cv2.imshow("Object Tracking", frame)
         cv2.waitKey()
