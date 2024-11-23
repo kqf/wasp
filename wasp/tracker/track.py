@@ -257,7 +257,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["sky-slimmer"]
+    segment = SEGMENTS["sky"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
@@ -268,8 +268,6 @@ def main():
 
     while True:
         ret, frame = cap.read()
-        frame_count += 1
-
         if not segment.within(frame_count):
             continue
 
