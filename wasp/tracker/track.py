@@ -268,7 +268,6 @@ def main():
 
     while True:
         ret, frame = cap.read()
-
         if not segment.within(frame_count):
             continue
 
