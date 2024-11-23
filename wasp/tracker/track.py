@@ -268,8 +268,6 @@ def main():
 
     while True:
         ret, frame = cap.read()
-        if not ret:
-            break
         frame_count += 1
 
         if not segment.within(frame_count):
@@ -310,7 +308,6 @@ def main():
         kx, ky, kw, kh = kalman_filter.predict()
         # Draw the Kalman Filter's smoothed bounding box
         cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
-
         cv2.imshow("Object Tracking", frame)
         cv2.waitKey()
 
