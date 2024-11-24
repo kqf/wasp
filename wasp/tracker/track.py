@@ -274,7 +274,7 @@ def main():
         if frame_count == segment.start_frame:
             # print(cv2.selectROI("select the area", frame))
             tracker.init(frame, segment.roi)
-            kalman_filter = KalmanFilter(segment.roi)
+            kalman_filter = ExtendedKalmanFilter(segment.roi)
 
         kalman_filter.correct(roi)
         success, roi = tracker.update(frame)
