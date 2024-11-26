@@ -52,6 +52,9 @@ def extract_features_with_ellipse(image, bounding_box, prior_ellipse=None):
         contour[:, 0, 1] += y
 
     if prior_ellipse:
+        # select the countour
+        # selected_contour = np.vstack(contours)
+
         prior_center, prior_axes, _ = prior_ellipse
         prior_major_axis = max(prior_axes)
         selected_contour = min(
@@ -66,14 +69,15 @@ def extract_features_with_ellipse(image, bounding_box, prior_ellipse=None):
         )
     else:
         bbox_center = np.array([x + w / 2, y + h / 2])
-        selected_contour = min(
-            contours,
-            key=lambda c: max(
-                0,
-                cv2.pointPolygonTest(c, tuple(bbox_center), True),
-            ),
-            default=None,
-        )
+        # selected_contour = min(
+        #     contours,
+        #     key=lambda c: max(
+        #         0,
+        #         cv2.pointPolygonTest(c, tuple(bbox_center), True),
+        #     ),
+        #     default=None,
+        # )
+        selected_contour = np.vstack(contours)
 
     ellipse = (
         cv2.fitEllipse(selected_contour)
