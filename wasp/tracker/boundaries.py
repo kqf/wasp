@@ -47,43 +47,64 @@ def extract_features_with_ellipse(image, bounding_box, prior_ellipse=None):
         cv2.CHAIN_APPROX_NONE,
     )
 
+    # Offset contours back to the original image coordinates
     for contour in contours:
         contour[:, 0, 0] += x
         contour[:, 0, 1] += y
 
     if prior_ellipse:
-        # select the countour
-        # selected_contour = np.vstack(contours)
-
-        prior_center, prior_axes, _ = prior_ellipse
-        prior_major_axis = max(prior_axes)
-        selected_contour = min(
-            contours,
-            key=lambda c: (
-                np.linalg.norm(prior_center - np.mean(c[:, 0, :], axis=0))
-                if np.linalg.norm(prior_center - np.mean(c[:, 0, :], axis=0))
-                <= prior_major_axis
-                else float("inf")
-            ),
-            default=None,
-        )
-    else:
-        bbox_center = np.array([x + w / 2, y + h / 2])
-        # selected_contour = min(
-        #     contours,
-        #     key=lambda c: max(
-        #         0,
-        #         cv2.pointPolygonTest(c, tuple(bbox_center), True),
-        #     ),
-        #     default=None,
-        # )
+        # 1. Select all the contours:
         selected_contour = np.vstack(contours)
 
+        # 2. Move the ellipse so its center coincides with the bbox center
+        prior_center, prior_axes, prior_angle = prior_ellipse
+        bbox_center = np.array([x + w / 2, y + h / 2])
+        shift = bbox_center - prior_center
+
+        # Adjust the prior ellipse center
+        adjusted_ellipse_center = prior_center + shift
+
+        # 3. Remove points outside the ellipse
+        a, b = prior_axes  # Major and minor axes
+        angle = prior_angle  # Ellipse rotation angle
+
+        # Function to check if a point is inside the ellipse
+        def is_point_inside_ellipse(point, ellipse_center, axes, angle):
+            cos_angle = np.cos(np.deg2rad(angle))
+            sin_angle = np.sin(np.deg2rad(angle))
+
+            # Translate point to ellipse center coordinate system
+            dx = point[:, 0].item() - ellipse_center[0]
+            dy = point[:, 1].item() - ellipse_center[1]
+
+            # Rotate point coordinates back to axis-aligned
+            x_rot = cos_angle * dx + sin_angle * dy
+            y_rot = -sin_angle * dx + cos_angle * dy
+
+            # Check if the point lies within the ellipse equation
+            return (x_rot**2 / axes[0] ** 2 + y_rot**2 / axes[1] ** 2) <= 1
+
+        # Filter out points that are outside the ellipse
+        selected_contour = [
+            point
+            for point in selected_contour
+            if is_point_inside_ellipse(
+                point, adjusted_ellipse_center, (a, b), angle
+            )
+        ]
+        selected_contour = np.array(selected_contour)
+
+    else:
+        bbox_center = np.array([x + w / 2, y + h / 2])
+        selected_contour = np.vstack(contours)
+
+    # Fit an ellipse to the selected contour points if there are enough points
     ellipse = (
         cv2.fitEllipse(selected_contour)
         if selected_contour is not None and len(selected_contour) >= 5
         else None
     )
+
     return selected_contour.reshape(-1, 2), ellipse
 
 
