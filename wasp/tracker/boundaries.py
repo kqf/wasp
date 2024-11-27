@@ -37,75 +37,66 @@ def draw_ellipse(image, ellipse, color=(0, 255, 0), thickness=2):
 
 
 def extract_features_with_ellipse(image, bounding_box, prior_ellipse=None):
+    contours = to_contours(image, bounding_box)
+    selected_contour = filter_contours_with_ellipse(
+        contours, bounding_box, prior_ellipse
+    )
+
+    if len(selected_contour) < 5:
+        return selected_contour.reshape(-1, 2), None
+
+    ellipse = cv2.fitEllipse(selected_contour)
+    return selected_contour.reshape(-1, 2), ellipse
+
+
+def to_contours(image, bounding_box):
     x, y, w, h = bounding_box
-    roi = image[y : y + h, x : x + w]
-    roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    roi_gray = cv2.cvtColor(image[y : y + h, x : x + w], cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(roi_gray, 100, 200)
     contours, _ = cv2.findContours(
         edges,
         cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_NONE,
     )
-
-    # Offset contours back to the original image coordinates
     for contour in contours:
         contour[:, 0, 0] += x
         contour[:, 0, 1] += y
+    return contours
 
-    if prior_ellipse:
-        # 1. Select all the contours:
-        selected_contour = np.vstack(contours)
 
-        # 2. Move the ellipse so its center coincides with the bbox center
-        prior_center, prior_axes, prior_angle = prior_ellipse
-        bbox_center = np.array([x + w / 2, y + h / 2])
-        shift = bbox_center - prior_center
+def filter_contours_with_ellipse(contours, bounding_box, ellipse):
+    selected_contour = np.vstack(contours)
 
-        # Adjust the prior ellipse center
-        adjusted_ellipse_center = prior_center + shift
+    if ellipse is None:
+        return selected_contour
 
-        # 3. Remove points outside the ellipse
-        a, b = prior_axes  # Major and minor axes
-        angle = prior_angle  # Ellipse rotation angle
+    center, axes, angle = ellipse
+    adjusted_center = adjust_ellipse_center(center, bounding_box)
 
-        # Function to check if a point is inside the ellipse
-        def is_point_inside_ellipse(point, ellipse_center, axes, angle):
-            cos_angle = np.cos(np.deg2rad(angle))
-            sin_angle = np.sin(np.deg2rad(angle))
-
-            # Translate point to ellipse center coordinate system
-            dx = point[:, 0].item() - ellipse_center[0]
-            dy = point[:, 1].item() - ellipse_center[1]
-
-            # Rotate point coordinates back to axis-aligned
-            x_rot = cos_angle * dx + sin_angle * dy
-            y_rot = -sin_angle * dx + cos_angle * dy
-
-            # Check if the point lies within the ellipse equation
-            return (x_rot**2 / axes[0] ** 2 + y_rot**2 / axes[1] ** 2) <= 1
-
-        # Filter out points that are outside the ellipse
-        selected_contour = [
+    return np.array(
+        [
             point
             for point in selected_contour
-            if is_point_inside_ellipse(
-                point, adjusted_ellipse_center, (a, b), angle
-            )
+            if is_inside_ellipse(point, adjusted_center, axes, angle)
         ]
-        selected_contour = np.array(selected_contour)
-
-    else:
-        bbox_center = np.array([x + w / 2, y + h / 2])
-        selected_contour = np.vstack(contours)
-
-    # Fit an ellipse to the selected contour points if there are enough points
-    ellipse = (
-        cv2.fitEllipse(selected_contour)
-        if selected_contour is not None and len(selected_contour) >= 5
-        else None
     )
 
-    return selected_contour.reshape(-1, 2), ellipse
+
+def adjust_ellipse_center(prior_center, bounding_box):
+    x, y, w, h = bounding_box
+    bbox_center = np.array([x + w / 2, y + h / 2])
+    return prior_center + (bbox_center - prior_center)
+
+
+def is_inside_ellipse(point, ellipse_center, axes, angle):
+    cos_angle, sin_angle = np.cos(np.deg2rad(angle)), np.sin(np.deg2rad(angle))
+    dx, dy = (
+        point[:, 0].item() - ellipse_center[0],
+        point[:, 1].item() - ellipse_center[1],
+    )
+    x_rot = cos_angle * dx + sin_angle * dy
+    y_rot = -sin_angle * dx + cos_angle * dy
+    return (x_rot**2 / axes[0] ** 2 + y_rot**2 / axes[1] ** 2) <= 1
 
 
 def extract_features_small(image, bounding_box):
