@@ -105,8 +105,9 @@ SEGMENTS = {
         1000,
         last_frame=580,
         roi=(1048, 744, 160, 96),
-        tracker=cv2.legacy.TrackerMOSSE_create,
+        # tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
+        tracker=TemplateMatchingTracker,
     ),
     "mixed": Segment(
         580,
