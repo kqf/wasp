@@ -8,6 +8,7 @@ from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.tracker import TemplateMatchingTracker
 
 
+
 @dataclass
 class Segment:
     start_frame: int
@@ -19,7 +20,7 @@ class Segment:
     def within(self, frame_count):
         return self.start_frame <= frame_count < self.stop_frame
 
-
+      
 SEGMENTS = {
     "sky": Segment(
         120,
