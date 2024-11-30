@@ -8,6 +8,7 @@ from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.tracker import TemplateMatchingTracker
 
 
+
 @dataclass
 class Segment:
     start_frame: int
