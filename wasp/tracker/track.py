@@ -8,7 +8,6 @@ from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.tracker import TemplateMatchingTracker
 
 
-
 @dataclass
 class Segment:
     start_frame: int
@@ -84,7 +83,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["mixed"]
+    segment = SEGMENTS["small"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
