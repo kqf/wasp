@@ -113,7 +113,10 @@ def main():
         # # print(frame_count, roi)
 
         # Draw the original tracker's bounding box
+        frame, ellipse = visualize_features(frame, roi, ellipse)
+        overlay_bbox_on_frame(frame, roi)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
         if not success:
             cv2.putText(
                 frame,
@@ -126,9 +129,6 @@ def main():
             )
 
         # tracker.draw_corners(frame)
-        frame, ellipse = visualize_features(frame, roi, ellipse)
-        overlay_bbox_on_frame(frame, roi)
-
         # Use Kalman Filter to smooth and validate the tracker's output
         kx, ky, kw, kh = kalman_filter.predict()
         # Draw the Kalman Filter's smoothed bounding box
