@@ -20,7 +20,7 @@ class Segment:
     def within(self, frame_count):
         return self.start_frame <= frame_count < self.stop_frame
 
-      
+
 SEGMENTS = {
     "sky": Segment(
         120,
@@ -84,23 +84,22 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["sky"]
+    segment = SEGMENTS["mixed"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
     kalman_filter = None
     ellipse = None
-
-    # Initialize Kalman Filter with the initial ROI
+    prev_frame = None  # Store the previous frame
 
     while True:
         ret, frame = cap.read()
         frame_count += 1
+
         if not segment.within(frame_count):
             continue
 
         if frame_count == segment.start_frame:
-            # print(cv2.selectROI("select the area", frame))
             tracker.init(frame, segment.roi)
             kalman_filter = KalmanFilter(segment.roi)
 
@@ -108,13 +107,12 @@ def main():
         success, roi = tracker.update(frame)
         roi = tuple(map(int, roi))
         x, y, w, h = map(int, roi)
-        # success = True
-        # if 588 <= frame_count <= 591:
-        #     cv2.imwrite(f"{frame_count}.png", frame)
-        # # print(frame_count, roi)
 
         # Draw the original tracker's bounding box
+        frame, ellipse = visualize_features(frame, roi, ellipse)
+        overlay_bbox_on_frame(frame, roi)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
         if not success:
             cv2.putText(
                 frame,
@@ -126,16 +124,16 @@ def main():
                 2,
             )
 
-        # tracker.draw_corners(frame)
-        frame, ellipse = visualize_features(frame, roi, ellipse)
-        overlay_bbox_on_frame(frame, roi)
-
-        # Use Kalman Filter to smooth and validate the tracker's output
         kx, ky, kw, kh = kalman_filter.predict()
-        # Draw the Kalman Filter's smoothed bounding box
         cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
-        cv2.imshow("Object Tracking", frame)
+
+        if prev_frame is None:
+            prev_frame = frame
+
+        combined_frame = cv2.hconcat([prev_frame, frame])
+        cv2.imshow("tracking", combined_frame)
         cv2.waitKey()
+        prev_frame = frame
 
     cap.release()
     cv2.destroyAllWindows()
