@@ -59,9 +59,7 @@ class TemplateMatchingTracker:
 class TemplateMatchingScaled(TemplateMatchingTracker):
     def __init__(self, n=3, scale_factors=None):
         super().__init__(n=n)
-        self.scale_factors = (
-            scale_factors if scale_factors else [0.8, 0.9, 1.0, 1.1, 1.2]
-        )
+        self.scale_factors = scale_factors or [0.8, 0.9, 1.0, 1.1, 1.2]
 
     def update(self, frame):
         if not self.initialized:
