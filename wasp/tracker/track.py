@@ -83,7 +83,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["small"]
+    segment = SEGMENTS["mixed"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
@@ -108,7 +108,7 @@ def main():
         x, y, w, h = map(int, roi)
 
         # Draw the original tracker's bounding box
-        frame, ellipse = visualize_features(frame, roi, ellipse)
+        # frame, ellipse = visualize_features(frame, roi, ellipse)
         overlay_bbox_on_frame(frame, roi)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
