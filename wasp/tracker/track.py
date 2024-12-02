@@ -68,6 +68,27 @@ SEGMENTS = {
 }
 
 
+def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
+    x, y, w, h = bbox
+    center_x, center_y = x + w // 2, y + h // 2
+    new_w, new_h = 2 * w, 2 * h
+    new_x, new_y = max(0, center_x - new_w // 2), max(0, center_y - new_h // 2)
+    roi = frame[
+        new_y : new_y + min(frame.shape[0] - new_y, new_h),
+        new_x : new_x + min(frame.shape[1] - new_x, new_w),
+    ]
+    scale = min(max_size / roi.shape[1], max_size / roi.shape[0])
+    resized_roi = cv2.resize(
+        roi, (int(roi.shape[1] * scale), int(roi.shape[0] * scale))
+    )
+    o_y = max(10, frame.shape[0] - resized_roi.shape[0] - 10)
+    o_x = min(o_x, frame.shape[1] - resized_roi.shape[1])
+    frame[
+        o_y : o_y + resized_roi.shape[0], o_x : o_x + resized_roi.shape[1]
+    ] = resized_roi
+    return frame
+
+
 def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
     x, y, w, h = bbox
     center_x, center_y = x + w // 2, y + h // 2
