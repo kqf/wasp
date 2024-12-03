@@ -71,6 +71,18 @@ SEGMENTS = {
 def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
     x, y, w, h = bbox
     roi = frame[y : y + h, x : x + w]
+    w, h = roi.shape[:2]
+    scale = min(max_size / w, max_size / h)
+    new_width = int(w * scale)
+    new_height = int(h * scale)
+    resized_roi = cv2.resize(roi, (new_width, new_height))
+    frame_height, frame_width = frame.shape[:2]
+    o_y = frame_height - new_height - 10
+    frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
+
+
+def overlay_template(frame, roi, max_size=256, o_x=40):
+    w, h = roi.shape[:2]
     scale = min(max_size / w, max_size / h)
     new_width = int(w * scale)
     new_height = int(h * scale)
@@ -90,14 +102,13 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
         new_x : new_x + min(frame.shape[1] - new_x, new_w),
     ]
     scale = min(max_size / roi.shape[1], max_size / roi.shape[0])
-    resized_roi = cv2.resize(
-        roi, (int(roi.shape[1] * scale), int(roi.shape[0] * scale))
+    nroi = cv2.resize(
+        roi,
+        (int(roi.shape[1] * scale), int(roi.shape[0] * scale)),
     )
-    o_y = max(10, frame.shape[0] - resized_roi.shape[0] - 10)
-    o_x = min(o_x, frame.shape[1] - resized_roi.shape[1])
-    frame[
-        o_y : o_y + resized_roi.shape[0], o_x : o_x + resized_roi.shape[1]
-    ] = resized_roi
+    o_y = max(10, frame.shape[0] - nroi.shape[0] - 10)
+    o_x = min(o_x, frame.shape[1] - nroi.shape[1])
+    frame[o_y : o_y + nroi.shape[0], o_x : o_x + nroi.shape[1]] = nroi  # noqa
     return frame
 
 
@@ -130,6 +141,7 @@ def main():
         # Draw the original tracker's bounding box
         # frame, ellipse = visualize_features(frame, roi, ellipse)
         overlay_bbox_on_frame_simple(frame, roi)
+        overlay_template(frame, tracker.template, o_x=300)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         if not success:
