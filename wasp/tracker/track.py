@@ -90,20 +90,19 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
         new_x : new_x + min(frame.shape[1] - new_x, new_w),
     ]
     scale = min(max_size / roi.shape[1], max_size / roi.shape[0])
-    resized_roi = cv2.resize(
-        roi, (int(roi.shape[1] * scale), int(roi.shape[0] * scale))
+    nroi = cv2.resize(
+        roi,
+        (int(roi.shape[1] * scale), int(roi.shape[0] * scale)),
     )
-    o_y = max(10, frame.shape[0] - resized_roi.shape[0] - 10)
-    o_x = min(o_x, frame.shape[1] - resized_roi.shape[1])
-    frame[
-        o_y : o_y + resized_roi.shape[0], o_x : o_x + resized_roi.shape[1]
-    ] = resized_roi
+    o_y = max(10, frame.shape[0] - nroi.shape[0] - 10)
+    o_x = min(o_x, frame.shape[1] - nroi.shape[1])
+    frame[o_y : o_y + nroi.shape[0], o_x : o_x + nroi.shape[1]] = nroi  # noqa
     return frame
 
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["mixed"]
+    segment = SEGMENTS["sky"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
