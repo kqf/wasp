@@ -1,15 +1,20 @@
 import cv2
+import numpy as np
 
 
 class TemplateMatchingTracker:
-    def __init__(self, n=3):
+    def __init__(self, n=3, alpha=0.9, confidence_threshold=0.0):
         self.initialized = False
         self.n = n
-        self.corners = []  # Class variable to store corners
+        self.alpha = alpha
+        self.confidence_threshold = confidence_threshold
+        self.corners = []
 
     def init(self, frame, roi):
         x, y, w, h = map(int, roi)
-        self.template = frame[y : y + h, x : x + w].copy()
+        self.template = frame[y : y + h, x : x + w].astype(
+            np.float32
+        )  # Store as float for averaging
         self.template_width = w
         self.template_height = h
         self.last_position = (x, y, w, h)
@@ -31,19 +36,27 @@ class TemplateMatchingTracker:
 
         search_area = frame[search_y:search_y_end, search_x:search_x_end]
 
+        # Template matching
         result = cv2.matchTemplate(
             search_area,
-            self.template,
+            self.template.astype(np.uint8),
             cv2.TM_CCOEFF_NORMED,
         )
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
+        if max_val < self.confidence_threshold:
+            # Skip update if confidence is low
+            return False, self.last_position
+
         # Adjust the top-left corner of the match to the frame coordinates
         top_left = (search_x + max_loc[0], search_y + max_loc[1])
         x, y = top_left
-        w, h = self.template_width, self.template_height
 
         self.last_position = (x, y, w, h)
+
+        # Update the template using exponential moving average
+        nt = frame[y : y + h, x : x + w].astype(np.float32)
+        self.template = self.alpha * self.template + (1 - self.alpha) * nt
 
         # Define the corners of the bounding box
         self.corners = [
@@ -90,7 +103,9 @@ class TemplateMatchingScaled(TemplateMatchingTracker):
                 ),
             )
             result = cv2.matchTemplate(
-                search_area, scaled_template, cv2.TM_CCOEFF_NORMED
+                search_area,
+                scaled_template,
+                cv2.TM_CCOEFF_NORMED,
             )
             _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
