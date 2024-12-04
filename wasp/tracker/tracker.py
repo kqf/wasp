@@ -165,7 +165,7 @@ def max_bounding_box(points):
 
 
 class TemplateMatchingTrackerWithResize:
-    def __init__(self, n=3, alpha=0.95, confidence_threshold=0.0):
+    def __init__(self, n=3, alpha=0.9, confidence_threshold=0.0):
         self.initialized = False
         self.n = n
         self.alpha = alpha
