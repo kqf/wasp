@@ -130,7 +130,7 @@ def max_bounding_box(points):
 
 
 class TemplateMatchingTrackerWithResize:
-    def __init__(self, n=3, alpha=0.5, confidence_threshold=0.0):
+    def __init__(self, n=3, alpha=0.95, confidence_threshold=0.0):
         self.initialized = False
         self.n = n
         self.alpha = alpha
@@ -155,7 +155,7 @@ class TemplateMatchingTrackerWithResize:
         points = extract_features(frame, roi)
         x, y, w, h = roi
         if points is None:
-            return w * 1.5, h * 1.5
+            return w, h
 
         roi_frame = frame[y : y + h, x : x + w]
         for point in points:
