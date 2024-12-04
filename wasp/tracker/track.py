@@ -55,7 +55,7 @@ SEGMENTS = {
         # roi=(897, 449, 32, 18),
         bbox=(536, 333, 49, 36),
         # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.TrackerCSRT_create,
+        tracker=TemplateMatchingTrackerWithResize,
     ),
     "after-hard-field-b": Segment(
         734,
@@ -124,7 +124,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["sky"]
+    segment = SEGMENTS["after-hard-field"]
     tracker = segment.tracker()
     bbox = segment.bbox
     frame_count = -1

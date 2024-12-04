@@ -60,8 +60,8 @@ class TemplateMatchingTracker:
         return True, (x, y, w, h)
 
 
-def shift_box(roi, new_w, new_h):
-    x, y, w, h = roi
+def shift_box(bbox, new_w, new_h):
+    x, y, w, h = bbox
 
     # Calculate the center of the current bounding box
     center_x = x + w // 2
@@ -164,6 +164,26 @@ def max_bounding_box(points):
     return min_x, min_y, width, height
 
 
+def recalculate_object_size(frame, bbox):
+    x, y, w, h = bbox
+    points = extract_features(frame, bbox)
+    if points is None:
+        return w, h
+
+    roi_frame = frame[y : y + h, x : x + w]
+    for point in points:
+        cv2.circle(
+            roi_frame,
+            (int(point[0] - x), int(point[1] - y)),
+            1,
+            (0, 255, 0),
+            -1,
+        )
+
+    nx, ny, new_w, new_h = cv2.boundingRect(points)
+    return new_w * 2, new_h * 2
+
+
 class TemplateMatchingTrackerWithResize:
     def __init__(self, n=3, alpha=0.9, confidence_threshold=0.0):
         self.initialized = False
@@ -183,25 +203,6 @@ class TemplateMatchingTrackerWithResize:
         self.h = h
         self.last_position = (x, y, w, h)
         self.initialized = True
-
-    def update_bbox_with_contours(self, frame, bbox):
-        x, y, w, h = bbox
-        points = extract_features(frame, bbox)
-        if points is None:
-            return w, h
-
-        roi_frame = frame[y : y + h, x : x + w]
-        for point in points:
-            cv2.circle(
-                roi_frame,
-                (int(point[0] - x), int(point[1] - y)),
-                1,
-                (0, 255, 0),
-                -1,
-            )
-
-        nx, ny, new_w, new_h = cv2.boundingRect(points)
-        return new_w * 2, new_h * 2
 
     def update(self, frame):
         if not self.initialized:
@@ -236,7 +237,7 @@ class TemplateMatchingTrackerWithResize:
         nt = nt.astype(np.float32)
         self.template = self.alpha * self.template + (1 - self.alpha) * nt
 
-        new_w, new_h = self.update_bbox_with_contours(frame, (x, y, w, h))
+        new_w, new_h = recalculate_object_size(frame, (x, y, w, h))
         print(new_w, new_h)
         # new_w, new_h = self.w, self.h
         beta = 0.8
@@ -251,64 +252,3 @@ class TemplateMatchingTrackerWithResize:
         )
 
         return True, self.last_position
-
-
-class TemplateMatchingScaled(TemplateMatchingTracker):
-    def __init__(self, n=3, scale_factors=None):
-        super().__init__(n=n)
-        self.scale_factors = scale_factors or [0.8, 0.9, 1.0, 1.1, 1.2]
-
-    def update(self, frame):
-        if not self.initialized:
-            raise RuntimeError("Tracker not initialized. Call `init` first.")
-
-        x, y, w, h = self.last_position
-        search_width = w * self.n
-        search_height = h * self.n
-
-        frame_height, frame_width = frame.shape[:2]
-        search_x = max(0, x - (search_width - w) // 2)
-        search_y = max(0, y - (search_height - h) // 2)
-        search_x_end = min(frame_width, search_x + search_width)
-        search_y_end = min(frame_height, search_y + search_height)
-
-        search_area = frame[search_y:search_y_end, search_x:search_x_end]
-
-        best_match_val = -1
-        best_match_pos = None
-        best_scale = 1.0
-
-        for scale in self.scale_factors:
-            scaled_template = cv2.resize(
-                self.template,
-                (
-                    int(self.template_width * scale),
-                    int(self.template_height * scale),
-                ),
-            )
-            result = cv2.matchTemplate(
-                search_area,
-                scaled_template,
-                cv2.TM_CCOEFF_NORMED,
-            )
-            _, max_val, _, max_loc = cv2.minMaxLoc(result)
-
-            if max_val > best_match_val:
-                best_match_val = max_val
-                best_match_pos = max_loc
-                best_scale = scale
-
-        if best_match_pos is None:
-            return False, (x, y, w, h)
-
-        top_left = (search_x + best_match_pos[0], search_y + best_match_pos[1])
-        x, y = top_left
-        w = int(self.template_width * best_scale)
-        h = int(self.template_height * best_scale)
-
-        self.last_position = (x, y, w, h)
-        self.template = cv2.resize(
-            frame[y : y + h, x : x + w],
-            (self.template_width, self.template_height),
-        )
-        return True, (x, y, w, h)
