@@ -13,7 +13,7 @@ class Segment:
     start_frame: int
     stop_frame: int
     last_frame: int
-    roi: tuple[float, float, float, float]
+    bbox: tuple[float, float, float, float]
     tracker: Callable
 
     def within(self, frame_count):
@@ -25,14 +25,14 @@ SEGMENTS = {
         120,
         1000,
         last_frame=580,
-        roi=(1031.0, 721.0, 200.0, 138.0),
+        bbox=(1031.0, 721.0, 200.0, 138.0),
         tracker=TemplateMatchingTrackerWithResize,
     ),
     "sky-slimmer": Segment(
         120,
         1000,
         last_frame=580,
-        roi=(1048, 744, 160, 96),
+        bbox=(1048, 744, 160, 96),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
         # tracker=TemplateMatchingTracker,
@@ -43,7 +43,7 @@ SEGMENTS = {
         1000,
         last_frame=667,
         # roi=(897, 449, 32, 18),
-        roi=(896, 446, 16, 17),
+        bbox=(896, 446, 16, 17),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
         tracker=TemplateMatchingTrackerWithResize,
@@ -53,7 +53,7 @@ SEGMENTS = {
         1000,
         last_frame=830,
         # roi=(897, 449, 32, 18),
-        roi=(536, 333, 49, 36),
+        bbox=(536, 333, 49, 36),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         tracker=cv2.TrackerCSRT_create,
     ),
@@ -62,7 +62,7 @@ SEGMENTS = {
         1000,
         last_frame=830,
         # roi=(897, 449, 32, 18),
-        roi=(536, 333, 49, 36),
+        bbox=(536, 333, 49, 36),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         tracker=cv2.legacy.TrackerBoosting_create,
     ),
@@ -82,12 +82,21 @@ def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
     frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
 
 
-def overlay_template(frame, roi, max_size=256, o_x=40):
+def overlay_template(frame, roi, score, max_size=256, o_x=40):
     w, h = roi.shape[:2]
     scale = min(max_size / w, max_size / h)
     new_width = int(w * scale)
     new_height = int(h * scale)
     resized_roi = cv2.resize(roi, (new_width, new_height))
+    cv2.putText(
+        resized_roi,
+        f"score: {score:.2f}",
+        (10, 30),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0, 255, 0),
+        4,
+    )
     frame_height, frame_width = frame.shape[:2]
     o_y = frame_height - new_height - 10
     frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
@@ -115,9 +124,9 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["mixed"]
+    segment = SEGMENTS["sky"]
     tracker = segment.tracker()
-    roi = segment.roi
+    bbox = segment.bbox
     frame_count = -1
     kalman_filter = None
     # ellipse = None
@@ -131,18 +140,18 @@ def main():
             continue
 
         if frame_count == segment.start_frame:
-            tracker.init(frame, segment.roi)
-            kalman_filter = KalmanFilter(segment.roi)
+            tracker.init(frame, segment.bbox)
+            kalman_filter = KalmanFilter(segment.bbox)
 
-        kalman_filter.correct(roi)
-        success, roi = tracker.update(frame)
-        roi = tuple(map(int, roi))
-        x, y, w, h = map(int, roi)
+        kalman_filter.correct(bbox)
+        success, bbox = tracker.update(frame)
+        bbox = tuple(map(int, bbox))
+        x, y, w, h = bbox
 
         # Draw the original tracker's bounding box
         # frame, ellipse = visualize_features(frame, roi, ellipse)
-        overlay_bbox_on_frame_simple(frame, roi)
-        overlay_template(frame, tracker.template, o_x=300)
+        overlay_bbox_on_frame_simple(frame, bbox)
+        overlay_template(frame, tracker.template, tracker.max_val, o_x=300)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         if not success:

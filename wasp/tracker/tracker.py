@@ -174,6 +174,7 @@ class TemplateMatchingTrackerWithResize:
         self.h = None
         self.last_position = None
         self.template = None
+        self.max_val = 0
 
     def init(self, frame, roi):
         x, y, w, h = map(int, roi)
@@ -218,9 +219,12 @@ class TemplateMatchingTrackerWithResize:
 
         search_area = frame[search_y:search_y_end, search_x:search_x_end]
         result = cv2.matchTemplate(
-            search_area, self.template.astype(np.uint8), cv2.TM_CCOEFF_NORMED
+            search_area,
+            self.template.astype(np.uint8),
+            cv2.TM_CCOEFF_NORMED,
         )
         _, max_val, _, max_loc = cv2.minMaxLoc(result)
+        self.max_val = max_val
 
         if max_val < self.confidence_threshold:
             return False, self.last_position
