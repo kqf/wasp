@@ -5,7 +5,10 @@ import cv2
 
 # from wasp.tracker.boundaries import visualize_features
 from wasp.tracker.filter import KalmanFilter
-from wasp.tracker.tracker import TemplateMatchingTracker
+from wasp.tracker.tracker import (
+    TemplateMatchingTracker,
+    TemplateMatchingTrackerWithResize,
+)
 
 
 @dataclass
@@ -35,7 +38,8 @@ SEGMENTS = {
         roi=(1048, 744, 160, 96),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
-        tracker=TemplateMatchingTracker,
+        # tracker=TemplateMatchingTracker,
+        tracker=TemplateMatchingTrackerWithResize,
     ),
     "mixed": Segment(
         580,
@@ -114,7 +118,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["mixed"]
+    segment = SEGMENTS["sky-slimmer"]
     tracker = segment.tracker()
     roi = segment.roi
     frame_count = -1
