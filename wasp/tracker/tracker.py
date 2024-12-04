@@ -92,12 +92,44 @@ def resize_bounding_box(bounding_box, image_shape=None):
     return new_x, new_y, new_w, new_h
 
 
-def extract_features(image, bounding_box):
-    x, y, w, h = resize_bounding_box(bounding_box, image.shape)
+# def is_valid_contour(contour, roi):
+#     x, y, w, h = roi
+#     for point in contour:
+#         px, py = point[0]
+#         if x <= px < x + w and y <= py < y + h:
+#             return False
+#     return True
+
+
+def is_valid_contour(contour, roi):
+    x, y, w, h = roi
+    contour_points = contour.reshape(-1, 2)
+    cx = np.mean(contour_points[:, 0])
+    cy = np.mean(contour_points[:, 1])
+
+    return not x <= cx < x + w or not y <= cy < y + h
+
+
+def valid_n(contour, bbox, n=0.9):
+    x, y, w, h = bbox
+    contour_points = contour.reshape(-1, 2)
+
+    inside_x = (contour_points[:, 0] >= x) & (contour_points[:, 0] < x + w)
+    inside_y = (contour_points[:, 1] >= y) & (contour_points[:, 1] < y + h)
+
+    inside_bbox = inside_x & inside_y
+    num_points_inside = np.sum(inside_bbox)
+
+    percentage_inside = num_points_inside / contour_points.shape[0]
+
+    return percentage_inside >= n
+
+
+def extract_features(image, bbox):
+    x, y, w, h = resize_bounding_box(bbox, image.shape)
     roi = image[y : y + h, x : x + w]
 
     roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-
     edges = cv2.Canny(roi_gray, 100, 200)
 
     contours, _ = cv2.findContours(
@@ -105,15 +137,18 @@ def extract_features(image, bounding_box):
         cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_NONE,
     )
+    for c in contours:
+        for points in c:
+            points[:, 0] += x
+            points[:, 1] += y
+
+    contours = [contour for contour in contours if valid_n(contour, bbox)]
+
     if not contours:
         return None
 
-    largest_contour = np.concatenate(contours)
-
-    points = largest_contour.reshape(-1, 2)
-    points[:, 0] += x
-    points[:, 1] += y
-
+    all_points = np.concatenate(contours)
+    points = all_points.reshape(-1, 2)
     return points
 
 
@@ -139,7 +174,6 @@ class TemplateMatchingTrackerWithResize:
         self.h = None
         self.last_position = None
         self.template = None
-        self.bkg = cv2.createBackgroundSubtractorMOG2()
 
     def init(self, frame, roi):
         x, y, w, h = map(int, roi)
@@ -148,12 +182,10 @@ class TemplateMatchingTrackerWithResize:
         self.h = h
         self.last_position = (x, y, w, h)
         self.initialized = True
-        roi_frame = frame[y : y + h, x : x + w]
-        self.bkg.apply(roi_frame)
 
-    def update_bbox_with_contours(self, frame, roi):
-        points = extract_features(frame, roi)
-        x, y, w, h = roi
+    def update_bbox_with_contours(self, frame, bbox):
+        x, y, w, h = bbox
+        points = extract_features(frame, bbox)
         if points is None:
             return w, h
 
