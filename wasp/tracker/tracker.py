@@ -193,10 +193,8 @@ def within_ellipse(points, bbox, ellipse):
     points_shifted = points - np.array([cx, cy])
     rotated_points = np.column_stack(
         (
-            points_shifted[:, 0] * cos_angle
-            + points_shifted[:, 1] * sin_angle,
-            -points_shifted[:, 0] * sin_angle
-            + points_shifted[:, 1] * cos_angle,
+            points_shifted[:, 0] * cos_angle + points_shifted[:, 1] * sin_angle,
+            -points_shifted[:, 0] * sin_angle + points_shifted[:, 1] * cos_angle,
         )
     )
     a = major_axis / 2
