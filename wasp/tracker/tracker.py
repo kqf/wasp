@@ -125,6 +125,29 @@ def valid_n(contour, bbox, n=0.9):
     return percentage_inside >= n
 
 
+def within_bbox(contour, bbox):
+    x, y, w, h = bbox
+    contour_points = contour.reshape(-1, 2)
+
+    inside_x = (contour_points[:, 0] >= x) & (contour_points[:, 0] < x + w)
+    inside_y = (contour_points[:, 1] >= y) & (contour_points[:, 1] < y + h)
+
+    inside_bbox = inside_x & inside_y
+    return contour[inside_bbox]
+
+
+def max_bounding_box(points):
+    min_x = np.min(points[:, 0])
+    min_y = np.min(points[:, 1])
+    max_x = np.max(points[:, 0])
+    max_y = np.max(points[:, 1])
+
+    width = max_x - min_x
+    height = max_y - min_y
+
+    return min_x, min_y, width, height
+
+
 def extract_features(image, bbox):
     x, y, w, h = resize_bounding_box(bbox, image.shape)
     roi = image[y : y + h, x : x + w]
@@ -142,8 +165,6 @@ def extract_features(image, bbox):
             points[:, 0] += x
             points[:, 1] += y
 
-    contours = [contour for contour in contours if valid_n(contour, bbox)]
-
     if not contours:
         return None
 
@@ -152,19 +173,40 @@ def extract_features(image, bbox):
     return points
 
 
-def max_bounding_box(points):
-    min_x = np.min(points[:, 0])
-    min_y = np.min(points[:, 1])
-    max_x = np.max(points[:, 0])
-    max_y = np.max(points[:, 1])
+def shift_ellipse_to_the_new_center(ellipse, bbox):
+    if ellipse is None:
+        return ellipse
 
-    width = max_x - min_x
-    height = max_y - min_y
-
-    return min_x, min_y, width, height
+    (center, (major_axis, minor_axis), angle) = ellipse
+    x, y, w, h = bbox
+    new_center = (x + w // 2, y + h // 2)
+    return (new_center, (major_axis, minor_axis), angle)
 
 
-def recalculate_object_size(frame, bbox):
+def within_ellipse(points, bbox, ellipse):
+    if not ellipse:
+        return points
+    (center, (major_axis, minor_axis), angle) = ellipse
+    cx, cy = center
+    cos_angle = np.cos(np.radians(angle))
+    sin_angle = np.sin(np.radians(angle))
+    points_shifted = points - np.array([cx, cy])
+    rotated_points = np.column_stack(
+        (
+            points_shifted[:, 0] * cos_angle + points_shifted[:, 1] * sin_angle,
+            -points_shifted[:, 0] * sin_angle + points_shifted[:, 1] * cos_angle,
+        )
+    )
+    a = major_axis / 2
+    b = minor_axis / 2
+    ellipse_equation = (rotated_points[:, 0] ** 2) / (a**2) + (
+        rotated_points[:, 1] ** 2
+    ) / (b**2)
+    inside_ellipse = ellipse_equation <= 1
+    return points[inside_ellipse]
+
+
+def recalculate_object_size(frame, bbox, ellipse=None):
     x, y, w, h = bbox
     points = extract_features(frame, bbox)
     if points is None:
@@ -180,8 +222,37 @@ def recalculate_object_size(frame, bbox):
             -1,
         )
 
-    nx, ny, new_w, new_h = cv2.boundingRect(points)
-    return new_w * 2, new_h * 2
+    # Could you implement this function
+    shifted_ellipse = shift_ellipse_to_the_new_center(ellipse, bbox)
+
+    # And this function
+    points = within_ellipse(points, bbox, shifted_ellipse)
+    # nx, ny, new_w, new_h = cv2.boundingRect(points)
+    if len(points) < 5:
+        return w, h, None
+
+    ellipse = cv2.fitEllipse(points)
+
+    if ellipse is None:
+        return w, h
+
+    center, (major_axis, minor_axis), angle = ellipse
+    center = tuple(map(int, center))
+    cv2.ellipse(
+        frame,
+        center,
+        (int(major_axis), int(minor_axis)),
+        angle,
+        0,
+        360,
+        (0, 255, 0),
+        2,
+    )
+
+    new_w = max(major_axis, w)
+    new_h = max(minor_axis, h)
+
+    return new_w * 2, new_h * 2, ellipse
 
 
 class TemplateMatchingTrackerWithResize:
@@ -203,6 +274,7 @@ class TemplateMatchingTrackerWithResize:
         self.h = h
         self.last_position = (x, y, w, h)
         self.initialized = True
+        *_, self.ellipse = recalculate_object_size(frame, roi)
 
     def update(self, frame):
         if not self.initialized:
@@ -237,7 +309,9 @@ class TemplateMatchingTrackerWithResize:
         nt = nt.astype(np.float32)
         self.template = self.alpha * self.template + (1 - self.alpha) * nt
 
-        new_w, new_h = recalculate_object_size(frame, (x, y, w, h))
+        new_w, new_h, self.ellipse = recalculate_object_size(
+            frame, (x, y, w, h), self.ellipse
+        )
         print(new_w, new_h)
         # new_w, new_h = self.w, self.h
         beta = 0.8
@@ -251,58 +325,4 @@ class TemplateMatchingTrackerWithResize:
             (self.w, self.h),
         )
 
-        return True, self.last_position
-
-
-class TemplateMatchingScaled(TemplateMatchingTracker):
-    def __init__(self, n=3, scale_factors=None):
-        super().__init__(n=n)
-        self.scale_factors = scale_factors or [0.8, 0.9, 1.0, 1.1, 1.2]
-
-    def update(self, frame):
-        if not self.initialized:
-            raise RuntimeError("Tracker not initialized. Call `init` first.")
-
-        x, y, w, h = self.last_position
-        search_width = w * self.n
-        search_height = h * self.n
-
-        frame_height, frame_width = frame.shape[:2]
-        search_x = max(0, x - (search_width - w) // 2)
-        search_y = max(0, y - (search_height - h) // 2)
-        search_x_end = min(frame_width, search_x + search_width)
-        search_y_end = min(frame_height, search_y + search_height)
-
-        search_area = frame[search_y:search_y_end, search_x:search_x_end]
-        result = cv2.matchTemplate(
-            search_area,
-            self.template.astype(np.uint8),
-            cv2.TM_CCOEFF_NORMED,
-        )
-        _, max_val, _, max_loc = cv2.minMaxLoc(result)
-        self.max_val = max_val
-
-        if max_val < self.confidence_threshold:
-            return False, self.last_position
-
-        top_left = (search_x + max_loc[0], search_y + max_loc[1])
-        x, y = top_left
-
-        nt = frame[y : y + self.h, x : x + self.w]
-        nt = nt.astype(np.float32)
-        self.template = self.alpha * self.template + (1 - self.alpha) * nt
-
-        new_w, new_h = recalculate_object_size(frame, (x, y, w, h))
-        print(new_w, new_h)
-        # new_w, new_h = self.w, self.h
-        beta = 0.8
-        gama = 0.8
-        self.last_position = (x, y, self.w, self.h)
-        self.w = max(int(beta * self.w + (1 - beta) * new_w), 15)
-        self.h = max(int(gama * self.h + (1 - gama) * new_h), 15)
-        self.last_position = shift_box(self.last_position, self.w, self.h)
-        self.template = cv2.resize(
-            self.template,
-            (self.w, self.h),
-        )
         return True, self.last_position
