@@ -252,3 +252,57 @@ class TemplateMatchingTrackerWithResize:
         )
 
         return True, self.last_position
+
+
+class TemplateMatchingScaled(TemplateMatchingTracker):
+    def __init__(self, n=3, scale_factors=None):
+        super().__init__(n=n)
+        self.scale_factors = scale_factors or [0.8, 0.9, 1.0, 1.1, 1.2]
+
+    def update(self, frame):
+        if not self.initialized:
+            raise RuntimeError("Tracker not initialized. Call `init` first.")
+
+        x, y, w, h = self.last_position
+        search_width = w * self.n
+        search_height = h * self.n
+
+        frame_height, frame_width = frame.shape[:2]
+        search_x = max(0, x - (search_width - w) // 2)
+        search_y = max(0, y - (search_height - h) // 2)
+        search_x_end = min(frame_width, search_x + search_width)
+        search_y_end = min(frame_height, search_y + search_height)
+
+        search_area = frame[search_y:search_y_end, search_x:search_x_end]
+        result = cv2.matchTemplate(
+            search_area,
+            self.template.astype(np.uint8),
+            cv2.TM_CCOEFF_NORMED,
+        )
+        _, max_val, _, max_loc = cv2.minMaxLoc(result)
+        self.max_val = max_val
+
+        if max_val < self.confidence_threshold:
+            return False, self.last_position
+
+        top_left = (search_x + max_loc[0], search_y + max_loc[1])
+        x, y = top_left
+
+        nt = frame[y : y + self.h, x : x + self.w]
+        nt = nt.astype(np.float32)
+        self.template = self.alpha * self.template + (1 - self.alpha) * nt
+
+        new_w, new_h = recalculate_object_size(frame, (x, y, w, h))
+        print(new_w, new_h)
+        # new_w, new_h = self.w, self.h
+        beta = 0.8
+        gama = 0.8
+        self.last_position = (x, y, self.w, self.h)
+        self.w = max(int(beta * self.w + (1 - beta) * new_w), 15)
+        self.h = max(int(gama * self.h + (1 - gama) * new_h), 15)
+        self.last_position = shift_box(self.last_position, self.w, self.h)
+        self.template = cv2.resize(
+            self.template,
+            (self.w, self.h),
+        )
+        return True, self.last_position
