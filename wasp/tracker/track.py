@@ -30,23 +30,23 @@ SEGMENTS = {
     ),
     "sky-slimmer": Segment(
         120,
-        1000,
+        600,
         last_frame=580,
         bbox=(1048, 744, 160, 96),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
         # tracker=TemplateMatchingTracker,
-        tracker=TemplateMatchingTrackerWithResize,
+        # tracker=TemplateMatchingTrackerWithResize,
     ),
     "mixed": Segment(
         580,
-        1000,
+        600,
         last_frame=667,
         # roi=(897, 449, 32, 18),
         bbox=(896, 446, 16, 17),
         # tracker=cv2.legacy.TrackerMOSSE_create,
         # tracker=cv2.TrackerCSRT_create,
-        tracker=TemplateMatchingTrackerWithResize,
+        tracker=cv2.legacy.TrackerMOSSE_create,
     ),
     "after-hard-field": Segment(
         734,
@@ -124,7 +124,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["sky-slimmer"]
+    segment = SEGMENTS["mixed"]
     tracker = segment.tracker()
     bbox = segment.bbox
     frame_count = -1
@@ -132,7 +132,16 @@ def main():
     # ellipse = None
     prev_frame = None  # Store the previous frame
 
-    while True:
+    output = cv2.VideoWriter(
+        "mosse-mixed.mp4",
+        cv2.VideoWriter_fourcc(*"H264"),
+        cap.get(cv2.CAP_PROP_FPS),
+        (
+            int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+        ),
+    )
+    while frame_count < segment.stop_frame:
         ret, frame = cap.read()
         frame_count += 1
 
@@ -150,8 +159,8 @@ def main():
 
         # Draw the original tracker's bounding box
         # frame, ellipse = visualize_features(frame, roi, ellipse)
-        overlay_bbox_on_frame_simple(frame, bbox)
-        overlay_template(frame, tracker.template, tracker.max_val, o_x=300)
+        # overlay_bbox_on_frame_simple(frame, bbox)
+        # overlay_template(frame, tracker.template, tracker.max_val, o_x=300)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         if not success:
@@ -171,11 +180,15 @@ def main():
         if prev_frame is None:
             prev_frame = frame
 
-        combined_frame = cv2.hconcat([prev_frame, frame])
+        # combined_frame = cv2.hconcat([prev_frame, frame])
+        combined_frame = frame
+        output.write(frame)
         cv2.imshow("tracking", combined_frame)
-        cv2.waitKey()
+        cv2.waitKey(1)
         prev_frame = frame
 
+    print(output.release())
+    print("released")
     cap.release()
     cv2.destroyAllWindows()
 
