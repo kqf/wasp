@@ -124,7 +124,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["after-hard-field"]
+    segment = SEGMENTS["sky-slimmer"]
     tracker = segment.tracker()
     bbox = segment.bbox
     frame_count = -1

@@ -125,29 +125,6 @@ def valid_n(contour, bbox, n=0.9):
     return percentage_inside >= n
 
 
-def within_bbox(contour, bbox):
-    x, y, w, h = bbox
-    contour_points = contour.reshape(-1, 2)
-
-    inside_x = (contour_points[:, 0] >= x) & (contour_points[:, 0] < x + w)
-    inside_y = (contour_points[:, 1] >= y) & (contour_points[:, 1] < y + h)
-
-    inside_bbox = inside_x & inside_y
-    return contour[inside_bbox]
-
-
-def max_bounding_box(points):
-    min_x = np.min(points[:, 0])
-    min_y = np.min(points[:, 1])
-    max_x = np.max(points[:, 0])
-    max_y = np.max(points[:, 1])
-
-    width = max_x - min_x
-    height = max_y - min_y
-
-    return min_x, min_y, width, height
-
-
 def extract_features(image, bbox):
     x, y, w, h = resize_bounding_box(bbox, image.shape)
     roi = image[y : y + h, x : x + w]
@@ -165,6 +142,8 @@ def extract_features(image, bbox):
             points[:, 0] += x
             points[:, 1] += y
 
+    contours = [contour for contour in contours if valid_n(contour, bbox)]
+
     if not contours:
         return None
 
@@ -173,40 +152,19 @@ def extract_features(image, bbox):
     return points
 
 
-def shift_ellipse_to_the_new_center(ellipse, bbox):
-    if ellipse is None:
-        return ellipse
+def max_bounding_box(points):
+    min_x = np.min(points[:, 0])
+    min_y = np.min(points[:, 1])
+    max_x = np.max(points[:, 0])
+    max_y = np.max(points[:, 1])
 
-    (center, (major_axis, minor_axis), angle) = ellipse
-    x, y, w, h = bbox
-    new_center = (x + w // 2, y + h // 2)
-    return (new_center, (major_axis, minor_axis), angle)
+    width = max_x - min_x
+    height = max_y - min_y
 
-
-def within_ellipse(points, bbox, ellipse):
-    if not ellipse:
-        return points
-    (center, (major_axis, minor_axis), angle) = ellipse
-    cx, cy = center
-    cos_angle = np.cos(np.radians(angle))
-    sin_angle = np.sin(np.radians(angle))
-    points_shifted = points - np.array([cx, cy])
-    rotated_points = np.column_stack(
-        (
-            points_shifted[:, 0] * cos_angle + points_shifted[:, 1] * sin_angle,
-            -points_shifted[:, 0] * sin_angle + points_shifted[:, 1] * cos_angle,
-        )
-    )
-    a = major_axis / 2
-    b = minor_axis / 2
-    ellipse_equation = (rotated_points[:, 0] ** 2) / (a**2) + (
-        rotated_points[:, 1] ** 2
-    ) / (b**2)
-    inside_ellipse = ellipse_equation <= 1
-    return points[inside_ellipse]
+    return min_x, min_y, width, height
 
 
-def recalculate_object_size(frame, bbox, ellipse=None):
+def recalculate_object_size(frame, bbox):
     x, y, w, h = bbox
     points = extract_features(frame, bbox)
     if points is None:
@@ -222,37 +180,46 @@ def recalculate_object_size(frame, bbox, ellipse=None):
             -1,
         )
 
-    # Could you implement this function
-    shifted_ellipse = shift_ellipse_to_the_new_center(ellipse, bbox)
+    nx, ny, new_w, new_h = cv2.boundingRect(points)
+    return new_w * 2, new_h * 2
 
-    # And this function
-    points = within_ellipse(points, bbox, shifted_ellipse)
-    # nx, ny, new_w, new_h = cv2.boundingRect(points)
-    if len(points) < 5:
-        return w, h, None
 
-    ellipse = cv2.fitEllipse(points)
+def recalculate_size(
+    scores,
+    w,
+    h,
+    threshold=0.01,
+):
+    height, width = scores.shape
+    if height == 0 or width == 0:
+        return 2 * w, 2 * h
 
-    if ellipse is None:
-        return w, h
+    lmean = np.mean(scores[:, 0]) - np.max(scores)
+    rmean = np.mean(scores[:, -1]) - np.max(scores)
+    tmean = np.mean(scores[0, :]) - np.max(scores)
+    bmean = np.mean(scores[-1, :]) - np.max(scores)
 
-    center, (major_axis, minor_axis), angle = ellipse
-    center = tuple(map(int, center))
-    cv2.ellipse(
-        frame,
-        center,
-        (int(major_axis), int(minor_axis)),
-        angle,
-        0,
-        360,
-        (0, 255, 0),
-        2,
+    resized = cv2.resize(scores, (640, 480))
+    cv2.putText(
+        resized,
+        f"score: {tmean:.2f}",
+        (10, 30),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (255, 255, 255),
+        4,
     )
+    cv2.imshow("lol1", resized)
+    cv2.waitKey()
 
-    new_w = max(major_axis, w)
-    new_h = max(minor_axis, h)
+    w_scale, h_scale = 0.96, 0.96
+    if lmean > threshold or rmean > threshold:
+        w_scale = 1.2
 
-    return new_w * 2, new_h * 2, ellipse
+    if tmean > threshold or bmean > threshold:
+        h_scale = 1.2
+
+    return int(w * w_scale), int(h * h_scale)
 
 
 class TemplateMatchingTrackerWithResize:
@@ -274,7 +241,6 @@ class TemplateMatchingTrackerWithResize:
         self.h = h
         self.last_position = (x, y, w, h)
         self.initialized = True
-        *_, self.ellipse = recalculate_object_size(frame, roi)
 
     def update(self, frame):
         if not self.initialized:
@@ -299,6 +265,10 @@ class TemplateMatchingTrackerWithResize:
         _, max_val, _, max_loc = cv2.minMaxLoc(result)
         self.max_val = max_val
 
+        r_x, r_y = max_loc[0] - w // 2, max_loc[1] - h // 2
+        roi_template = result[r_y : r_y + h, r_x : r_x + w]
+        new_w, new_h = recalculate_size(roi_template, w, h)
+
         if max_val < self.confidence_threshold:
             return False, self.last_position
 
@@ -309,9 +279,7 @@ class TemplateMatchingTrackerWithResize:
         nt = nt.astype(np.float32)
         self.template = self.alpha * self.template + (1 - self.alpha) * nt
 
-        new_w, new_h, self.ellipse = recalculate_object_size(
-            frame, (x, y, w, h), self.ellipse
-        )
+        # new_w, new_h = recalculate_object_size(frame, (x, y, w, h))
         print(new_w, new_h)
         # new_w, new_h = self.w, self.h
         beta = 0.8
