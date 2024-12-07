@@ -20,3 +20,4 @@ pytorch-lightning
 toolz
 psutil
 gpumonitor
+dataclasses-json
