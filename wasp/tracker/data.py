@@ -3,6 +3,7 @@ from typing import Optional
 
 from dataclasses_json import dataclass_json
 
+
 AbsoluteXYXY = tuple[float, float, float, float]
 AbsoluteXYHW = tuple[float, float, float, float]
 
