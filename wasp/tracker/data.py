@@ -5,6 +5,7 @@ AbsoluteXYXY = tuple[float, float, float, float]
 AbsoluteXYHW = tuple[float, float, float, float]
 
 
+@dataclass_json
 @dataclass
 class Annotation:
     label: str
