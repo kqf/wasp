@@ -280,7 +280,7 @@ class TemplateMatchingTrackerWithResize:
         self.template = self.alpha * self.template + (1 - self.alpha) * nt
 
         # new_w, new_h = recalculate_object_size(frame, (x, y, w, h))
-        print(new_w, new_h)
+        # print(new_w, new_h)
         # new_w, new_h = self.w, self.h
         beta = 0.8
         gama = 0.8
