@@ -294,8 +294,8 @@ def main():
             continue
 
         if frame_count == segment.start_frame:
-            bbox = cv2.selectROI("select the area", frame)
-            print(bbox)
+            # bbox = cv2.selectROI("select the area", frame)
+            # print(bbox)
             tracker.init(frame, segment.bbox)
             kalman_filter = KalmanFilter(segment.bbox)
 
