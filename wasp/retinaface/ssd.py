@@ -137,7 +137,7 @@ class RetinaNetPure(torch.nn.Module):
         )
         load_with_mismatch(
             self,
-            RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1.get_state_dict(True),
+            RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1.get_state_dict(),
         )
 
     def forward(self, images):
@@ -177,7 +177,7 @@ class SSDPure(torch.nn.Module):
         )
         load_with_mismatch(
             self,
-            SSDLite320_MobileNet_V3_Large_Weights.COCO_V1.get_state_dict(True),
+            SSDLite320_MobileNet_V3_Large_Weights.COCO_V1.get_state_dict(),
         )
 
     def forward(self, images):
