@@ -1,7 +1,6 @@
 from functools import partial
 
 import cv2
-import nptyping as npt
 import numpy as np
 import onnx
 import onnxruntime
@@ -74,7 +73,7 @@ class INSwapper:
     ) -> np.ndarray:
         # Crop a single face:
         crop, M = norm_crop(image, target.kps, self.resolution[0])
-        blob: npt.NDArray[npt.Shape["1, 3, 128, 128"]] = nninput(
+        blob = nninput(
             crop,
             std=255.0,
             mean=0.0,
@@ -86,7 +85,7 @@ class INSwapper:
         latent /= np.linalg.norm(latent)
         print(latent.shape)
 
-        pred: npt.NDArray[npt.Shape["1, 3, 128, 128"]] = self.session.run(
+        pred = self.session.run(
             self.output_names,
             {
                 self.input_names[0]: blob.astype(np.float32),
@@ -94,7 +93,7 @@ class INSwapper:
             },
         )[0]
         # Convert ot BGR image
-        fake: npt.NDArray[npt.Shape["128, 128, 3"]] = nnoutput(pred)
+        fake = nnoutput(pred)
         return self.blend(image.copy(), fake, crop, M)
 
     def blend(self, image, fake, crop, M) -> np.ndarray:

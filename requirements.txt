@@ -5,8 +5,7 @@ opencv-python
 opencv-contrib-python
 matplotlib
 scikit-image
-nptyping
-torch<=1.13.1
+torch
 mlflow<2.4.0
 torchvision
 types-PyYAML
@@ -20,3 +19,4 @@ pytorch-lightning
 toolz
 psutil
 gpumonitor
+dataclasses-json
