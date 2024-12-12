@@ -269,7 +269,7 @@ SEGMENTS = {
 
 def main():
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["field8"]
+    segment = SEGMENTS["field9"]
     tracker = segment.tracker()
     bbox = segment.bbox
     frame_count = -1
