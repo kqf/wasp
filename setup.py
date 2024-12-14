@@ -2,4 +2,6 @@ from setuptools import setup
 
 # This is needed only for editable installs
 # fake line
-setup()
+setup(
+    py_modules=["wasp"],
+)
