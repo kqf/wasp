@@ -1,19 +1,21 @@
+import json
 from dataclasses import dataclass
-from typing import Callable
 
 import cv2
+from dataclasses_json import dataclass_json
 
 # from wasp.tracker.boundaries import visualize_features
 from wasp.tracker.filter import KalmanFilter
 
 
+@dataclass_json
 @dataclass
 class Segment:
     start_frame: int
     stop_frame: int
     last_frame: int
     bbox: tuple[float, float, float, float]
-    tracker: Callable
+    tracker: str
     name: str
 
     def within(self, frame_count):
@@ -73,13 +75,20 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
     return frame
 
 
+TRACKERS = {
+    "cv2.legacy.TrackerMOSSE_create",
+    cv2.legacy.TrackerMOSSE_create,
+    "cv2.legacy.TrackerBoosting_create",
+    cv2.legacy.TrackerBoosting_create,
+}
+
 SEGMENTS = {
     "sky": Segment(
         120,
         600,
         last_frame=580,
         bbox=(1031.0, 721.0, 200.0, 138.0),
-        tracker=cv2.legacy.TrackerMOSSE_create,
+        tracker="cv2.legacy.TrackerMOSSE_create",
         name="sky",
     ),
     "sky-slimmer": Segment(
@@ -87,10 +96,10 @@ SEGMENTS = {
         600,
         last_frame=580,
         bbox=(1048, 744, 160, 96),
-        tracker=cv2.legacy.TrackerMOSSE_create,
-        # tracker=cv2.TrackerCSRT_create,
-        # tracker=TemplateMatchingTracker,
-        # tracker=TemplateMatchingTrackerWithResize,
+        tracker="cv2.legacy.TrackerMOSSE_create",
+        # "cv2.TrackerCSRT_create",
+        # "TemplateMatchingTracker",
+        # "TemplateMatchingTrackerWithResize",
         name="sky-slimmer",
     ),
     "mixed": Segment(
@@ -99,9 +108,9 @@ SEGMENTS = {
         last_frame=667,
         # roi=(897, 449, 32, 18),
         bbox=(896, 446, 16, 17),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        # tracker=cv2.TrackerCSRT_create,
-        tracker=cv2.legacy.TrackerMOSSE_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        # "cv2.TrackerCSRT_create",
+        tracker="cv2.legacy.TrackerMOSSE_create",
         name="mixed",
     ),
     "field1": Segment(
@@ -110,8 +119,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(609, 470, 20, 21),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field1",
     ),
     "field2": Segment(
@@ -120,8 +129,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1325, 125, 61, 25),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field2",
     ),
     "field3": Segment(
@@ -130,8 +139,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1325, 125, 61, 25),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field3",
     ),
     "field4": Segment(
@@ -140,8 +149,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1325, 125, 61, 25),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field4",
     ),
     "forest1": Segment(
@@ -150,8 +159,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(438, 908, 103, 49),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="forest1",
     ),
     "forest2": Segment(
@@ -160,8 +169,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(438, 908, 103, 49),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="forest2",
     ),
     "forest3": Segment(
@@ -170,8 +179,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1718, 546, 48, 22),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="forest3",
     ),
     "field5": Segment(
@@ -180,8 +189,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1718, 546, 48, 22),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field5",
     ),
     "field6": Segment(
@@ -190,8 +199,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1718, 546, 48, 22),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field6",
     ),
     "field7-sky": Segment(
@@ -200,8 +209,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1718, 546, 48, 22),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field7-sky",
     ),
     "sky3": Segment(
@@ -210,8 +219,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(671, 8, 27, 17),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="sky3",
     ),
     "sky4": Segment(
@@ -220,8 +229,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(671, 8, 27, 17),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="sky4",
     ),
     "sky4-mixed": Segment(
@@ -230,8 +239,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(671, 8, 27, 17),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="sky4-mixed",
     ),
     "sky5": Segment(
@@ -240,8 +249,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(671, 8, 27, 17),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="sky5",
     ),
     "sky6": Segment(
@@ -250,8 +259,8 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1159, 939, 63, 21),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="sky6",
     ),
     "field8": Segment(
@@ -260,32 +269,46 @@ SEGMENTS = {
         last_frame=830,
         # roi=(897, 449, 32, 18),
         bbox=(1159, 939, 63, 21),
-        # tracker=cv2.legacy.TrackerMOSSE_create,
-        tracker=cv2.legacy.TrackerBoosting_create,
+        # tracker="cv2.legacy.TrackerMOSSE_create",
+        tracker="cv2.legacy.TrackerBoosting_create",
         name="field8",
     ),
 }
 
 
+def save_segments(segments, filename):
+    data = {key: segment.to_dict() for key, segment in segments.items()}
+    with open(filename, "w") as json_file:
+        json.dump(data, json_file, indent=4)
+
+
+def load_segments(filename):
+    with open(filename, "r") as json_file:
+        data = json.load(json_file)
+    return {key: Segment.from_dict(value) for key, value in data.items()}
+
+
 def main():
+    save_segments(SEGMENTS, "test.json")
+    return
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["field8"]
-    tracker = segment.tracker()
+    segment = SEGMENTS["sky"]
+    tracker = TRACKERS[segment.tracker]()
     bbox = segment.bbox
     frame_count = -1
     kalman_filter = None
     # ellipse = None
     prev_frame = None  # Store the previous frame
 
-    output = cv2.VideoWriter(
-        f"mosse-{segment.name}.mp4",
-        cv2.VideoWriter_fourcc(*"H264"),
-        cap.get(cv2.CAP_PROP_FPS),
-        (
-            int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-            int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-        ),
-    )
+    # output = cv2.VideoWriter(
+    #     f"mosse-{segment.name}.mp4",
+    #     cv2.VideoWriter_fourcc(*"H264"),
+    #     cap.get(cv2.CAP_PROP_FPS),
+    #     (
+    #         int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+    #         int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+    #     ),
+    # )
     while frame_count < segment.stop_frame:
         ret, frame = cap.read()
         frame_count += 1
@@ -329,13 +352,13 @@ def main():
 
         # combined_frame = cv2.hconcat([prev_frame, frame])
         combined_frame = frame
-        output.write(frame)
+        # output.write(frame)
         cv2.imshow("tracking", combined_frame)
         cv2.waitKey()
         prev_frame = frame
         print(frame_count)
 
-    print(output.release())
+    # print(output.release())
     print("released")
     cap.release()
     cv2.destroyAllWindows()
