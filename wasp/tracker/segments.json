@@ -1,0 +1,249 @@
+{
+    "sky": {
+        "start_frame": 120,
+        "stop_frame": 600,
+        "last_frame": 580,
+        "bbox": [
+            1031.0,
+            721.0,
+            200.0,
+            138.0
+        ],
+        "tracker": "cv2.legacy.TrackerMOSSE_create",
+        "name": "sky"
+    },
+    "sky-slimmer": {
+        "start_frame": 120,
+        "stop_frame": 600,
+        "last_frame": 580,
+        "bbox": [
+            1048,
+            744,
+            160,
+            96
+        ],
+        "tracker": "cv2.legacy.TrackerMOSSE_create",
+        "name": "sky-slimmer"
+    },
+    "mixed": {
+        "start_frame": 580,
+        "stop_frame": 667,
+        "last_frame": 667,
+        "bbox": [
+            896,
+            446,
+            16,
+            17
+        ],
+        "tracker": "cv2.legacy.TrackerMOSSE_create",
+        "name": "mixed"
+    },
+    "field1": {
+        "start_frame": 689,
+        "stop_frame": 910,
+        "last_frame": 830,
+        "bbox": [
+            609,
+            470,
+            20,
+            21
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field1"
+    },
+    "field2": {
+        "start_frame": 952,
+        "stop_frame": 1100,
+        "last_frame": 830,
+        "bbox": [
+            1325,
+            125,
+            61,
+            25
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field2"
+    },
+    "field3": {
+        "start_frame": 1063,
+        "stop_frame": 1139,
+        "last_frame": 830,
+        "bbox": [
+            1325,
+            125,
+            61,
+            25
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field3"
+    },
+    "field4": {
+        "start_frame": 1333,
+        "stop_frame": 1370,
+        "last_frame": 830,
+        "bbox": [
+            1325,
+            125,
+            61,
+            25
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field4"
+    },
+    "forest1": {
+        "start_frame": 1404,
+        "stop_frame": 1623,
+        "last_frame": 830,
+        "bbox": [
+            438,
+            908,
+            103,
+            49
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "forest1"
+    },
+    "forest2": {
+        "start_frame": 1623,
+        "stop_frame": 3000,
+        "last_frame": 830,
+        "bbox": [
+            438,
+            908,
+            103,
+            49
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "forest2"
+    },
+    "forest3": {
+        "start_frame": 1746,
+        "stop_frame": 2014,
+        "last_frame": 830,
+        "bbox": [
+            1718,
+            546,
+            48,
+            22
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "forest3"
+    },
+    "field5": {
+        "start_frame": 2052,
+        "stop_frame": 2161,
+        "last_frame": 830,
+        "bbox": [
+            1718,
+            546,
+            48,
+            22
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field5"
+    },
+    "field6": {
+        "start_frame": 2362,
+        "stop_frame": 2484,
+        "last_frame": 830,
+        "bbox": [
+            1718,
+            546,
+            48,
+            22
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field6"
+    },
+    "field7-sky": {
+        "start_frame": 2529,
+        "stop_frame": 2640,
+        "last_frame": 830,
+        "bbox": [
+            1718,
+            546,
+            48,
+            22
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field7-sky"
+    },
+    "sky3": {
+        "start_frame": 2574,
+        "stop_frame": 2640,
+        "last_frame": 830,
+        "bbox": [
+            671,
+            8,
+            27,
+            17
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "sky3"
+    },
+    "sky4": {
+        "start_frame": 2760,
+        "stop_frame": 3235,
+        "last_frame": 830,
+        "bbox": [
+            671,
+            8,
+            27,
+            17
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "sky4"
+    },
+    "sky4-mixed": {
+        "start_frame": 2760,
+        "stop_frame": 3424,
+        "last_frame": 830,
+        "bbox": [
+            671,
+            8,
+            27,
+            17
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "sky4-mixed"
+    },
+    "sky5": {
+        "start_frame": 3633,
+        "stop_frame": 3700,
+        "last_frame": 830,
+        "bbox": [
+            671,
+            8,
+            27,
+            17
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "sky5"
+    },
+    "sky6": {
+        "start_frame": 3633,
+        "stop_frame": 3700,
+        "last_frame": 830,
+        "bbox": [
+            1159,
+            939,
+            63,
+            21
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "sky6"
+    },
+    "field8": {
+        "start_frame": 4145,
+        "stop_frame": 4424,
+        "last_frame": 830,
+        "bbox": [
+            1159,
+            939,
+            63,
+            21
+        ],
+        "tracker": "cv2.legacy.TrackerBoosting_create",
+        "name": "field8"
+    }
+}
