@@ -1,30 +1,39 @@
-from dataclasses import dataclass, field
-from typing import Optional
+import json
+from dataclasses import dataclass
+from functools import partial
 
 from dataclasses_json import dataclass_json
 
-AbsoluteXYXY = tuple[float, float, float, float]
-AbsoluteXYHW = tuple[float, float, float, float]
+
+@dataclass_json
+@dataclass
+class Bbox:
+    left: float
+    top: float
+    width: float
+    height: float
+
+    def to_tuple(self) -> tuple[float, float, float, float]:
+        return self.left, self.top, self.width, self.height
 
 
 @dataclass_json
 @dataclass
 class Annotation:
-    label: str
-    segment: str
-    xxyy: Optional[AbsoluteXYXY] = field(default=None)
-    xyhw: Optional[AbsoluteXYHW] = field(default=None)
+    file: str
+    label: int
+    bbox: Bbox
 
-    def __post_init__(self):
-        if self.xxyy and self.xyhw:
-            raise ValueError("Provide only one of xxyy or xyhw, not both.")
-        elif not self.xxyy and not self.xyhw:
-            raise ValueError("You must provide one of xxyy or xyhw.")
+    def to_tuple(self) -> tuple[int, int, int, int]:
+        if self.bbox is None:
+            return ()
+        x, y, w, h = map(int, self.bbox.to_tuple())
+        return x, y, w, h
 
-        if self.xxyy:
-            x1, y1, x2, y2 = self.xxyy
-            self.xyhw = (x1, y1, x2 - x1, y2 - y1)
-            return
 
-        x, y, w, h = self.xyhw
-        self.xxyy = (x, y, x + w, y + h)
+def read_data(path: str) -> list[Annotation]:
+    with open(path, "r") as file:
+        data = json.load(file)
+
+    read = partial(Annotation.from_dict, infer_missing=True)  # type: ignore
+    return [read(i) for i in data["images"]]
