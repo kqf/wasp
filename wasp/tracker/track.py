@@ -4,6 +4,8 @@ from dataclasses import dataclass
 import cv2
 from dataclasses_json import dataclass_json
 
+from wasp.tracker.data import read_data
+
 # from wasp.tracker.boundaries import visualize_features
 from wasp.tracker.filter import KalmanFilter
 
@@ -93,7 +95,15 @@ def load_segments(filename):
     return {key: Segment.from_dict(value) for key, value in data.items()}
 
 
+def draw_bbox(frame, xywh, color=(0, 255, 0)):
+    bbox = tuple(map(int, xywh))
+    x, y, w, h = bbox
+    return cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+
+
 def main():
+    annotations = read_data("test-annotations.json")
+    print("Total annotations", len(annotations))
     SEGMENTS = load_segments("wasp/tracker/segments.json")
     cap = cv2.VideoCapture("test.mov")
     segment = SEGMENTS["sky"]
@@ -128,14 +138,12 @@ def main():
 
         kalman_filter.correct(bbox)
         success, bbox = tracker.update(frame)
-        bbox = tuple(map(int, bbox))
-        x, y, w, h = bbox
+        draw_bbox(frame, bbox)
 
         # Draw the original tracker's bounding box
         # frame, ellipse = visualize_features(frame, roi, ellipse)
         # overlay_bbox_on_frame_simple(frame, bbox)
         # overlay_template(frame, tracker.template, tracker.max_val, o_x=300)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         if not success:
             cv2.putText(
@@ -148,8 +156,7 @@ def main():
                 2,
             )
 
-        kx, ky, kw, kh = kalman_filter.predict()
-        cv2.rectangle(frame, (kx, ky), (kx + kw, ky + kh), (255, 0, 0), 2)
+        draw_bbox(frame, kalman_filter.predict(), (255, 0, 0))
 
         if prev_frame is None:
             prev_frame = frame
