@@ -1,27 +1,8 @@
-import json
-from dataclasses import dataclass
-
 import cv2
-from dataclasses_json import dataclass_json
+from tracker.segments import load_segments
 
 from wasp.tracker.data import read_data
-
-# from wasp.tracker.boundaries import visualize_features
 from wasp.tracker.filter import KalmanFilter
-
-
-@dataclass_json
-@dataclass
-class Segment:
-    start_frame: int
-    stop_frame: int
-    last_frame: int
-    bbox: tuple[float, float, float, float]
-    tracker: str
-    name: str
-
-    def within(self, frame_count):
-        return self.start_frame <= frame_count < self.stop_frame
 
 
 def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
@@ -83,18 +64,6 @@ TRACKERS = {
 }
 
 
-def save_segments(segments, filename):
-    data = {key: segment.to_dict() for key, segment in segments.items()}
-    with open(filename, "w") as json_file:
-        json.dump(data, json_file, indent=4)
-
-
-def load_segments(filename):
-    with open(filename, "r") as json_file:
-        data = json.load(json_file)
-    return {key: Segment.from_dict(value) for key, value in data.items()}
-
-
 def draw_bbox(frame, xywh, color=(0, 255, 0)):
     bbox = tuple(map(int, xywh))
     x, y, w, h = bbox
@@ -104,9 +73,8 @@ def draw_bbox(frame, xywh, color=(0, 255, 0)):
 def main():
     annotations = read_data("test-annotations.json")
     print("Total annotations", len(annotations))
-    SEGMENTS = load_segments("wasp/tracker/segments.json")
     cap = cv2.VideoCapture("test.mov")
-    segment = SEGMENTS["sky"]
+    segment = load_segments("wasp/tracker/segments.json")["sky"]
     tracker = TRACKERS[segment.tracker]()
     bbox = segment.bbox
     frame_count = -1
