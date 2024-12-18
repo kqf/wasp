@@ -1,4 +1,5 @@
 import cv2
+from tracker.capture import video_data
 from tracker.segments import load_segments
 
 from wasp.tracker.data import read_data
@@ -73,32 +74,20 @@ def draw_bbox(frame, xywh, color=(0, 255, 0)):
 def main():
     annotations = read_data("test-annotations.json")
     print("Total annotations", len(annotations))
-    cap = cv2.VideoCapture("test.mov")
+
     segment = load_segments("wasp/tracker/segments.json")["sky"]
-    tracker = TRACKERS[segment.tracker]()
+    tracker = None
+    frames = video_data(
+        iname="test.mov",
+        start=segment.start_frame,
+        final=segment.stop_frame,
+    )
     bbox = segment.bbox
-    frame_count = -1
     kalman_filter = None
-    # ellipse = None
-    prev_frame = None  # Store the previous frame
-
-    # output = cv2.VideoWriter(
-    #     f"mosse-{segment.name}.mp4",
-    #     cv2.VideoWriter_fourcc(*"H264"),
-    #     cap.get(cv2.CAP_PROP_FPS),
-    #     (
-    #         int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-    #         int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-    #     ),
-    # )
-    while frame_count < segment.stop_frame:
-        ret, frame = cap.read()
-        frame_count += 1
-
-        if not segment.within(frame_count):
-            continue
-
-        if frame_count == segment.start_frame:
+    prev_frame = None
+    for frame in frames:
+        if tracker is None:
+            tracker = TRACKERS[segment.tracker]()
             # bbox = cv2.selectROI("select the area", frame)
             # print(bbox)
             tracker.init(frame, segment.bbox)
@@ -135,11 +124,6 @@ def main():
         cv2.imshow("tracking", combined_frame)
         cv2.waitKey()
         prev_frame = frame
-        print(frame_count)
-
-    # print(output.release())
-    print("released")
-    cap.release()
     cv2.destroyAllWindows()
 
 
