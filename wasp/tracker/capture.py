@@ -3,6 +3,8 @@ from typing import Generator
 import cv2
 import numpy as np
 
+from wasp.tracker.data import Annotation, read_data
+
 
 class IOCapture:
     def __init__(self, iname: str, oname: str = ""):
@@ -54,3 +56,18 @@ def video_data(
             yield frame  # Yield the current frame
     finally:
         capture.release()
+
+
+def video_dataset(
+    aname: str,
+    iname: str,
+    oname: str = "",
+    start: int = 0,
+    final: int = -1,
+) -> Generator[tuple[np.ndarray, Annotation], None, None]:
+    labels = read_data(aname)
+    for i, frame in enumerate(video_data(iname, oname, start - 1, final)):
+        label = Annotation("missing.png", -1, None)
+        if i + start < len(labels):
+            label = labels[i + start]
+        yield frame, label

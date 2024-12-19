@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from functools import partial
+from typing import Optional
 
 from dataclasses_json import dataclass_json
 
@@ -22,11 +23,11 @@ class Bbox:
 class Annotation:
     file: str
     label: int
-    bbox: Bbox
+    bbox: Optional[Bbox]
 
-    def to_tuple(self) -> tuple[int, int, int, int]:
+    def to_tuple(self) -> Optional[tuple[int, int, int, int]]:
         if self.bbox is None:
-            return ()
+            return None
         x, y, w, h = map(int, self.bbox.to_tuple())
         return x, y, w, h
 
