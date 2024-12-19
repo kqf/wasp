@@ -1,8 +1,7 @@
 import cv2
-from tracker.capture import video_data
+from tracker.capture import video_dataset
 from tracker.segments import load_segments
 
-from wasp.tracker.data import read_data
 from wasp.tracker.filter import KalmanFilter
 
 
@@ -72,15 +71,13 @@ def draw_bbox(frame, xywh, color=(0, 255, 0)):
 
 
 def main():
-    annotations = read_data("test-annotations.json")
-    print("Total annotations", len(annotations))
-
     segment = load_segments("wasp/tracker/segments.json")["sky"]
     tracker = None
-    frames = video_data(
+    frames = video_dataset(
         iname="test.mov",
         start=segment.start_frame,
         final=segment.stop_frame,
+        label="test-annotations.json",
     )
     bbox = segment.bbox
     kalman_filter = None
