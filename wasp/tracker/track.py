@@ -1,8 +1,9 @@
 import cv2
-from tracker.capture import video_dataset
-from tracker.segments import load_segments
 
+from wasp.tracker.capture import video_dataset
 from wasp.tracker.filter import KalmanFilter
+from wasp.tracker.segments import load_segments
+from wasp.tracker.tracker import SIFTTracker
 
 
 def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
@@ -65,6 +66,8 @@ TRACKERS = {
 
 
 def draw_bbox(frame, xywh, color=(0, 255, 0)):
+    if xywh is None:
+        return
     bbox = tuple(map(int, xywh))
     x, y, w, h = bbox
     return cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
@@ -72,55 +75,30 @@ def draw_bbox(frame, xywh, color=(0, 255, 0)):
 
 def main():
     segment = load_segments("wasp/tracker/segments.json")["sky"]
-    tracker = None
     frames = video_dataset(
+        aname="test-annotations.json",
         iname="test.mov",
         start=segment.start_frame,
         final=segment.stop_frame,
-        label="test-annotations.json",
     )
     bbox = segment.bbox
+    tracker = None
     kalman_filter = None
-    prev_frame = None
-    for frame in frames:
+    for frame, label in frames:
         if tracker is None:
-            tracker = TRACKERS[segment.tracker]()
-            # bbox = cv2.selectROI("select the area", frame)
-            # print(bbox)
-            tracker.init(frame, segment.bbox)
+            tracker = SIFTTracker()
+            tracker.init(frame, label.to_tuple())
             kalman_filter = KalmanFilter(segment.bbox)
 
         kalman_filter.correct(bbox)
-        success, bbox = tracker.update(frame)
-        draw_bbox(frame, bbox)
+        _, bbox = tracker.update(frame)
 
-        # Draw the original tracker's bounding box
-        # frame, ellipse = visualize_features(frame, roi, ellipse)
-        # overlay_bbox_on_frame_simple(frame, bbox)
-        # overlay_template(frame, tracker.template, tracker.max_val, o_x=300)
-
-        if not success:
-            cv2.putText(
-                frame,
-                "Tracking failed",
-                (50, 50),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.75,
-                (0, 0, 255),
-                2,
-            )
-
+        draw_bbox(frame, bbox, (0, 0, 255))
+        draw_bbox(frame, label.to_tuple())
         draw_bbox(frame, kalman_filter.predict(), (255, 0, 0))
 
-        if prev_frame is None:
-            prev_frame = frame
-
-        # combined_frame = cv2.hconcat([prev_frame, frame])
-        combined_frame = frame
-        # output.write(frame)
-        cv2.imshow("tracking", combined_frame)
+        cv2.imshow("tracking", frame)
         cv2.waitKey()
-        prev_frame = frame
     cv2.destroyAllWindows()
 
 
