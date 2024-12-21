@@ -80,6 +80,7 @@ def main():
         iname="test.mov",
         start=segment.start_frame,
         final=segment.stop_frame,
+        label="test-annotations.json",
     )
     bbox = segment.bbox
     tracker = None
