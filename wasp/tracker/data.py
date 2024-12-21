@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial
 from typing import Optional
 
@@ -22,8 +22,8 @@ class Bbox:
 @dataclass
 class Annotation:
     file: str
-    label: int
-    bbox: Optional[Bbox]
+    label: Optional[int] = -1
+    bbox: Optional[Bbox] = field(default_factory=lambda: Bbox(0, 0, 0, 0))
 
     def to_tuple(self) -> Optional[tuple[int, int, int, int]]:
         if self.bbox is None:
@@ -36,5 +36,5 @@ def read_data(path: str) -> list[Annotation]:
     with open(path, "r") as file:
         data = json.load(file)
 
-    read = partial(Annotation.from_dict, infer_missing=True)  # type: ignore
+    read = partial(Annotation.from_dict, infer_missing=False)  # type: ignore
     return [read(i) for i in data["images"]]
