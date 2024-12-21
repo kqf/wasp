@@ -74,7 +74,7 @@ def draw_bbox(frame, xywh, color=(0, 255, 0)):
 
 
 def main():
-    segment = load_segments("wasp/tracker/segments.json")["sky"]
+    segment = load_segments("wasp/tracker/segments.json")["mixed"]
     frames = video_dataset(
         aname="test-annotations.json",
         iname="test.mov",
@@ -84,7 +84,8 @@ def main():
     bbox = segment.bbox
     tracker = None
     kalman_filter = None
-    for frame, label in frames:
+    for xframe, label in frames:
+        frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
             tracker = SIFTTracker()
             tracker.init(frame, label.to_tuple())
@@ -97,7 +98,7 @@ def main():
         draw_bbox(frame, label.to_tuple())
         draw_bbox(frame, kalman_filter.predict(), (255, 0, 0))
 
-        cv2.imshow("tracking", frame)
+        cv2.imshow("tracking", xframe)
         cv2.waitKey()
     cv2.destroyAllWindows()
 
