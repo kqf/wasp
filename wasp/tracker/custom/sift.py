@@ -2,6 +2,18 @@ import cv2
 import numpy as np
 
 
+def max_bounding_box(points):
+    min_x = np.min(points[:, 0])
+    min_y = np.min(points[:, 1])
+    max_x = np.max(points[:, 0])
+    max_y = np.max(points[:, 1])
+
+    width = max_x - min_x
+    height = max_y - min_y
+
+    return min_x, min_y, width, height
+
+
 def add_weighted(a, b, alpha):
     h, w, _ = b.shape
     r = cv2.resize(
@@ -201,4 +213,6 @@ class SIFTTracker:
         self.last_position = (new_x, new_y, new_w, new_h)
         self.prev_frame = frame
 
+        return True, self.last_position
+        return True, self.last_position
         return True, self.last_position

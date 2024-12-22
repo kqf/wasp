@@ -152,18 +152,6 @@ def extract_features(image, bbox):
     return points
 
 
-def max_bounding_box(points):
-    min_x = np.min(points[:, 0])
-    min_y = np.min(points[:, 1])
-    max_x = np.max(points[:, 0])
-    max_y = np.max(points[:, 1])
-
-    width = max_x - min_x
-    height = max_y - min_y
-
-    return min_x, min_y, width, height
-
-
 def recalculate_object_size(frame, bbox):
     x, y, w, h = bbox
     points = extract_features(frame, bbox)
