@@ -1,9 +1,9 @@
 import cv2
 
 from wasp.tracker.capture import video_dataset
+from wasp.tracker.custom.sift import SIFTTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
-from wasp.tracker.tracker import SIFTTracker
 
 
 def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
