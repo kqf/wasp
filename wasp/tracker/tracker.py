@@ -224,7 +224,3 @@ class TemplateMatchingTrackerWithResize:
         )
 
         return True, self.last_position
-
-        return True, self.last_position
-
-        return True, self.last_position
