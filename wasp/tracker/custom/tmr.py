@@ -9,7 +9,7 @@ def shift_box(bbox, new_w, new_h):
     center_x = x + w // 2
     center_y = y + h // 2
 
-    # Calculate the new top-left corner based on new width and height
+    # Calculate the new top-left corner based on new width and heights
     new_x = center_x - new_w // 2
     new_y = center_y - new_h // 2
 
