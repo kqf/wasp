@@ -16,104 +16,6 @@ def shift_box(bbox, new_w, new_h):
     return (new_x, new_y, new_w, new_h)
 
 
-def resize_bounding_box(bounding_box, image_shape=None):
-    x, y, w, h = bounding_box
-    center_x = x + w // 2
-    center_y = y + h // 2
-    new_w = max(w * 2, 30)
-    new_h = max(h * 2, 30)
-    new_x = center_x - new_w // 2
-    new_y = center_y - new_h // 2
-
-    if image_shape is not None:
-        new_x = max(0, new_x)
-        new_y = max(0, new_y)
-        new_w = min(new_w, image_shape[1] - new_x)
-        new_h = min(new_h, image_shape[0] - new_y)
-
-    return new_x, new_y, new_w, new_h
-
-
-# def is_valid_contour(contour, roi):
-#     x, y, w, h = roi
-#     for point in contour:
-#         px, py = point[0]
-#         if x <= px < x + w and y <= py < y + h:
-#             return False
-#     return True
-
-
-def is_valid_contour(contour, roi):
-    x, y, w, h = roi
-    contour_points = contour.reshape(-1, 2)
-    cx = np.mean(contour_points[:, 0])
-    cy = np.mean(contour_points[:, 1])
-
-    return not x <= cx < x + w or not y <= cy < y + h
-
-
-def valid_n(contour, bbox, n=0.9):
-    x, y, w, h = bbox
-    contour_points = contour.reshape(-1, 2)
-
-    inside_x = (contour_points[:, 0] >= x) & (contour_points[:, 0] < x + w)
-    inside_y = (contour_points[:, 1] >= y) & (contour_points[:, 1] < y + h)
-
-    inside_bbox = inside_x & inside_y
-    num_points_inside = np.sum(inside_bbox)
-
-    percentage_inside = num_points_inside / contour_points.shape[0]
-
-    return percentage_inside >= n
-
-
-def extract_features(image, bbox):
-    x, y, w, h = resize_bounding_box(bbox, image.shape)
-    roi = image[y : y + h, x : x + w]
-
-    roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(roi_gray, 100, 200)
-
-    contours, _ = cv2.findContours(
-        edges,
-        cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_NONE,
-    )
-    for c in contours:
-        for points in c:
-            points[:, 0] += x
-            points[:, 1] += y
-
-    contours = [contour for contour in contours if valid_n(contour, bbox)]
-
-    if not contours:
-        return None
-
-    all_points = np.concatenate(contours)
-    points = all_points.reshape(-1, 2)
-    return points
-
-
-def recalculate_object_size(frame, bbox):
-    x, y, w, h = bbox
-    points = extract_features(frame, bbox)
-    if points is None:
-        return w, h
-
-    roi_frame = frame[y : y + h, x : x + w]
-    for point in points:
-        cv2.circle(
-            roi_frame,
-            (int(point[0] - x), int(point[1] - y)),
-            1,
-            (0, 255, 0),
-            -1,
-        )
-
-    nx, ny, new_w, new_h = cv2.boundingRect(points)
-    return new_w * 2, new_h * 2
-
-
 def recalculate_size(
     scores,
     w,
@@ -222,9 +124,5 @@ class TemplateMatchingTrackerWithResize:
             self.template,
             (self.w, self.h),
         )
-
-        return True, self.last_position
-
-        return True, self.last_position
 
         return True, self.last_position
