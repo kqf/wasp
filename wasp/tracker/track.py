@@ -84,20 +84,20 @@ def main():
     )
     bbox = segment.bbox
     tracker = None
-    kalman_filter = None
+    kfilter = None
     for xframe, label in frames:
         frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
+            kfilter = KalmanFilter(segment.bbox)
             tracker = SIFTTracker()
             tracker.init(frame, label.to_tuple())
-            kalman_filter = KalmanFilter(segment.bbox)
 
-        kalman_filter.correct(bbox)
+        kfilter.correct(bbox)
         _, bbox = tracker.update(frame)
 
         draw_bbox(frame, bbox, (0, 0, 255))
         draw_bbox(frame, label.to_tuple())
-        draw_bbox(frame, kalman_filter.predict(), (255, 0, 0))
+        draw_bbox(frame, kfilter.predict(), (255, 0, 0))
 
         cv2.imshow("tracking", xframe)
         cv2.waitKey()
