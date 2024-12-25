@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import cv2
 import numpy as np
@@ -22,12 +22,13 @@ def clean_features(features, sigma_threshold=0.5):
 @dataclass
 class OpticalFLowTracker:
     bbox: XYWH = (0.0, 0.0, 0.0, 0.0)
-    last_frame: np.ndarray = np.empty((0,))
-    features: np.ndarray = np.empty((0,))
+    last_frame: np.ndarray = field(default_factory=lambda: np.empty((0,)))
+    features: np.ndarray = field(default_factory=lambda: np.empty((0,)))
 
     def init(self, frame, bbox: XYWH) -> None:
-        self.last_frame = frame.clone()
+        self.last_frame = frame.copy()
         self.bbox = bbox
+        print(self.bbox)
         self.features = to_features(frame, bbox=self.bbox)
 
     def update(self, frmae: np.ndarray) -> tuple[bool, XYWH]:
@@ -60,7 +61,7 @@ class OpticalFLowTracker:
 
         # self.features = clean_features(features)
         self.features = features
-        self.bbox = self.box_from_features(frmae, self.features)
+        # self.bbox = self.box_from_features(frmae, self.features)
         return True, self.bbox
 
     def box_from_features(self, frame, features):
@@ -81,14 +82,17 @@ def to_features(
     bbox: XYWH,
 ) -> np.ndarray:
     x1, y1, x2, y2 = bbox
-    # Convert from relative to absolute coordinates
     h, w = frame.shape[:2]
     abs_x1, abs_y1 = int(x1 * w), int(y1 * h)
     abs_x2, abs_y2 = int(x2 * w), int(y2 * h)
 
     roi = frame[abs_y1:abs_y2, abs_x1:abs_x2]
     features = cv2.goodFeaturesToTrack(
-        roi, maxCorners=100, qualityLevel=0.01, minDistance=7, blockSize=7
+        roi,
+        maxCorners=100,
+        qualityLevel=0.01,
+        minDistance=7,
+        blockSize=7,
     )
     if features is None:
         return np.array([])
