@@ -80,27 +80,29 @@ def main():
         iname="test.mov",
         start=segment.start_frame,
         final=segment.stop_frame,
+        # final=segment.start_frame + 10,
     )
     bbox = segment.bbox
     tracker = None
     kfilter = None
-    for xframe, label in frames:
+    for i, (xframe, label) in enumerate(frames):
         frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
-            kfilter = KalmanFilter(segment.bbox)
+            kfilter = KalmanFilter(label.to_tuple())
             tracker = OpticalFLowTracker()
             tracker.init(frame, label.to_tuple())
 
         kfilter.correct(bbox)
         _, bbox = tracker.update(frame)
-        print(bbox)
 
         draw_bbox(xframe, bbox, (0, 255, 0))
         draw_bbox(xframe, label.to_tuple(), (255, 0, 0))
+        tracker.plot(xframe)
         # draw_bbox(xframe, kfilter.predict(), (255, 0, 0))
-
         cv2.imshow("tracking", xframe)
-        cv2.waitKey()
+        if cv2.waitKey() == 27:
+            return
+
     cv2.destroyAllWindows()
 
 
