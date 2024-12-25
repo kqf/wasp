@@ -6,7 +6,7 @@ import numpy as np
 XYWH = tuple[int, int, int, int]
 
 
-def clean_features(features, sigma_threshold=0.5):
+def clean_features(features, sigma_threshold=1):
     # TODO: Check why do we need it
     features = features.reshape(-1, 2)
     center = features.mean(axis=0, keepdims=True)
@@ -19,17 +19,41 @@ def clean_features(features, sigma_threshold=0.5):
     return features[deviations <= allowed_deviation]
 
 
+def clean_errors(features, sigma_threshold=0.5):
+    center = features.mean(keepdims=True)
+    deviations = np.linalg.norm(features - center)
+
+    mean_deviation = deviations.mean()
+    std_deviation = deviations.std()
+
+    allowed_deviation = mean_deviation + sigma_threshold * std_deviation
+    return features[deviations <= allowed_deviation]
+
+
 def most_extreme_value(arr):
     return arr[np.argmax(np.abs(arr))]
 
 
+def extreme_midpoint(data, num_bins=20, threshold=0.05):
+    counts, bin_edges = np.histogram(data, bins=num_bins)
+    midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    tcounts = threshold * np.max(counts)
+    valid_midpoints = midpoints[counts >= tcounts]
+
+    if valid_midpoints.size == 0:
+        return np.mean(data)
+
+    return valid_midpoints[np.argmax(np.abs(valid_midpoints))]
+
+
 def calculate_displacement(old_features, new_features):
-    displacement = new_features - old_features
-    # plot_histogram(displacement[0], displacement[1])
-    ex = most_extreme_value(displacement[:, 0])
-    ey = most_extreme_value(displacement[:, 1])
+    displacement = clean_features(new_features - old_features)
+    # plot_histogram(displacement[:0], displacement[:, 1])
+    ex = extreme_midpoint(displacement[:, 0])
+    ey = extreme_midpoint(displacement[:, 1])
 
     mx, my = np.mean(displacement, axis=0)
+    return mx, my
 
     return np.mean([ex, mx]), np.mean([ey, my])
 
@@ -48,32 +72,73 @@ def calculate_spread(points):
     return np.max(points) - np.min(points)
 
 
-def calculate_scale_change(of, nf):
-    od_x = calculate_spread(of[:, 0])
-    od_y = calculate_spread(of[:, 1])
-
-    nd_x = calculate_spread(nf[:, 0])
-    nd_y = calculate_spread(nf[:, 1])
-
-    # plot_histogram(od_x, nd_y)
-    scale_x = (nd_x) / (od_x + 1e-8) if od_x > 0.0001 else 1.0
-    scale_y = (nd_y) / (od_y + 1e-8) if od_y > 0.0001 else 1.0
-
-    print("scale", scale_x, scale_y, nd_x, od_x)
-    return scale_x, scale_y
-
-
 def plot_histogram(od, nd):
     import matplotlib.pyplot as plt
 
     plt.figure(figsize=(10, 6))
-    plt.hist(od.ravel(), bins=100, alpha=0.5, label="Old Distances")
-    plt.hist(nd.ravel(), bins=100, alpha=0.5, label="New Distances")
+    print(od)
+    print(nd)
+    plt.hist(od.ravel(), bins=20, alpha=0.5, label="x")
+    plt.hist(nd.ravel(), bins=20, alpha=0.5, label="y")
     plt.xlabel("Distance")
     plt.ylabel("Frequency")
     plt.title("Histogram of Old vs New Distances")
     plt.legend()
     plt.show()
+
+
+def optical_flow(frame1, frame2, features1):
+    if features1 is None or features1.size == 0:
+        return False, (None, None)
+
+    features2, status, error = cv2.calcOpticalFlowPyrLK(
+        frame1,
+        frame2,
+        features1,
+        None,
+        winSize=(21, 21),
+        maxLevel=3,
+        criteria=(
+            cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
+            40,
+            0.05,
+        ),
+    )
+
+    if features2 is None or status is None or error is None:
+        return False, (features1, None)
+
+    # mean_error = clean_errors(error.squeeze()).mean()
+    print(error.mean())
+
+    valid_mask = (status.squeeze() == 1) & (error.squeeze() < np.mean(error))
+    features1 = features1[valid_mask]
+    features2 = features2[valid_mask]
+
+    return len(features2) > 0, (features1, features2)
+
+
+def make_sure_includes_all(bbox, features, margin=0.05):
+    min_x, min_y = np.min(features, axis=0)
+    max_x, max_y = np.max(features, axis=0)
+
+    x, y, w, h = bbox
+
+    new_x = min(min_x, x)
+    new_y = min(min_y, y)
+    new_w = max(max_x, x + w) - new_x
+    new_h = max(max_y, y + h) - new_y
+
+    if new_w > w or new_h > h:
+        margin_x = new_w * margin
+        margin_y = new_h * margin
+
+        new_x -= margin_x
+        new_y -= margin_y
+        new_w += 2 * margin_x
+        new_h += 2 * margin_y
+
+    return int(new_x), int(new_y), int(new_w), int(new_h)
 
 
 @dataclass
@@ -86,32 +151,24 @@ class OpticalFLowTracker:
         self.last_frame = frame.copy()
         self.bbox = bbox
         self.features = to_features(frame, bbox=self.bbox)
+        self.last_features = self.features
 
     def _calculate(self, frame1, frame2, old_features):
-        if old_features.size == 0:
-            return False, self.bbox
-
-        new_features, status, _ = cv2.calcOpticalFlowPyrLK(
+        status, (features1, features2) = optical_flow(
             frame1,
             frame2,
             old_features,
-            None,
-            winSize=(15, 15),
-            maxLevel=2,
-            criteria=(
-                cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
-                10,
-                0.03,
-            ),
+        )
+        if not status:
+            return status, (features1, features2)
+
+        status, (features2, features1) = optical_flow(
+            frame2,
+            frame1,
+            features2,
         )
 
-        if status is None:
-            return False, (old_features, new_features)
-
-        new_features = new_features[status.squeeze() == 1]
-        old_features = old_features[status.squeeze() == 1]
-
-        return len(new_features) != 0, (old_features, new_features)
+        return status, (features1, features2)
 
     def update(self, frame: np.ndarray) -> tuple[bool, XYWH]:
         status, (old_features, new_features) = self._calculate(
@@ -141,12 +198,24 @@ class OpticalFLowTracker:
 
         # Update tracker state
         self.bbox = (int(x_new), int(y_new), int(w_new), int(h_new))
+        self.last_features = old_features + (dx, dy)
+        self.bbox = make_sure_includes_all(self.bbox, self.last_features)
         self.features = to_features(frame, self.bbox)
+
         self.last_frame = frame.copy()
 
         return True, self.bbox
 
     def plot(self, frame: np.ndarray) -> np.ndarray:
+        for feature in self.last_features.reshape(-1, 2):
+            x, y = int(feature[0]), int(feature[1])
+            frame = cv2.circle(
+                frame,
+                (x, y),
+                radius=2,
+                color=(0, 0, 255),
+                thickness=-1,
+            )
         for feature in self.features.reshape(-1, 2):
             x, y = int(feature[0]), int(feature[1])
             frame = cv2.circle(
@@ -170,7 +239,7 @@ def to_features(
         maxCorners=1000,
         qualityLevel=0.01,
         minDistance=1,
-        blockSize=4,
+        blockSize=1,
     )
     if features is None:
         return np.array([])

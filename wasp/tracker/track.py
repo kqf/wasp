@@ -80,6 +80,7 @@ def main():
         iname="test.mov",
         start=segment.start_frame,
         final=segment.stop_frame,
+        # final=segment.start_frame + 10,
     )
     bbox = segment.bbox
     tracker = None
@@ -87,7 +88,7 @@ def main():
     for xframe, label in frames:
         frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
-            kfilter = KalmanFilter(segment.bbox)
+            kfilter = KalmanFilter(label.to_tuple())
             tracker = OpticalFLowTracker()
             tracker.init(frame, label.to_tuple())
 
