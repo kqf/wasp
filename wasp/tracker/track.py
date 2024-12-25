@@ -1,9 +1,9 @@
 import cv2
 
 from wasp.tracker.capture import video_dataset
+from wasp.tracker.custom.sift import SIFTTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
-from wasp.tracker.tracker import SIFTTracker
 
 
 def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
@@ -74,30 +74,32 @@ def draw_bbox(frame, xywh, color=(0, 255, 0)):
 
 
 def main():
-    segment = load_segments("wasp/tracker/segments.json")["sky"]
+    segment = load_segments("wasp/tracker/segments.json")["mixed"]
     frames = video_dataset(
         aname="test-annotations.json",
         iname="test.mov",
         start=segment.start_frame,
         final=segment.stop_frame,
+        label="test-annotations.json",
     )
     bbox = segment.bbox
     tracker = None
-    kalman_filter = None
-    for frame, label in frames:
+    kfilter = None
+    for xframe, label in frames:
+        frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
+            kfilter = KalmanFilter(segment.bbox)
             tracker = SIFTTracker()
             tracker.init(frame, label.to_tuple())
-            kalman_filter = KalmanFilter(segment.bbox)
 
-        kalman_filter.correct(bbox)
+        kfilter.correct(bbox)
         _, bbox = tracker.update(frame)
 
         draw_bbox(frame, bbox, (0, 0, 255))
         draw_bbox(frame, label.to_tuple())
-        draw_bbox(frame, kalman_filter.predict(), (255, 0, 0))
+        draw_bbox(frame, kfilter.predict(), (255, 0, 0))
 
-        cv2.imshow("tracking", frame)
+        cv2.imshow("tracking", xframe)
         cv2.waitKey()
     cv2.destroyAllWindows()
 
