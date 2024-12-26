@@ -63,13 +63,12 @@ class OpticalFLowSimplified:
             self.object_lost = True
             return False, self.bbox
 
-        self.previous_frame = frame.copy()
-        self.last_features = self.features
-        self.features = valid_new_points
-
         dx, dy = np.mean(valid_new_points - valid_old_points, axis=0)
         x, y, w, h = self.bbox
         self.bbox = (int(x + dx), int(y + dy), w, h)
+        self.last_features = self.features + (dx, dy)
+        self.features = valid_new_points
+        self.previous_frame = frame.copy()
 
         return True, self.bbox
 
