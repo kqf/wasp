@@ -1,7 +1,7 @@
 import cv2
+from tracker.custom.ofs import OpticalFLowSimplified
 
 from wasp.tracker.capture import video_dataset
-from wasp.tracker.custom.of import OpticalFLowTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
@@ -89,7 +89,7 @@ def main():
         frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
             kfilter = KalmanFilter(label.to_tuple())
-            tracker = OpticalFLowTracker()
+            tracker = OpticalFLowSimplified()
             tracker.init(frame, label.to_tuple())
 
         kfilter.correct(bbox)
@@ -97,7 +97,7 @@ def main():
 
         draw_bbox(xframe, bbox, (0, 255, 0))
         draw_bbox(xframe, label.to_tuple(), (255, 0, 0))
-        tracker.plot(xframe)
+        # tracker.plot(xframe)
         # draw_bbox(xframe, kfilter.predict(), (255, 0, 0))
         cv2.imshow("tracking", xframe)
         if cv2.waitKey() == 27:
