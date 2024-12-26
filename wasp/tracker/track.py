@@ -97,7 +97,7 @@ def main():
 
         draw_bbox(xframe, bbox, (0, 255, 0))
         draw_bbox(xframe, label.to_tuple(), (255, 0, 0))
-        # tracker.plot(xframe)
+        tracker.plot(xframe)
         # draw_bbox(xframe, kfilter.predict(), (255, 0, 0))
         cv2.imshow("tracking", xframe)
         if cv2.waitKey() == 27:
