@@ -2,11 +2,12 @@ from typing import Tuple
 
 import cv2
 import numpy as np
+from tracker.custom.of import OpticalFLowTracker
 
 XYWH = tuple[int, int, int, int]
 
 
-class OpticalFLowSimplified:
+class OpticalFLowSimplified(OpticalFLowTracker):
     def __init__(self):
         self.bbox = None
         self.previous_frame = None
