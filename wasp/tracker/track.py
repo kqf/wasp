@@ -1,5 +1,5 @@
 import cv2
-from tracker.custom.ofs import OpticalFLowSimplified
+from tracker.custom.of import OpticalFLowTracker
 
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.filter import KalmanFilter
@@ -89,7 +89,7 @@ def main():
         frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
             kfilter = KalmanFilter(label.to_tuple())
-            tracker = OpticalFLowSimplified()
+            tracker = OpticalFLowTracker()
             tracker.init(frame, label.to_tuple())
 
         kfilter.correct(bbox)
