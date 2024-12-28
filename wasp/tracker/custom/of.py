@@ -190,9 +190,10 @@ class OpticalFLowTracker:
             new_features,
         )
         # Update bounding box position
-        x, y, w, h = self.bbox
-        x_new = x + dx
-        y_new = y + dy
+        _, _, w, h = self.bbox
+        x_new, y_new = np.mean(new_features, axis=0)
+        x_new -= w // 2
+        y_new -= h // 2
 
         # Calculate scale change
         # scale_h, scale_w = calculate_scale_change(old_features, new_features)
@@ -202,11 +203,11 @@ class OpticalFLowTracker:
         # Update tracker state
         self.bbox = (int(x_new), int(y_new), int(w_new), int(h_new))
         self.last_features = old_features + (dx, dy)
-        self.bbox = make_sure_includes_all(
-            self.bbox,
-            self.last_features,
-            new_features,
-        )
+        # self.bbox = make_sure_includes_all(
+        #     self.bbox,
+        #     self.last_features,
+        #     new_features,
+        # )
         self.features = to_features(frame, self.bbox)
 
         self.last_frame = frame.copy()
