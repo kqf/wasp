@@ -72,3 +72,24 @@ class OpticalFLowSimplified(OpticalFLowTracker):
         self.previous_frame = frame.copy()
 
         return True, self.bbox
+
+    def plot(self, frame: np.ndarray) -> np.ndarray:
+        for feature in self.last_features.reshape(-1, 2):
+            x, y = int(feature[0]), int(feature[1])
+            frame = cv2.circle(
+                frame,
+                (x, y),
+                radius=2,
+                color=(0, 0, 255),
+                thickness=-1,
+            )
+        for feature in self.features.reshape(-1, 2):
+            x, y = int(feature[0]), int(feature[1])
+            frame = cv2.circle(
+                frame,
+                (x, y),
+                radius=5,
+                color=(0, 255, 0),
+                thickness=-1,
+            )
+        return frame
