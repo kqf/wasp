@@ -146,6 +146,16 @@ def make_sure_includes_all(
     return nbox
 
 
+def calculate_scale_change(old_features, new_features):
+    old_center = np.mean(old_features, axis=0)
+    old_distances = np.linalg.norm(old_features - old_center, axis=1)
+
+    new_center = np.mean(new_features, axis=0)
+    new_distances = np.linalg.norm(new_features - new_center, axis=1)
+    scale_ratio = np.mean(new_distances) / np.mean(old_distances)
+    return scale_ratio, scale_ratio
+
+
 @dataclass
 class OpticalFLowTracker:
     bbox: XYWH = (0, 0, 0, 0)
@@ -196,9 +206,15 @@ class OpticalFLowTracker:
         y_new -= h // 2
 
         # Calculate scale change
-        # scale_h, scale_w = calculate_scale_change(old_features, new_features)
-        h_new = h
-        w_new = w
+        # TODO: To be implemented:
+        # the lagorithm is as follows:
+        # 1. Calculate center in x and y
+        # 2. Calculate average distance from the center
+        # 3. Calcualte the average distance to the center for new features
+        # 4. Compute the ratio between the distances
+        scale_h, scale_w = calculate_scale_change(old_features, new_features)
+        h_new = h * scale_h
+        w_new = w * scale_w
 
         # Update tracker state
         self.bbox = (int(x_new), int(y_new), int(w_new), int(h_new))
