@@ -150,7 +150,7 @@ def calculate_scale_change(old_features, new_features):
     scale_ratio = new_distances / old_distances
     return np.nan_to_num(scale_ratio, nan=1.0)
 
-  
+
 @dataclass
 class OpticalFLowTracker:
     bbox: XYWH = (0, 0, 0, 0)
