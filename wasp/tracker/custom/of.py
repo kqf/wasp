@@ -18,11 +18,6 @@ def clean_features(features, sigma_threshold=1):
     return features[deviations <= allowed_deviation]
 
 
-def calculate_displacement(old_features, new_features):
-    displacement = clean_features(new_features - old_features)
-    return np.mean(displacement, axis=0)
-
-
 def plot_histogram(od, nd):
     import matplotlib.pyplot as plt
 
