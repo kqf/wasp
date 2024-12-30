@@ -18,6 +18,11 @@ def clean_features(features, sigma_threshold=1):
     return features[deviations <= allowed_deviation]
 
 
+def calculate_displacement(old_features, new_features):
+    displacement = clean_features(new_features - old_features)
+    return np.mean(displacement, axis=0)
+
+
 def plot_histogram(od, nd):
     import matplotlib.pyplot as plt
 
@@ -150,7 +155,7 @@ def calculate_scale_change(old_features, new_features):
     scale_ratio = new_distances / old_distances
     return np.nan_to_num(scale_ratio, nan=1.0)
 
-  
+
 @dataclass
 class OpticalFLowTracker:
     bbox: XYWH = (0, 0, 0, 0)
