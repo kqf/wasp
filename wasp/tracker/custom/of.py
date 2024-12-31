@@ -23,21 +23,6 @@ def calculate_displacement(old_features, new_features):
     return np.mean(displacement, axis=0)
 
 
-def plot_histogram(od, nd):
-    import matplotlib.pyplot as plt
-
-    plt.figure(figsize=(10, 6))
-    print(od)
-    print(nd)
-    plt.hist(od.ravel(), bins=20, alpha=0.5, label="x")
-    plt.hist(nd.ravel(), bins=20, alpha=0.5, label="y")
-    plt.xlabel("Distance")
-    plt.ylabel("Frequency")
-    plt.title("Histogram of Old vs New Distances")
-    plt.legend()
-    plt.show()
-
-
 def optical_flow(frame1, frame2, features1):
     if features1 is None or features1.size == 0:
         return False, (None, None)
