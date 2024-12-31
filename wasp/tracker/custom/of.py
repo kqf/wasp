@@ -20,7 +20,7 @@ def clean_features(features, sigma_threshold=1):
 
 def calculate_displacement(old_features, new_features):
     displacement = clean_features(new_features - old_features)
-    return np.mean(displacement, axis=0
+    return np.mean(displacement, axis=0)
 
 
 def optical_flow(frame1, frame2, features1):
