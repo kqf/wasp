@@ -18,19 +18,9 @@ def clean_features(features, sigma_threshold=1):
     return features[deviations <= allowed_deviation]
 
 
-def plot_histogram(od, nd):
-    import matplotlib.pyplot as plt
-
-    plt.figure(figsize=(10, 6))
-    print(od)
-    print(nd)
-    plt.hist(od.ravel(), bins=20, alpha=0.5, label="x")
-    plt.hist(nd.ravel(), bins=20, alpha=0.5, label="y")
-    plt.xlabel("Distance")
-    plt.ylabel("Frequency")
-    plt.title("Histogram of Old vs New Distances")
-    plt.legend()
-    plt.show()
+def calculate_displacement(old_features, new_features):
+    displacement = clean_features(new_features - old_features)
+    return np.mean(displacement, axis=0
 
 
 def optical_flow(frame1, frame2, features1):
