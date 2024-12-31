@@ -65,8 +65,10 @@ class OpticalFLowSimplified(OpticalFLowTracker):
             return False, self.bbox
 
         dx, dy = np.mean(valid_new_points - valid_old_points, axis=0)
-        x, y, w, h = self.bbox
-        self.bbox = (int(x + dx), int(y + dy), w, h)
+
+        x_new, y_new = np.mean(valid_new_points, axis=0)
+        _, _, w, h = self.bbox
+        self.bbox = (int(x_new), int(y_new), w, h)
         self.last_features = self.features + (dx, dy)
         self.features = valid_new_points
         self.previous_frame = frame.copy()
