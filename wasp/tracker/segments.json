@@ -35,7 +35,7 @@
             16,
             17
         ],
-        "tracker": "cv2.legacy.TrackerMOSSE_create",
+        "tracker": "cv2.legacy.TrackerCSRT_create",
         "name": "mixed"
     },
     "field1": {
