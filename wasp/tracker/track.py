@@ -62,6 +62,7 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
 TRACKERS = {
     "cv2.legacy.TrackerMOSSE_create": cv2.legacy.TrackerMOSSE_create,
     "cv2.legacy.TrackerBoosting_create": cv2.legacy.TrackerBoosting_create,
+    "cv2.legacy.TrackerCSRT_create": cv2.legacy.TrackerCSRT_create,
 }
 
 
