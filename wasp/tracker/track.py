@@ -80,7 +80,6 @@ def main():
         iname="test.mov",
         start=segment.start_frame,
         final=segment.stop_frame,
-        # final=segment.start_frame + 10,
     )
     bbox = segment.bbox
     tracker = None
