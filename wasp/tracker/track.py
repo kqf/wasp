@@ -64,6 +64,7 @@ TRACKERS = {
     "cv2.legacy.TrackerBoosting_create": cv2.legacy.TrackerBoosting_create,
     "cv2.legacy.TrackerCSRT_create": cv2.legacy.TrackerCSRT_create,
     "cv2.legacy.TrackerMIL_create": cv2.legacy.TrackerMIL_create,
+    "cv2.legacy.TrackerKCF_create": cv2.legacy.TrackerKCF_create,
 }
 
 
