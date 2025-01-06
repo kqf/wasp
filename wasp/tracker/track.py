@@ -70,6 +70,7 @@ TRACKERS = {
     "cv2.legacy.TrackerTLD_create": cv2.legacy.TrackerTLD_create,
     "OF": OpticalFLowTracker,
     "OFS": OpticalFLowSimplified,
+    "TM": TemplateMatchingTracker,
 }
 
 
