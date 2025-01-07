@@ -2,8 +2,6 @@ import cv2
 from tracker.custom.of import OpticalFLowTracker
 
 from wasp.tracker.capture import video_dataset
-from wasp.tracker.custom.ofs import OpticalFLowSimplified
-from wasp.tracker.custom.tm import TemplateMatchingTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
@@ -59,20 +57,6 @@ def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
     o_x = min(o_x, frame.shape[1] - nroi.shape[1])
     frame[o_y : o_y + nroi.shape[0], o_x : o_x + nroi.shape[1]] = nroi  # noqa
     return frame
-
-
-TRACKERS = {
-    "cv2.legacy.TrackerMOSSE_create": cv2.legacy.TrackerMOSSE_create,
-    "cv2.legacy.TrackerBoosting_create": cv2.legacy.TrackerBoosting_create,
-    "cv2.legacy.TrackerCSRT_create": cv2.legacy.TrackerCSRT_create,
-    "cv2.legacy.TrackerMIL_create": cv2.legacy.TrackerMIL_create,
-    "cv2.legacy.TrackerKCF_create": cv2.legacy.TrackerKCF_create,
-    "cv2.legacy.TrackerMF_create": cv2.legacy.TrackerMF_create,
-    "cv2.legacy.TrackerTLD_create": cv2.legacy.TrackerTLD_create,
-    "OF": OpticalFLowTracker,
-    "OFS": OpticalFLowSimplified,
-    "TM": TemplateMatchingTracker,
-}
 
 
 def draw_bbox(frame, xywh, color=(0, 255, 0)):
