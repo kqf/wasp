@@ -3,6 +3,7 @@ from tracker.custom.of import OpticalFLowTracker
 
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.custom.ofs import OpticalFLowSimplified
+from wasp.tracker.custom.tm import TemplateMatchingTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
