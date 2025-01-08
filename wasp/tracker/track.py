@@ -19,26 +19,6 @@ def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
     frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
 
 
-def overlay_template(frame, roi, score, max_size=256, o_x=40):
-    w, h = roi.shape[:2]
-    scale = min(max_size / w, max_size / h)
-    new_width = int(w * scale)
-    new_height = int(h * scale)
-    resized_roi = cv2.resize(roi, (new_width, new_height))
-    cv2.putText(
-        resized_roi,
-        f"score: {score:.2f}",
-        (10, 30),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0, 255, 0),
-        4,
-    )
-    frame_height, frame_width = frame.shape[:2]
-    o_y = frame_height - new_height - 10
-    frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
-
-
 def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
     x, y, w, h = bbox
     center_x, center_y = x + w // 2, y + h // 2
