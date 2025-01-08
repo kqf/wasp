@@ -58,3 +58,23 @@ class TemplateMatchingTracker:
         self.template = self.alpha * self.template + (1 - self.alpha) * nt
 
         return True, (x, y, w, h)
+
+    def plot(self, frame, max_size=256, o_x=40, score=-0.1):
+        w, h = self.template.shape[:2]
+        scale = min(max_size / w, max_size / h)
+        new_width = int(w * scale)
+        new_height = int(h * scale)
+        resized_roi = cv2.resize(self.template, (new_width, new_height))
+        cv2.putText(
+            resized_roi,
+            f"score: {score:.2f}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            4,
+        )
+        frame_height, frame_width = frame.shape[:2]
+        o_y = frame_height - new_height - 10
+        frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
+        return frame
