@@ -6,17 +6,14 @@ from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
 
-def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40):
+def overlay_bbox_on_frame_simple(frame, bbox, max_size=256, o_x=40, o_y=10):
     x, y, w, h = bbox
     roi = frame[y : y + h, x : x + w]
-    w, h = roi.shape[:2]
     scale = min(max_size / w, max_size / h)
-    new_width = int(w * scale)
-    new_height = int(h * scale)
-    resized_roi = cv2.resize(roi, (new_width, new_height))
-    frame_height, frame_width = frame.shape[:2]
-    o_y = frame_height - new_height - 10
-    frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
+    n_w, n_h = int(w * scale), int(h * scale)
+    o_y_ = frame.shape[0] - n_h - o_y
+    frame[o_y_ : o_y_ + n_h, o_x : o_x + n_w] = cv2.resize(roi, (n_w, n_h))
+    return frame
 
 
 def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
@@ -70,7 +67,8 @@ def main():
 
         draw_bbox(xframe, bbox, (0, 255, 0))
         draw_bbox(xframe, label.to_tuple(), (255, 0, 0))
-        tracker.plot(xframe)
+        overlay_bbox_on_frame_simple(xframe, bbox=bbox)
+        # tracker.plot(xframe)
         # draw_bbox(xframe, kfilter.predict(), (255, 0, 0))
         cv2.imshow("tracking", xframe)
         if cv2.waitKey() == 27:
