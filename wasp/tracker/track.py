@@ -48,7 +48,7 @@ def draw_bbox(frame, xywh, color=(0, 255, 0)):
 
 
 def main():
-    segment = load_segments("wasp/tracker/segments.json")["field1"]
+    segment = load_segments("wasp/tracker/segments.json")["sky"]
     frames = video_dataset(
         aname="test-annotations.json",
         iname="test.mov",
