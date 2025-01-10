@@ -172,28 +172,12 @@ samples = {
 }
 
 
-def overlay_bbox_on_frame(frame, bbox, max_size=256, o_x=40):
-    x, y, w, h = bbox
-    roi = frame[y : y + h, x : x + w]
-    scale = min(max_size / w, max_size / h)
-    new_width = int(w * scale)
-    new_height = int(h * scale)
-    resized_roi = cv2.resize(roi, (new_width, new_height))
-    frame_height, frame_width = frame.shape[:2]
-    o_y = frame_height - new_height - 10
-    frame[o_y : o_y + new_height, o_x : o_x + new_width] = resized_roi
-    return frame
-
-
 def main():
     # Example usage:
     for sample, bounding_box in samples.items():
         image = cv2.imread(sample)
         points = extract_features_small(image, bounding_box)
         draw_features(image, points)
-
-        overlay_bbox_on_frame(image, bounding_box)
-
         cv2.imshow("Feature Points", image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
