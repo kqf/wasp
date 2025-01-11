@@ -10,8 +10,9 @@ class OverlayTracker:
 
     def update(self, frame):
         status, bbox = self.tracker.update(frame)
-        overlay_bbox(frame, bbox)
-        return status, bbox
+        ibox = list(map(int, bbox))
+        overlay_bbox(frame, ibox)
+        return status, ibox
 
 
 def overlay_bbox(frame, bbox, max_size=256, o_x=40, o_y=10):
