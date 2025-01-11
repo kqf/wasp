@@ -1,4 +1,5 @@
 import cv2
+from matplotlib.patches import draw_bbox
 
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.custom.plot import draw_bbox
@@ -31,7 +32,6 @@ def main():
         draw_bbox(xframe, bbox, (0, 255, 0))
         draw_bbox(xframe, label.to_tuple(), (255, 0, 0))
         draw_bbox(xframe, kfilter.predict(), (255, 0, 0))
-
         cv2.imshow("tracking", xframe)
         if cv2.waitKey() == 27:
             return
