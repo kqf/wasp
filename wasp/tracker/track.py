@@ -1,5 +1,4 @@
 import cv2
-from matplotlib.patches import draw_bbox
 
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.custom.plot import draw_bbox
