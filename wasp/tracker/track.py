@@ -1,7 +1,7 @@
 import cv2
 
 from wasp.tracker.capture import video_dataset
-from wasp.tracker.custom.plot import draw_bbox
+from wasp.tracker.custom.plot import OverlayTracker, draw_bbox
 from wasp.tracker.custom.tm import TemplateMatchingTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
@@ -22,7 +22,7 @@ def main():
         frame = cv2.cvtColor(xframe, cv2.COLOR_BGR2GRAY)
         if tracker is None:
             kfilter = KalmanFilter(label.to_tuple())
-            tracker = TemplateMatchingTracker()
+            tracker = OverlayTracker(TemplateMatchingTracker())
             tracker.init(frame, label.to_tuple())
 
         kfilter.correct(bbox)
