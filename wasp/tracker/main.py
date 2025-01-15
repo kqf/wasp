@@ -1,4 +1,5 @@
 import cv2
+from toolz import compose
 
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.color import GrayscaleTracker
@@ -22,11 +23,11 @@ def main():
     for i, (frame, label) in enumerate(frames):
         if tracker is None:
             kfilter = KalmanFilter(label.to_tuple())
-            tracker = OverlayTracker(
-                GrayscaleTracker(
-                    TemplateMatchingTracker(),
-                )
-            )
+            tracker = compose(
+                OverlayTracker,
+                GrayscaleTracker,
+                TemplateMatchingTracker,
+            )()
             tracker.init(frame, label.to_tuple())
 
         kfilter.correct(bbox)
