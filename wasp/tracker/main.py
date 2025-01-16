@@ -3,7 +3,11 @@ from toolz import compose
 
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.color import GrayscaleTracker
-from wasp.tracker.custom.plot import OverlayTracker, draw_bbox
+from wasp.tracker.custom.plot import (
+    OverlayTracker,
+    PlotInternalTracker,
+    draw_bbox,
+)
 from wasp.tracker.custom.tm import TemplateMatchingTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
@@ -26,6 +30,7 @@ def main():
             tracker = compose(
                 OverlayTracker,
                 GrayscaleTracker,
+                PlotInternalTracker,
                 TemplateMatchingTracker,
             )()
             tracker.init(frame, label.to_tuple())
