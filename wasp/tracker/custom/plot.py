@@ -15,6 +15,21 @@ class OverlayTracker:
         return status, ibox
 
 
+class PlotInternalTracker:
+    def __init__(self, tracker):
+        if not hasattr(tracker, "plot"):
+            raise RuntimeError("This tracker doen't implement plot method")
+        self.tracker = tracker
+
+    def init(self, frame, bbox):
+        self.tracker.init(frame, bbox)
+
+    def update(self, frame):
+        status, bbox = self.tracker.update(frame)
+        self.tracker.plot(frame)
+        return status, bbox
+
+
 def overlay_bbox(frame, bbox, max_size=256, o_x=40, o_y=10):
     x, y, w, h = bbox
     roi = frame[y : y + h, x : x + w]
