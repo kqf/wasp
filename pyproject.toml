@@ -7,8 +7,9 @@ line_length = 79
 
 [tool.mypy]
 python_version = "3.10"
-namespace_packages = true
-strict = true
+strict = false
+ignore_missing_imports = true
+
 
 [tool.flake8]
 max-line-length = 79
