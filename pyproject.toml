@@ -1,0 +1,32 @@
+[tool.black]
+line-length = 79
+
+[tool.isort]
+profile = "black"
+line_length = 79
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true
+
+
+[tool.flake8]
+max-line-length = 79
+ignore = [
+    "E203", # Whitespace before ':'
+    "W503", # Line break before binary operator
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wasp"
+version = "0.0.1"
+description = "Your project description"
+dependencies = []
+
+[project.scripts]
+wasp-track = "wasp.tracker.main:main"
