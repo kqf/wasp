@@ -28,7 +28,6 @@ def main():
             kfilter = KalmanFilter(label.to_tuple())
             tracker = compose(
                 OverlayTracker,
-                # GrayscaleTracker,
                 PlotInternalTracker,
                 TemplateMatchingTracker,
             )()
