@@ -2,7 +2,6 @@ import cv2
 from toolz import compose
 
 from wasp.tracker.capture import video_dataset
-from wasp.tracker.color import GrayscaleTracker
 from wasp.tracker.custom.plot import (
     OverlayTracker,
     PlotInternalTracker,
@@ -29,7 +28,7 @@ def main():
             kfilter = KalmanFilter(label.to_tuple())
             tracker = compose(
                 OverlayTracker,
-                GrayscaleTracker,
+                # GrayscaleTracker,
                 PlotInternalTracker,
                 TemplateMatchingTracker,
             )()
