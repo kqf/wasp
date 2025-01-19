@@ -64,8 +64,7 @@ class TemplateMatchingTracker:
         scale = min(max_size / w, max_size / h)
         new_width = int(w * scale)
         new_height = int(h * scale)
-        roi = cv2.cvtColor(self.template, cv2.COLOR_GRAY2BGR)
-        resized_roi = cv2.resize(roi, (new_width, new_height))
+        resized_roi = cv2.resize(self.template, (new_width, new_height))
         cv2.putText(
             resized_roi,
             f"score: {score:.2f}",
