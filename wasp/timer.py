@@ -26,3 +26,4 @@ class Timer:
 
     def __str__(self):
         return f"{self.label}: {self.mean():.4f}  +/- {self.std():.4f} seconds"
+
