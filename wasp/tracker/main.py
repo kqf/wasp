@@ -1,6 +1,7 @@
 import cv2
 from toolz import compose
 
+from wasp.timer import Timer
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.custom.plot import (
     OverlayTracker,
@@ -23,6 +24,7 @@ def main():
     bbox = segment.bbox
     tracker = None
     kfilter = None
+    timer = Timer()
     for i, (frame, label) in enumerate(frames):
         if tracker is None:
             kfilter = KalmanFilter(label.to_tuple())
@@ -34,7 +36,8 @@ def main():
             tracker.init(frame, label.to_tuple())
 
         kfilter.correct(bbox)
-        _, bbox = tracker.update(frame)
+        with timer():
+            _, bbox = tracker.update(frame)
 
         draw_bbox(frame, bbox, (0, 255, 0))
         draw_bbox(frame, label.to_tuple(), (255, 0, 0))
@@ -42,6 +45,7 @@ def main():
         cv2.imshow("tracking", frame)
         if cv2.waitKey() == 27:
             return
+    print(timer)
 
     cv2.destroyAllWindows()
 
