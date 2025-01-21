@@ -8,7 +8,7 @@ def wasp():
 
 
 @wasp.command()
-def tracker():
+def track():
     from wasp.tracker.main import main  # noqa
 
     main()
