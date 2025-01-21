@@ -29,4 +29,4 @@ description = "Your project description"
 dependencies = []
 
 [project.scripts]
-wasp-track = "wasp.tracker.main:main"
+wasp = "wasp.cli:wasp"
