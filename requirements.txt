@@ -20,3 +20,4 @@ toolz
 psutil
 gpumonitor
 dataclasses-json
+click
