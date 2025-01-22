@@ -32,6 +32,8 @@ class PlotInternalTracker:
 
 def overlay_bbox(frame, bbox, max_size=256, o_x=40, o_y=10):
     x, y, w, h = bbox
+    if w == 0 or h == 0:
+        return frame
     roi = frame[y : y + h, x : x + w]
     scale = min(max_size / w, max_size / h)
     n_w, n_h = int(w * scale), int(h * scale)
