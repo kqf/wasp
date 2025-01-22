@@ -3,12 +3,12 @@ from toolz import compose
 
 from wasp.timer import Timer
 from wasp.tracker.capture import video_dataset
-from wasp.tracker.custom.plot import (
+from wasp.tracker.custom.plot import (  # PlotInternalTracker,
     OverlayTracker,
-    PlotInternalTracker,
     draw_bbox,
 )
-from wasp.tracker.custom.tm import TemplateMatchingTracker
+
+# from wasp.tracker.custom.tm import TemplateMatchingTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
@@ -30,8 +30,7 @@ def main():
             kfilter = KalmanFilter(label.to_tuple())
             tracker = compose(
                 OverlayTracker,
-                PlotInternalTracker,
-                TemplateMatchingTracker,
+                cv2.legacy.TrackerKCF_create,
             )()
             tracker.init(frame, label.to_tuple())
 
