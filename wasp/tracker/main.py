@@ -13,6 +13,12 @@ from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
 
+def build_tracker() -> cv2.Tracker:
+    params = cv2.TrackerMIL.Params()
+    params.samplerTrackInRadius = 10
+    return cv2.TrackerMIL.create(params)
+
+
 def main():
     segment = load_segments("wasp/tracker/segments.json")["sky"]
     frames = video_dataset(
@@ -31,6 +37,7 @@ def main():
             tracker = compose(
                 OverlayTracker,
                 cv2.legacy.TrackerMIL_create,
+                build_tracker(),
             )()
             tracker.init(frame, label.to_tuple())
 
