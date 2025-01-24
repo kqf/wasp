@@ -25,7 +25,7 @@ def build_tracker(
     params.samplerSearchWinSize = samplerSearchWinSize
     params.samplerTrackInRadius = samplerTrackInRadius
     params.samplerTrackMaxNegNum = samplerTrackMaxNegNum
-    params.samplerTrackMaxPosNum = samplerTrackMaxNegNum
+    params.samplerTrackMaxPosNum = samplerTrackMaxPosNum
     return cv2.TrackerMIL.create(params)
 
 
