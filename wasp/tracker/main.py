@@ -13,9 +13,19 @@ from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
 
-def build_tracker() -> cv2.Tracker:
+def build_tracker(
+    featureSetNumFeatures=250,
+    samplerSearchWinSize=25.0,
+    samplerTrackInRadius=4.0,
+    samplerTrackMaxNegNum=65,
+    samplerTrackMaxPosNum=100000,
+) -> cv2.Tracker:
     params = cv2.TrackerMIL.Params()
-    params.samplerTrackInRadius = 10
+    params.featureSetNumFeatures = featureSetNumFeatures
+    params.samplerSearchWinSize = samplerSearchWinSize
+    params.samplerTrackInRadius = samplerTrackInRadius
+    params.samplerTrackMaxNegNum = samplerTrackMaxNegNum
+    params.samplerTrackMaxPosNum = samplerTrackMaxNegNum
     return cv2.TrackerMIL.create(params)
 
 
