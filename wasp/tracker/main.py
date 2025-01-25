@@ -46,8 +46,7 @@ def main():
             kfilter = KalmanFilter(label.to_tuple())
             tracker = compose(
                 OverlayTracker,
-                cv2.legacy.TrackerMIL_create,
-                build_tracker(),
+                build_tracker,
             )()
             tracker.init(frame, label.to_tuple())
 
