@@ -3,6 +3,7 @@ from toolz import compose
 
 from wasp.timer import Timer
 from wasp.tracker.capture import video_dataset
+from wasp.tracker.color import GrayscaleTracker
 from wasp.tracker.custom.plot import (  # PlotInternalTracker,
     OverlayTracker,
     draw_bbox,
@@ -46,6 +47,7 @@ def main():
             kfilter = KalmanFilter(label.to_tuple())
             tracker = compose(
                 OverlayTracker,
+                GrayscaleTracker,
                 build_tracker,
             )()
             tracker.init(frame, label.to_tuple())
