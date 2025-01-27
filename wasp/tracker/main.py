@@ -19,7 +19,7 @@ def build_tracker(
     samplerSearchWinSize=25.0,
     samplerTrackInRadius=4.0,
     samplerTrackMaxNegNum=65,
-    samplerTrackMaxPosNum=25_000,
+    samplerTrackMaxPosNum=15_000,
 ) -> cv2.Tracker:
     params = cv2.TrackerMIL.Params()
     params.featureSetNumFeatures = featureSetNumFeatures
