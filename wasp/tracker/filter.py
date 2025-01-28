@@ -72,34 +72,3 @@ class KalmanFilter:
         self.prev_x, self.prev_y = x, y
 
         return x, y, self.w, self.h
-
-
-class ExtendedKalmanFilter(KalmanFilter):
-    def predict(self, dt=1.0):
-        # Nonlinear motion model (example: curvilinear motion)
-        x, y, dx, dy = self.kf.statePost.flatten()
-
-        # Example of a nonlinear update: curvilinear or sinusoidal motion
-        new_x = x + dx * dt
-        new_y = y + dy * dt  # nonlinear terms here, e.g., curvature
-        new_dx = dx  # Modify for acceleration or other dynamics
-        new_dy = dy  # Modify for acceleration or other dynamics
-
-        self.kf.transitionMatrix = np.array(
-            [
-                [1, 0, dt, 0],
-                [0, 1, 0, dt],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1],
-            ],
-            np.float32,
-        )
-
-        # Update the state with the nonlinear model
-        self.kf.statePre = np.array(
-            [[new_x], [new_y], [new_dx], [new_dy]],
-            np.float32,
-        )
-
-        # Call the base class predict method to proceed with prediction
-        return super().predict()
