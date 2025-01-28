@@ -45,7 +45,7 @@ def model() -> SCRFD:
 )
 def test_srfd_inferencd(model: SCRFD, image: np.ndarray):
     scores, boxes, keypoints = model.detect(image, max_num=0)
-    # visualize(image, boxes[0], keypoints[0])
+    visualize(image, boxes[0], keypoints[0])
 
     assert boxes.shape == (1, 1, 4)
     assert keypoints.shape == (1, 1, 5, 2)
