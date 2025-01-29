@@ -50,7 +50,6 @@ def calculate_search_area(frame, last_position, n=3):
 def select_good_matches(
     descriptors1,
     descriptors2,
-    ratio_threshold=0.75,
 ):
     bf_matcher = cv2.BFMatcher()
     matches = bf_matcher.knnMatch(descriptors1, descriptors2, k=2)
