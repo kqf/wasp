@@ -120,7 +120,6 @@ class RetinaFace(nn.Module):
     def __init__(
         self,
         name: str,
-        pretrained: bool,
         return_layers: Dict[str, int],
         out_channels: int,
         in_channels: Optional[list[int]] = None,
