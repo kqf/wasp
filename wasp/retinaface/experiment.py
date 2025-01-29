@@ -26,7 +26,6 @@ def main():
     resolution = (768, 768)
     model = RetinaFace(
         name="Resnet50",
-        pretrained=True,
         return_layers={
             "layer2": 1,
             "layer3": 2,

@@ -47,7 +47,6 @@ def test_retinaface(
 ):
     model = RetinaFace(
         name=name,
-        pretrained=False,
         return_layers=return_layers,
         in_channels=in_channels,
         out_channels=256,
