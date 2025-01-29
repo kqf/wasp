@@ -213,5 +213,3 @@ class SIFTTracker:
         self.prev_frame = frame
 
         return True, self.last_position
-        return True, self.last_position
-        return True, self.last_position
