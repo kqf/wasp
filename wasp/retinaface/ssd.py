@@ -1,7 +1,6 @@
 from functools import partial
 
 import torch
-import torchvision
 import tqdm
 from environs import Env
 from torch.utils.data import DataLoader
@@ -19,17 +18,6 @@ from torchvision.models.detection.ssdlite import (
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 from wasp.retinaface.preprocess import compose, normalize, preprocess
-
-
-# Transformations adjusted for 640x640 images
-def get_transform(train):
-    transforms = [
-        torchvision.transforms.Resize((640, 480)),
-        torchvision.transforms.ToTensor(),
-    ]
-    if train:
-        transforms.append(torchvision.transforms.RandomHorizontalFlip(0.5))
-    return torchvision.transforms.Compose(transforms)
 
 
 class SSDPureHead(torch.nn.Module):
