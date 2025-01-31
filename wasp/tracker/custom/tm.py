@@ -73,7 +73,7 @@ class TemplateMatchingTracker:
             (0, 255, 0),
             4,
         )
-        fh, fw = frame.shape[:2]
+        fh, _ = frame.shape[:2]
         o_y = fh - n_h - 10
         frame[o_y : o_y + n_h, o_x : o_x + n_w] = resized_roi
         return frame
