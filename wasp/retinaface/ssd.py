@@ -174,19 +174,6 @@ class SSDPure(torch.nn.Module):
         return self.head(features)
 
 
-def vis_outputs(images, boxes):
-    import cv2
-
-    from wasp.retinaface.data import Annotation
-    from wasp.retinaface.visualize.plot import plot, to_image
-
-    vis = plot(
-        image=to_image(images[-1]),
-        annotations=[Annotation(bbox, ()) for bbox in boxes],
-    )
-    cv2.imwrite("debug.jpg", vis)
-
-
 def load_with_mismatch(model, pretrained_state_dict):
     def repeat(pretrained_param, model_param):
         if pretrained_param.shape == model_param.shape:
