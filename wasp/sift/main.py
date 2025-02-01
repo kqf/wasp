@@ -9,7 +9,7 @@ def dump_database(output: str, descriptors) -> None:
     np.savez_compressed(output, descriptors=descriptors)
 
 
-def create_feature_database(impath: str) -> list[np.ndarray]:
+def build_features(impath: str) -> list[np.ndarray]:
     path = Path(impath)
     sift = cv2.SIFT_create()
 
@@ -81,7 +81,18 @@ def visualize_detections(
 
 
 def main():
-    pass
+    stacked_databases = {
+        "A": build_features("./A"),
+        "B": build_features("./B"),
+        "C": build_features("./C"),
+    }
+
+    input_image = cv2.imread("test_image.jpg", cv2.IMREAD_GRAYSCALE)
+    detections = detect_objects(input_image, stacked_databases)
+    # Visualize and save
+    output_image = visualize_detections(input_image, detections)
+    cv2.imshow(output_image)
+    cv2.waitKey()
 
 
 if __name__ == "__main__":
