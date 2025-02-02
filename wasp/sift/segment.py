@@ -7,7 +7,7 @@ from torchvision import models, transforms
 
 
 def load_image(image_path):
-    return cv2.imread(image_path)
+    return cv2.imread(str(image_path))
 
 
 def load_model():
@@ -33,14 +33,20 @@ def infer(image, model):
     return output.argmax(0).byte().cpu().numpy()
 
 
+def expand_mask(mask, kernel_size=5):
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    return cv2.dilate(mask.astype(np.uint8), kernel, iterations=1)
+
+
 def save_mask(output_predictions, output_path):
     np.save(output_path, output_predictions)
 
 
-def display_images(original_image, output_predictions):
-    num_classes = output_predictions.max() + 1
+def display_images(original_image, expanded_mask):
+    num_classes = expanded_mask.max() + 1
     colors = np.random.randint(0, 255, size=(num_classes, 3), dtype=np.uint8)
-    colored_mask = colors[output_predictions]
+
+    colored_mask = colors[expanded_mask]
     colored_mask_cv = cv2.resize(
         colored_mask, (original_image.shape[1], original_image.shape[0])
     )
@@ -53,11 +59,13 @@ def display_images(original_image, output_predictions):
 
 def main():
     model = load_model()
-    for file in Path("datasets/a").glob("*.jpg"):
+    path = Path("datasets/a")
+    for file in path.glob("*.jpg"):
         image = load_image(file)
         predictions = infer(image, model)
-        save_mask(predictions, file.with_suffix(".npy"))
-        display_images(image, predictions)
+        expanded_predictions = expand_mask(predictions, kernel_size=10)
+        save_mask(expanded_predictions.clip(0, 1), file.with_suffix(".npy"))
+        display_images(image, expanded_predictions)
 
 
 if __name__ == "__main__":

@@ -11,12 +11,15 @@ def dump_database(output: str, descriptors) -> None:
 
 def build_features(impath: str) -> list[np.ndarray]:
     path = Path(impath)
-    sift = cv2.SIFT_create()
+    sift = cv2.SIFT_create(contrastThreshold=0.04)
 
     db = []
     for file in path.glob("*.jpg"):
         image = cv2.imread(str(file), cv2.IMREAD_GRAYSCALE)
-        _, descriptors = sift.detectAndCompute(image, None)
+        mask = np.load(file.with_suffix(".npy"))
+        if "4.jpg" in str(file):
+            continue
+        _, descriptors = sift.detectAndCompute(image, mask)
         if descriptors is not None:
             db.append(descriptors)
 
@@ -37,7 +40,7 @@ def detect_objects(
     match_threshold: int = 30,
 ) -> list[Detection]:
 
-    sift = cv2.SIFT_create()
+    sift = cv2.SIFT_create(contrastThreshold=0.04)
     matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 
     keypoints, descriptors = sift.detectAndCompute(input_image, None)
@@ -88,7 +91,7 @@ def main():
     }
 
     # Prepare the output folder
-    outpath = Path("datasets/test/v0-vanilla-SIFT")
+    outpath = Path("datasets/test/v1-SIFT-masks")
     outpath.mkdir(parents=True, exist_ok=True)
 
     for file in Path("datasets/test").glob("*.jpg"):
