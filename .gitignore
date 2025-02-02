@@ -6,6 +6,9 @@
 *.json
 wider
 *.jpg
+*.npy
+*.avif
+*.webp
 
 # Tools
 .git/
