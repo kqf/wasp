@@ -82,16 +82,16 @@ def visualize_detections(
 
 def main():
     stacked_databases = {
-        "A": build_features("./A"),
-        "B": build_features("./B"),
-        "C": build_features("./C"),
+        "A": build_features("./datasets/a/"),
+        # "B": build_features("./B"),
+        # "C": build_features("./C"),
     }
 
-    input_image = cv2.imread("test_image.jpg", cv2.IMREAD_GRAYSCALE)
+    input_image = cv2.imread("./datasets/test/6.jpg", cv2.IMREAD_GRAYSCALE)
     detections = detect_objects(input_image, stacked_databases)
     # Visualize and save
     output_image = visualize_detections(input_image, detections)
-    cv2.imshow(output_image)
+    cv2.imshow("output", output_image)
     cv2.waitKey()
 
 
