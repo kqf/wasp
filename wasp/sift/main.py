@@ -14,7 +14,7 @@ def build_features(impath: str) -> list[np.ndarray]:
     sift = cv2.SIFT_create()
 
     db = []
-    for file in path.glob("*"):
+    for file in path.glob("*.jpg"):
         image = cv2.imread(str(file), cv2.IMREAD_GRAYSCALE)
         _, descriptors = sift.detectAndCompute(image, None)
         if descriptors is not None:
@@ -87,12 +87,19 @@ def main():
         # "C": build_features("./C"),
     }
 
-    input_image = cv2.imread("./datasets/test/6.jpg", cv2.IMREAD_GRAYSCALE)
-    detections = detect_objects(input_image, stacked_databases)
-    # Visualize and save
-    output_image = visualize_detections(input_image, detections)
-    cv2.imshow("output", output_image)
-    cv2.waitKey()
+    # Prepare the output folder
+    outpath = Path("datasets/test/v0-vanilla-SIFT")
+    outpath.mkdir(parents=True, exist_ok=True)
+
+    for file in Path("datasets/test").glob("*.jpg"):
+        image = cv2.imread(str(file), cv2.IMREAD_GRAYSCALE)
+        detections = detect_objects(image, stacked_databases)
+        # Visualize and save
+        annotated = visualize_detections(image, detections)
+
+        cv2.imwrite(str(outpath / file.name), annotated)
+        cv2.imshow("output", annotated)
+        cv2.waitKey()
 
 
 if __name__ == "__main__":
