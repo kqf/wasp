@@ -49,7 +49,7 @@ def main():
 
         priors = priorbox(
             min_sizes=[[resolution[0] // 8]],
-            steps=[32],
+            steps=[8],
             clip=True,
             image_size=resolution,
         )
