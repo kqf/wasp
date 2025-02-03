@@ -44,19 +44,16 @@ def main():
     for resolution in resolutions:
         image = np.random.randint(0, 256, (*resolution, 3), dtype=np.uint8)
 
-        # Get feature maps
-        features = model(to_blob(x))
+        features = model(to_blob(image))
         print(f"Feature map shape for {resolution}: {features.shape}")
 
-        # Generate prior boxes
         priors = priorbox(
-            min_sizes=[
-                [resolution[0] // 8, resolution[0] // 4, resolution[0] // 2]
-            ],
+            min_sizes=[[resolution[0] // 8]],
             steps=[32],
             clip=True,
             image_size=resolution,
         )
+        print(priors.shape)
 
         # Plot using OpenCV
         plot(image, priors)
