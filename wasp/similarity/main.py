@@ -8,7 +8,7 @@ from wasp.retinaface.priors import priorbox
 
 
 class BboxHead(torch.nn.Module):
-    def __init__(self, in_channels: int = 512, num_anchors: int = 3):
+    def __init__(self, in_channels: int = 512, num_anchors: int = 1):
         super().__init__()
         self.conv1x1 = torch.nn.Conv2d(
             in_channels,
@@ -29,9 +29,11 @@ class ResNet50Backbone(torch.nn.Module):
         super().__init__()
         resnet = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
         self.backbone = torch.nn.Sequential(*list(resnet.children())[:-2])
+        self.head = BboxHead(2048, 1)
 
     def forward(self, x):
-        return self.backbone(x)
+        return self.head(self.backbone(x))
+
 
 
 def plot(image: np.ndarray, priors: torch.Tensor):
