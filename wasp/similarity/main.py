@@ -35,6 +35,7 @@ class ResNet50Backbone(torch.nn.Module):
         return self.head(self.backbone(x))
 
 
+
 def plot(image: np.ndarray, priors: torch.Tensor):
     h, w = image.shape[:2]
 
