@@ -90,6 +90,9 @@ def main():
         # "C": build_features("./C"),
     }
 
+    for name, base in stacked_databases.items():
+        dump_database(f"database-{name}.npy", base)
+
     # Prepare the output folder
     outpath = Path("datasets/test/v1-SIFT-masks")
     outpath.mkdir(parents=True, exist_ok=True)
