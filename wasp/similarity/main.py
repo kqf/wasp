@@ -28,6 +28,7 @@ class ResNet50Backbone(torch.nn.Module):
     def __init__(self):
         super().__init__()
         resnet = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+
         self.backbone = torch.nn.Sequential(*list(resnet.children())[:-2])
         self.head = BboxHead(2048, 1)
 
