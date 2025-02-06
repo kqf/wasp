@@ -34,16 +34,17 @@ def expand_mask(predictions, kernel_size=10):
     masks = (masks > 0.5).astype(np.uint8)
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
     expanded_masks = [cv2.dilate(mask, kernel, iterations=1) for mask in masks]
-    return np.array(expanded_masks)
+    predictions["masks_dilated"] = torch.Tensor(expanded_masks).unsqueeze(0)
+    return predictions
 
 
 def save_mask(mask, output_path):
     np.save(output_path, mask)
 
 
-def display_images(image, mask):
+def display_images(image, predictions):
     mask_overlay = np.zeros_like(image, dtype=np.uint8)
-    for m in mask:
+    for m in predictions["masks"]:
         color = np.random.randint(0, 255, (1, 3), dtype=np.uint8).tolist()[0]
         for i in range(3):
             mask_overlay[:, :, i] = np.where(
@@ -64,7 +65,10 @@ def main():
         image_tensor, image = load_image(file)
         predictions = infer(image_tensor, model)
         expanded_predictions = expand_mask(predictions, kernel_size=10)
-        save_mask(expanded_predictions.clip(0, 1), file.with_suffix(".npy"))
+        save_mask(
+            expanded_predictions["masks_dilated"].clip(0, 1),
+            file.with_suffix(".npy"),
+        )
         display_images(image, expanded_predictions)
 
 
