@@ -9,7 +9,7 @@ import torchvision.transforms as T
 
 def load_model():
     weights = (
-        torchvision.models.detection.MaskRCNN_ResNet50_FPN_V2_Weights.DEFAULT
+        torchvision.models.detection.MaskRCNN_ResNet50_FPN_Weights.DEFAULT
     )
     model = torchvision.models.detection.maskrcnn_resnet50_fpn(weights=weights)
     model.eval()
