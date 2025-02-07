@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import cv2
@@ -5,6 +6,14 @@ import numpy as np
 import torch
 import torchvision
 import torchvision.transforms as T
+
+
+@dataclass
+class MaskRCNNOutput:
+    masks: torch.Tensor
+    labels: torch.Tensor
+    scores: torch.Tensor
+    masks_dilated: torch.Tensor = None
 
 
 def load_model():
@@ -23,28 +32,36 @@ def load_image(image_path):
     return transform(image).unsqueeze(0), image
 
 
-def infer(image_tensor, model):
+def infer(image_tensor, model) -> MaskRCNNOutput:
     with torch.no_grad():
         predictions = model(image_tensor)[0]
-    return predictions
+    return MaskRCNNOutput(
+        masks=predictions["masks"],
+        labels=predictions["labels"],
+        scores=predictions["scores"],
+    )
 
 
-def expand_mask(predictions, kernel_size=10):
-    masks = predictions["masks"].squeeze(1).detach().cpu().numpy()
+def expand_mask(predictions: MaskRCNNOutput, kernel_size=10) -> MaskRCNNOutput:
+    masks = predictions.masks.squeeze(1).detach().cpu().numpy()
     masks = (masks > 0.5).astype(np.uint8)
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
     expanded_masks = [cv2.dilate(mask, kernel, iterations=1) for mask in masks]
-    predictions["masks_dilated"] = torch.Tensor(expanded_masks).unsqueeze(0)
-    return predictions
+    return MaskRCNNOutput(
+        masks=predictions.masks,
+        labels=predictions.labels,
+        scores=predictions.scores,
+        masks_dilated=torch.Tensor(expanded_masks).unsqueeze(1),
+    )
 
 
 def save_mask(mask, output_path):
-    np.save(output_path, mask)
+    np.save(output_path, mask.cpu().numpy())
 
 
-def display_images(image, predictions):
+def display_images(image, predictions: MaskRCNNOutput):
     mask_overlay = np.zeros_like(image, dtype=np.uint8)
-    for m in predictions["masks"]:
+    for m in predictions.masks_dilated.squeeze(1).detach().cpu().numpy():
         color = np.random.randint(0, 255, (1, 3), dtype=np.uint8).tolist()[0]
         for i in range(3):
             mask_overlay[:, :, i] = np.where(
@@ -65,10 +82,7 @@ def main():
         image_tensor, image = load_image(file)
         predictions = infer(image_tensor, model)
         expanded_predictions = expand_mask(predictions, kernel_size=10)
-        save_mask(
-            expanded_predictions["masks_dilated"].clip(0, 1),
-            file.with_suffix(".npy"),
-        )
+        save_mask(expanded_predictions.masks_dilated, file.with_suffix(".npy"))
         display_images(image, expanded_predictions)
 
 
