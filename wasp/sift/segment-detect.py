@@ -13,6 +13,7 @@ class MaskRCNNOutput:
     masks: torch.Tensor
     labels: torch.Tensor
     scores: torch.Tensor
+    boxes: torch.Tensor
     masks_dilated: torch.Tensor = None
 
 
@@ -39,6 +40,7 @@ def infer(image_tensor, model) -> MaskRCNNOutput:
         masks=predictions["masks"],
         labels=predictions["labels"],
         scores=predictions["scores"],
+        boxes=predictions["boxes"],
     )
 
 
@@ -51,6 +53,7 @@ def expand_mask(predictions: MaskRCNNOutput, kernel_size=10) -> MaskRCNNOutput:
         masks=predictions.masks,
         labels=predictions.labels,
         scores=predictions.scores,
+        boxes=predictions.boxes,
         masks_dilated=torch.Tensor(expanded_masks).unsqueeze(1),
     )
 
@@ -68,6 +71,9 @@ def display_images(image, predictions: MaskRCNNOutput):
                 m > 0, color[i], mask_overlay[:, :, i]
             )
     blended = cv2.addWeighted(image, 1.0, mask_overlay, 0.5, 0)
+    for box in predictions.boxes.detach().cpu().numpy():
+        x1, y1, x2, y2 = map(int, box)
+        cv2.rectangle(blended, (x1, y1), (x2, y2), (0, 255, 0), 2)
     cv2.imshow(
         "Mask R-CNN Inference", cv2.cvtColor(blended, cv2.COLOR_RGB2BGR)
     )
