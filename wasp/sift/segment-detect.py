@@ -71,7 +71,10 @@ def display_images(image, predictions: MaskRCNNOutput):
                 m > 0, color[i], mask_overlay[:, :, i]
             )
     blended = cv2.addWeighted(image, 1.0, mask_overlay, 0.5, 0)
-    for box in predictions.boxes.detach().cpu().numpy():
+    for i, box in enumerate(predictions.boxes.detach().cpu().numpy()):
+        if predictions.scores[i] < 0.8:
+            continue
+        print(predictions.scores[i])
         x1, y1, x2, y2 = map(int, box)
         cv2.rectangle(blended, (x1, y1), (x2, y2), (0, 255, 0), 2)
     cv2.imshow(
