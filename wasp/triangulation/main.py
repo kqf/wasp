@@ -6,6 +6,7 @@ from typing import Generator, Tuple
 import cv2
 import numpy as np
 from dataclasses_json import dataclass_json
+from uncertainties import ufloat
 
 
 def iterate(
@@ -99,6 +100,28 @@ def find_match(
     return match_x, match_y, w, h
 
 
+def compute_distance(
+    lbbox,
+    rbbox,
+    focal_length,
+    focal_error=0,
+    baseline=0,
+    baseline_error=0,
+    disparity_error=0.0,
+):
+    x_left = lbbox[0] + lbbox[2] / 2
+    x_right = rbbox[0] + rbbox[2] / 2
+    disparity = ufloat(abs(x_left - x_right), disparity_error)
+
+    if disparity.nominal_value <= 0:
+        raise ValueError("Disparity is zero or negative!")
+
+    f = ufloat(focal_length, focal_error)
+    B = ufloat(baseline, baseline_error)
+
+    return (f * B) / disparity
+
+
 def main():
     sample = load_sample("datasets/distances/samples.json")
     tracker = cv2.TrackerCSRT_create()
@@ -123,6 +146,8 @@ def main():
         rbbox = find_match(limage, rimage, lbbox)
         rimage = draw_bbox(rimage, rbbox)
         rimage = draw_overlay(rimage, rbbox)
+
+        print(compute_distance(lbbox, rbbox, 1632, 0, baseline=0.002))
 
         cv2.imshow("Left Frame", np.hstack((limage, rimage)))
 

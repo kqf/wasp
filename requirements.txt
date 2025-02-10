@@ -22,3 +22,4 @@ gpumonitor
 dataclasses-json
 click
 timm
+uncertainties
