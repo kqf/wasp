@@ -55,27 +55,76 @@ def draw_bbox(image: np.ndarray, bbox: Tuple[float, float, float, float]):
     return image
 
 
+def draw_overlay(
+    image: np.ndarray,
+    bbox: Tuple[float, float, float, float],
+    scale_factor: int = 3,
+):
+    x, y, w, h = map(int, bbox)
+    patch = image[y : y + h, x : x + w]
+    if patch.size > 0:
+        enlarged_patch = cv2.resize(
+            patch,
+            (w * scale_factor, h * scale_factor),
+            interpolation=cv2.INTER_LINEAR,
+        )
+
+        h_img, w_img, _ = image.shape
+        patch_h, patch_w, _ = enlarged_patch.shape
+        y_offset = h_img - patch_h - 10
+        x_offset = w_img - patch_w - 10
+
+        image[
+            y_offset : y_offset + patch_h, x_offset : x_offset + patch_w
+        ] = enlarged_patch
+
+    return image
+
+
+def find_match(
+    limage: np.ndarray,
+    rimage: np.ndarray,
+    bbox: Tuple[float, float, float, float],
+) -> Tuple[float, float, float, float]:
+    x, y, w, h = map(int, bbox)
+    template = limage[y : y + h, x : x + w]
+
+    if template.size == 0:
+        raise RuntimeError("Got the empty template size")
+
+    res = cv2.matchTemplate(rimage, template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+    match_x, match_y = max_loc
+    return match_x, match_y, w, h
+
+
 def main():
     sample = load_sample("datasets/distances/samples.json")
     tracker = cv2.TrackerCSRT_create()
-    bbox = sample.bbox
+    loriginal = sample.bbox
 
     for limage, rimage in iterate(sample.name):
-        if bbox is not None:
+        if loriginal is not None:
             # bbox = cv2.selectROI(
             #     "Select ROI",
             #     limage,
             #     fromCenter=False,
             #     showCrosshair=True,
             # )
-            print(bbox)
-            tracker.init(limage, list(map(int, bbox)))
-            bbox = None
+            print(loriginal)
+            tracker.init(limage, list(map(int, loriginal)))
+            loriginal = None
 
-        success, new_bbox = tracker.update(limage)
+        success, lbbox = tracker.update(limage)
 
-        limage = draw_bbox(limage, new_bbox)
-        cv2.imshow("Left Frame", limage)
+        limage = draw_bbox(limage, lbbox)
+        limage = draw_overlay(limage, lbbox)
+        rbbox = find_match(limage, rimage, lbbox)
+        rimage = draw_bbox(rimage, rbbox)
+        rimage = draw_overlay(rimage, rbbox)
+
+        cv2.imshow("Left Frame", np.hstack((limage, rimage)))
         # cv2.imshow("Right Frame", rimage)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
