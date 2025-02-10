@@ -27,6 +27,7 @@ lightning_logs
 *.ckpt
 *.mov
 *.mp4
+datasets/distances/
 
 # Include
 !requirements.txt
