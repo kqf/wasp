@@ -125,7 +125,6 @@ def main():
         rimage = draw_overlay(rimage, rbbox)
 
         cv2.imshow("Left Frame", np.hstack((limage, rimage)))
-        # cv2.imshow("Right Frame", rimage)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
