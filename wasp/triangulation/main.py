@@ -50,7 +50,9 @@ def draw_bbox(image: np.ndarray, bbox: Tuple[float, float, float, float]):
     x, y, w, h = map(int, bbox)
     cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
     center = (x + w // 2, y + h // 2)
-    cv2.circle(image, center, 3, (0, 0, 255), -1)
+    cv2.circle(image, center, 3, (0, 255, 0), -1)
+    cv2.circle(image, center, max(w, h) // 8, (0, 255, 0), 2)
+    return image
 
 
 def main():
@@ -60,14 +62,21 @@ def main():
 
     for limage, rimage in iterate(sample.name):
         if bbox is not None:
-            tracker.init(limage, bbox)
+            # bbox = cv2.selectROI(
+            #     "Select ROI",
+            #     limage,
+            #     fromCenter=False,
+            #     showCrosshair=True,
+            # )
+            print(bbox)
+            tracker.init(limage, list(map(int, bbox)))
             bbox = None
 
         success, new_bbox = tracker.update(limage)
 
-        draw_bbox(limage, new_bbox)
+        limage = draw_bbox(limage, new_bbox)
         cv2.imshow("Left Frame", limage)
-        cv2.imshow("Right Frame", rimage)
+        # cv2.imshow("Right Frame", rimage)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
