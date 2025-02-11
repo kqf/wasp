@@ -121,7 +121,6 @@ def compute_distance(
 
     return (f * B) / disparity
 
-
 def main():
     sample = load_sample("datasets/distances/samples.json")
     tracker = cv2.TrackerCSRT_create()
@@ -148,7 +147,6 @@ def main():
         rimage = draw_overlay(rimage, rbbox)
 
         print(compute_distance(lbbox, rbbox, 1632, 0, baseline=0.002))
-
         cv2.imshow("Left Frame", np.hstack((limage, rimage)))
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
