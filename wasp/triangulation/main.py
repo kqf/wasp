@@ -208,7 +208,6 @@ def main():
             dist_vertical_disparity,
             dist / sample.meters,
         )
-        break
 
         cv2.imshow("Left Frame", np.hstack((limage, rimage)))
         if cv2.waitKey(1) & 0xFF == ord("q"):
