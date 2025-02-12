@@ -40,17 +40,27 @@ class VideoSample:
     distance: float
     bbox: tuple[float, float, float, float]
 
+    @property
+    def meters(self) -> float:
+        # Convert distance in inches to meters
+        return self.distance * 0.0254
 
-def load_sample(filename: str) -> VideoSample:
+
+def load_sample(filename: str) -> list[VideoSample]:
     with open(filename, "r") as json_file:
         data = json.load(json_file)
-    return VideoSample.from_dict(data)  # type: ignore
+    return [VideoSample.from_dict(sample) for sample in data]  # type: ignore
+
+
+def bcenter(bbox: Tuple[float, float, float, float]) -> Tuple[float, float]:
+    x, y, w, h = bbox
+    return x + w / 2, y + h / 2
 
 
 def draw_bbox(image: np.ndarray, bbox: Tuple[float, float, float, float]):
     x, y, w, h = map(int, bbox)
     cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    center = (x + w // 2, y + h // 2)
+    center = tuple(map(int, bcenter(bbox)))
     cv2.circle(image, center, 3, (0, 255, 0), -1)
     cv2.circle(image, center, max(w, h) // 8, (0, 255, 0), 2)
     return image
@@ -94,52 +104,66 @@ def find_match(
         raise RuntimeError("Got the empty template size")
 
     res = cv2.matchTemplate(rimage, template, cv2.TM_CCOEFF_NORMED)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+    _, _, _, max_loc = cv2.minMaxLoc(res)
 
     match_x, match_y = max_loc
     return match_x, match_y, w, h
 
 
 def compute_distance(
-    lbbox,
-    rbbox,
+    lpoint: tuple[float, float],
+    rpoint: tuple[float, float],
     focal_length,
     focal_error=0,
     baseline=0,
     baseline_error=0,
     disparity_error=0.0,
 ):
-    x_left = lbbox[0] + lbbox[2] / 2
-    x_right = rbbox[0] + rbbox[2] / 2
-    disparity = ufloat(abs(x_left - x_right), disparity_error)
-
+    disparity = ufloat(abs(lpoint[0] - rpoint[0]), disparity_error)
     if disparity.nominal_value <= 0:
         raise ValueError("Disparity is zero or negative!")
 
     f = ufloat(focal_length, focal_error)
     B = ufloat(baseline, baseline_error)
+    return (f * B) / disparity
 
+
+def compute_distance_acc(
+    lpoint: tuple[float, float],
+    rpoint: tuple[float, float],
+    focal_length,
+    focal_error=0,
+    baseline=1.0,
+    baseline_error=0,
+    disparity_error=0.0,
+):
+    disparity_x = ufloat(lpoint[0] - rpoint[0], disparity_error)
+    disparity_y = ufloat(lpoint[1] - rpoint[1], disparity_error)
+    disparity = (disparity_x**2 + disparity_y**2) ** 0.5
+
+    if disparity_x.nominal_value <= 0:
+        raise ValueError(
+            "Horizontal disparity is zero or negative! Check camera setup."
+        )
+
+    f = ufloat(focal_length, focal_error)
+    B = ufloat(baseline, baseline_error)
     return (f * B) / disparity
 
 
 def main():
-    sample = load_sample("datasets/distances/samples.json")
-    tracker = cv2.TrackerCSRT_create()
+    sample = load_sample("datasets/triangulation/samples.json")[0]
+    tracker = cv2.TrackerMIL.create()
     loriginal = sample.bbox
 
     for limage, rimage in iterate(sample.name):
         if loriginal is not None:
-            # bbox = cv2.selectROI(
-            #     "Select ROI",
-            #     limage,
-            #     fromCenter=False,
-            #     showCrosshair=True,
-            # )
-            print(loriginal)
             tracker.init(limage, list(map(int, loriginal)))
             loriginal = None
 
         success, lbbox = tracker.update(limage)
+        if not success:
+            continue
 
         limage = draw_bbox(limage, lbbox)
         limage = draw_overlay(limage, lbbox)
@@ -147,9 +171,45 @@ def main():
         rimage = draw_bbox(rimage, rbbox)
         rimage = draw_overlay(rimage, rbbox)
 
-        print(compute_distance(lbbox, rbbox, 1632, 0, baseline=0.025))
-        cv2.imshow("Left Frame", np.hstack((limage, rimage)))
+        lcetner = bcenter(lbbox)
+        rcenter = bcenter(rbbox)
 
+        print("Frame shape:", limage.shape)
+        print("Points", lcetner, rcenter)
+        print(
+            "Actual distance",
+            sample.distance,
+            "in inches",
+            sample.meters,
+            "meters",
+        )
+
+        # baseline is 45 mm
+        dist = compute_distance(
+            lcetner,
+            rcenter,
+            focal_length=1765.3463,
+            focal_error=1,
+            baseline=0.025,
+            baseline_error=0.0001,
+        )
+        dist_vertical_disparity = compute_distance_acc(
+            lcetner,
+            rcenter,
+            focal_length=1765.3463,
+            focal_error=1,
+            baseline=0.025,
+            baseline_error=0.0001,
+        )
+
+        print(
+            sample.meters,
+            dist,
+            dist_vertical_disparity,
+            dist / sample.meters,
+        )
+
+        cv2.imshow("Left Frame", np.hstack((limage, rimage)))
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
