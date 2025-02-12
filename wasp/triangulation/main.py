@@ -148,7 +148,6 @@ def main():
         rimage = draw_overlay(rimage, rbbox)
 
         print(compute_distance(lbbox, rbbox, 1632, 0, baseline=0.025))
-
         cv2.imshow("Left Frame", np.hstack((limage, rimage)))
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
