@@ -152,66 +152,59 @@ def compute_distance_acc(
 
 
 def main():
-    sample = load_sample("datasets/distances/samples.json")[0]
-    tracker = cv2.TrackerMIL.create()
-    loriginal = sample.bbox
+    datasets = {}
+    for sample in load_sample("datasets/distances/samples.json"):
+        tracker = cv2.TrackerMIL.create()
+        loriginal = sample.bbox
+        distances = []
+        for limage, rimage in iterate(sample.name):
+            if loriginal is not None:
+                tracker.init(limage, list(map(int, loriginal)))
+                loriginal = None
 
-    for limage, rimage in iterate(sample.name):
-        if loriginal is not None:
-            tracker.init(limage, list(map(int, loriginal)))
-            loriginal = None
+            success, lbbox = tracker.update(limage)
+            if not success:
+                continue
 
-        success, lbbox = tracker.update(limage)
-        if not success:
-            continue
+            limage = draw_bbox(limage, lbbox)
+            limage = draw_overlay(limage, lbbox)
+            rbbox = find_match(limage, rimage, lbbox)
+            rimage = draw_bbox(rimage, rbbox)
+            rimage = draw_overlay(rimage, rbbox)
 
-        limage = draw_bbox(limage, lbbox)
-        limage = draw_overlay(limage, lbbox)
-        rbbox = find_match(limage, rimage, lbbox)
-        rimage = draw_bbox(rimage, rbbox)
-        rimage = draw_overlay(rimage, rbbox)
+            lcetner = bcenter(lbbox)
+            rcenter = bcenter(rbbox)
 
-        lcetner = bcenter(lbbox)
-        rcenter = bcenter(rbbox)
+            print("Frame shape:", limage.shape)
+            print("Points", lcetner, rcenter)
+            print(
+                "Actual distance",
+                sample.distance,
+                "in inches",
+                sample.meters,
+                "meters",
+            )
 
-        print("Frame shape:", limage.shape)
-        print("Points", lcetner, rcenter)
-        print(
-            "Actual distance",
-            sample.distance,
-            "in inches",
-            sample.meters,
-            "meters",
-        )
+            # baseline is 45 mm
+            dist = compute_distance(
+                lcetner,
+                rcenter,
+                focal_length=1765.3463,
+                focal_error=1,
+                baseline=0.025,
+                baseline_error=0.0001,
+            )
+            distances.append(dist)
+            cv2.imshow("Left Frame", np.hstack((limage, rimage)))
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+        # Plot segment.meters as dotted horizontal line (expected value)
+        plot_distances_per_frame_with_error_bars(sample.meters, distances)
+        datasets[sample.meters] = distances
 
-        # baseline is 45 mm
-        dist = compute_distance(
-            lcetner,
-            rcenter,
-            focal_length=1765.3463,
-            focal_error=1,
-            baseline=0.025,
-            baseline_error=0.0001,
-        )
-        dist_vertical_disparity = compute_distance_acc(
-            lcetner,
-            rcenter,
-            focal_length=1765.3463,
-            focal_error=1,
-            baseline=0.025,
-            baseline_error=0.0001,
-        )
-
-        print(
-            sample.meters,
-            dist,
-            dist_vertical_disparity,
-            dist / sample.meters,
-        )
-
-        cv2.imshow("Left Frame", np.hstack((limage, rimage)))
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+    # plot the distnce histograms dataset key is the dashed vertical line
+    # The values of the datast should be plotted as a histogram
+    plot_histogram_of_distances(datasets)
 
     cv2.destroyAllWindows()
 
