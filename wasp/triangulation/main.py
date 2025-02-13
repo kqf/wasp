@@ -4,9 +4,57 @@ from pathlib import Path
 from typing import Generator, Tuple
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 from dataclasses_json import dataclass_json
 from uncertainties import ufloat
+
+
+def plot_distances_per_frame_with_error_bars(expected_distance, distances):
+    frames = np.arange(len(distances))
+    mean_distances = np.array([dist.nominal_value for dist in distances])
+    error_bars = np.array([dist.std_dev for dist in distances])
+
+    plt.figure(figsize=(10, 5))
+    plt.errorbar(
+        frames,
+        mean_distances,
+        yerr=error_bars,
+        fmt="-o",
+        label="Computed Distance",
+    )
+    plt.axhline(
+        y=expected_distance,
+        color="r",
+        linestyle="dashed",
+        label="Expected Distance",
+    )
+    plt.xlabel("Frame")
+    plt.ylabel("Distance (meters)")
+    plt.title("Distance Per Frame with Error Bars")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+def plot_histogram_of_distances(datasets):
+    plt.figure(figsize=(10, 5))
+    for expected_distance, distances in datasets.items():
+        mean_distances = [dist.nominal_value for dist in distances]
+        plt.hist(
+            mean_distances,
+            bins=20,
+            alpha=0.5,
+            label=f"Expected {expected_distance:.2f}m",
+        )
+        plt.axvline(x=expected_distance, color="k", linestyle="dashed")
+
+    plt.xlabel("Measured Distance (meters)")
+    plt.ylabel("Frequency")
+    plt.title("Histogram of Measured Distances")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 def iterate(
