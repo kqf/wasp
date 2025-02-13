@@ -4,9 +4,57 @@ from pathlib import Path
 from typing import Generator, Tuple
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 from dataclasses_json import dataclass_json
 from uncertainties import ufloat
+
+
+def plot_distances_per_frame_with_error_bars(expected_distance, distances):
+    frames = np.arange(len(distances))
+    mean_distances = np.array([dist.nominal_value for dist in distances])
+    error_bars = np.array([dist.std_dev for dist in distances])
+
+    plt.figure(figsize=(10, 5))
+    plt.errorbar(
+        frames,
+        mean_distances,
+        yerr=error_bars,
+        fmt="-o",
+        label="Computed Distance",
+    )
+    plt.axhline(
+        y=expected_distance,
+        color="r",
+        linestyle="dashed",
+        label="Expected Distance",
+    )
+    plt.xlabel("Frame")
+    plt.ylabel("Distance (meters)")
+    plt.title("Distance Per Frame with Error Bars")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+def plot_histogram_of_distances(datasets):
+    plt.figure(figsize=(10, 5))
+    for expected_distance, distances in datasets.items():
+        mean_distances = [dist.nominal_value for dist in distances]
+        plt.hist(
+            mean_distances,
+            bins=20,
+            alpha=0.5,
+            label=f"Expected {expected_distance:.2f}m",
+        )
+        plt.axvline(x=expected_distance, color="k", linestyle="dashed")
+
+    plt.xlabel("Measured Distance (meters)")
+    plt.ylabel("Frequency")
+    plt.title("Histogram of Measured Distances")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 def iterate(
@@ -152,66 +200,56 @@ def compute_distance_acc(
 
 
 def main():
-    sample = load_sample("datasets/distances/samples.json")[0]
-    tracker = cv2.TrackerMIL.create()
-    loriginal = sample.bbox
+    datasets = {}
+    for sample in load_sample("datasets/distances/samples.json"):
+        tracker = cv2.TrackerMIL.create()
+        loriginal = sample.bbox
+        distances = []
+        for limage, rimage in iterate(sample.name):
+            if loriginal is not None:
+                tracker.init(limage, list(map(int, loriginal)))
+                loriginal = None
 
-    for limage, rimage in iterate(sample.name):
-        if loriginal is not None:
-            tracker.init(limage, list(map(int, loriginal)))
-            loriginal = None
+            success, lbbox = tracker.update(limage)
+            if not success:
+                continue
 
-        success, lbbox = tracker.update(limage)
-        if not success:
-            continue
+            limage = draw_bbox(limage, lbbox)
+            limage = draw_overlay(limage, lbbox)
+            rbbox = find_match(limage, rimage, lbbox)
+            rimage = draw_bbox(rimage, rbbox)
+            rimage = draw_overlay(rimage, rbbox)
 
-        limage = draw_bbox(limage, lbbox)
-        limage = draw_overlay(limage, lbbox)
-        rbbox = find_match(limage, rimage, lbbox)
-        rimage = draw_bbox(rimage, rbbox)
-        rimage = draw_overlay(rimage, rbbox)
+            lcetner = bcenter(lbbox)
+            rcenter = bcenter(rbbox)
 
-        lcetner = bcenter(lbbox)
-        rcenter = bcenter(rbbox)
+            print("Frame shape:", limage.shape)
+            print("Points", lcetner, rcenter)
+            print(
+                "Actual distance",
+                sample.distance,
+                "in inches",
+                sample.meters,
+                "meters",
+            )
 
-        print("Frame shape:", limage.shape)
-        print("Points", lcetner, rcenter)
-        print(
-            "Actual distance",
-            sample.distance,
-            "in inches",
-            sample.meters,
-            "meters",
-        )
+            # baseline is 45 mm
+            dist = compute_distance(
+                lcetner,
+                rcenter,
+                focal_length=1765.3463,
+                focal_error=1,
+                baseline=0.025,
+                baseline_error=0.0001,
+            )
+            distances.append(dist)
+            cv2.imshow("Left Frame", np.hstack((limage, rimage)))
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+        plot_distances_per_frame_with_error_bars(sample.meters, distances)
+        datasets[sample.meters] = distances
 
-        # baseline is 45 mm
-        dist = compute_distance(
-            lcetner,
-            rcenter,
-            focal_length=1765.3463,
-            focal_error=1,
-            baseline=0.025,
-            baseline_error=0.0001,
-        )
-        dist_vertical_disparity = compute_distance_acc(
-            lcetner,
-            rcenter,
-            focal_length=1765.3463,
-            focal_error=1,
-            baseline=0.025,
-            baseline_error=0.0001,
-        )
-
-        print(
-            sample.meters,
-            dist,
-            dist_vertical_disparity,
-            dist / sample.meters,
-        )
-
-        cv2.imshow("Left Frame", np.hstack((limage, rimage)))
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+    plot_histogram_of_distances(datasets)
 
     cv2.destroyAllWindows()
 
