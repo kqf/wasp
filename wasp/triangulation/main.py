@@ -246,12 +246,9 @@ def main():
             cv2.imshow("Left Frame", np.hstack((limage, rimage)))
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-        # Plot segment.meters as dotted horizontal line (expected value)
         plot_distances_per_frame_with_error_bars(sample.meters, distances)
         datasets[sample.meters] = distances
 
-    # plot the distnce histograms dataset key is the dashed vertical line
-    # The values of the datast should be plotted as a histogram
     plot_histogram_of_distances(datasets)
 
     cv2.destroyAllWindows()
