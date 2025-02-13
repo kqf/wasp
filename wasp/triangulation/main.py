@@ -152,7 +152,7 @@ def compute_distance_acc(
 
 
 def main():
-    sample = load_sample("datasets/triangulation/samples.json")[0]
+    sample = load_sample("datasets/distances/samples.json")[0]
     tracker = cv2.TrackerMIL.create()
     loriginal = sample.bbox
 
