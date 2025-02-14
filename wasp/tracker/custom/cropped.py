@@ -7,13 +7,12 @@ def crop_region(frame, bbox, pad):
     x2, y2 = min(frame.shape[1], x + w + pad), min(frame.shape[0], y + h + pad)
     cropped = frame[y1:y2, x1:x2]
     new_bbox = (x - x1, y - y1, w, h)
-    return cropped, new_bbox
+    return cropped, new_bbox, x1, y1  # Also return the crop offsets
 
 
-def map_to_original(prev_bbox, new_bbox):
-    px, py, _, _ = map(int, prev_bbox)
+def map_to_original(crop_x, crop_y, new_bbox):
     cx, cy, w, h = map(int, new_bbox)
-    return (px + cx, py + cy, w, h)
+    return (crop_x + cx, crop_y + cy, w, h)
 
 
 class CroppedTracker:
@@ -22,15 +21,18 @@ class CroppedTracker:
         self.pad = pad
         self.last_bbox = None
 
-    def start(self, frame, bbox):
+    def init(self, frame, bbox):
         self.last_bbox = bbox
-        cropped, new_bbox = crop_region(frame, bbox, self.pad)
+        cropped, new_bbox, crop_x, crop_y = crop_region(frame, bbox, self.pad)
         self.tracker.init(cropped, new_bbox)
+        self.crop_x, self.crop_y = crop_x, crop_y  # Store cropping offsets
 
-    def track(self, frame):
-        cropped, _ = crop_region(frame, self.last_bbox, self.pad)
+    def update(self, frame):
+        cropped, _, crop_x, crop_y = crop_region(
+            frame, self.last_bbox, self.pad
+        )
         success, new_bbox = self.tracker.update(cropped)
         if not success:
             return False, None
-        self.last_bbox = map_to_original(self.last_bbox, new_bbox)
-        return True, self.last_bbox
+        self.last_bbox = map_to_original(crop_x, crop_y, new_bbox)
+        return success, self.last_bbox
