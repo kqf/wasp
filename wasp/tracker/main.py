@@ -4,6 +4,7 @@ from toolz import compose
 from wasp.timer import Timer
 from wasp.tracker.capture import video_dataset
 from wasp.tracker.color import GrayscaleTracker
+from wasp.tracker.custom.cropped import CroppedTracker
 from wasp.tracker.custom.plot import (  # PlotInternalTracker,
     OverlayTracker,
     draw_bbox,
@@ -48,6 +49,7 @@ def main():
             tracker = compose(
                 OverlayTracker,
                 GrayscaleTracker,
+                CroppedTracker,
                 build_tracker,
             )()
             tracker.init(frame, label.to_tuple())
