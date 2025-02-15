@@ -50,7 +50,7 @@ def main():
                 OverlayTracker,
                 GrayscaleTracker,
                 CroppedTracker,
-                build_tracker,
+                cv2.TrackerCSRT.create,
             )()
             tracker.init(frame, label.to_tuple())
 
