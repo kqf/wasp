@@ -176,29 +176,6 @@ def compute_distance(
     return (f * B) / disparity
 
 
-def compute_distance_acc(
-    lpoint: tuple[float, float],
-    rpoint: tuple[float, float],
-    focal_length,
-    focal_error=0,
-    baseline=1.0,
-    baseline_error=0,
-    disparity_error=0.0,
-):
-    disparity_x = ufloat(lpoint[0] - rpoint[0], disparity_error)
-    disparity_y = ufloat(lpoint[1] - rpoint[1], disparity_error)
-    disparity = (disparity_x**2 + disparity_y**2) ** 0.5
-
-    if disparity_x.nominal_value <= 0:
-        raise ValueError(
-            "Horizontal disparity is zero or negative! Check camera setup."
-        )
-
-    f = ufloat(focal_length, focal_error)
-    B = ufloat(baseline, baseline_error)
-    return (f * B) / disparity
-
-
 def main():
     datasets = {}
     for sample in load_sample("datasets/distances/samples.json"):
