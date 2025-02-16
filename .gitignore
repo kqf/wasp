@@ -32,3 +32,4 @@ datasets/distances/
 # Include
 !requirements.txt
 *.png
+*.pt
