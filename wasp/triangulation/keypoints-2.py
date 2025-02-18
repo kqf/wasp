@@ -1,7 +1,5 @@
 import cv2
-import numpy as np
 import torch
-from face_alignment import align
 
 from models import get_face_alignment_net
 
