@@ -75,50 +75,63 @@ class ExportModelMediaPipe:
         face_detections = self.face_detection.process(image_rgb)
         face_mesh_results = self.face_mesh.process(image_rgb)
 
+        annotations: list[Annotation] = []
+        if face_detections is None or face_detections.detections is None:
+            return []
+
+        detections = [
+            max(
+                face_detections.detections,
+                key=lambda detection: detection.score[0],  # type: ignore
+                default=None,  # type: ignore
+            )
+        ]
+        if not detections or detections[0] is None:
+            return []
+
         annotations = []
-        if face_detections.detections:
-            for detection in face_detections.detections:
-                ih, iw, _ = image.shape
-                if face_mesh_results.multi_face_landmarks:
-                    bbox = detection.location_data.relative_bounding_box
-                    bbox = (
-                        int(bbox.xmin * iw),
-                        int(bbox.ymin * ih),
-                        int(bbox.width * iw),
-                        int(bbox.height * ih),
+        for detection in detections:
+            ih, iw, _ = image.shape
+            if not face_mesh_results.multi_face_landmarks or detection is None:
+                continue
+
+            bbox = detection.location_data.relative_bounding_box
+            bbox = (
+                int(bbox.xmin * iw),
+                int(bbox.ymin * ih),
+                int(bbox.xmin * iw + bbox.width * iw),
+                int(bbox.ymin * ih + bbox.height * ih),
+            )
+            for face_landmarks in face_mesh_results.multi_face_landmarks:
+                keypoints = [
+                    (
+                        face_landmarks.landmark[i].x * iw,
+                        face_landmarks.landmark[i].y * ih,
                     )
-                    for (
-                        face_landmarks
-                    ) in face_mesh_results.multi_face_landmarks:
-                        keypoints = [
-                            (
-                                face_landmarks.landmark[i].x,
-                                face_landmarks.landmark[i].y,
-                            )
-                            for i in self.relevant_indices
-                        ]
-                        leye_points = tuple(
-                            (
-                                face_landmarks.landmark[i].x,
-                                face_landmarks.landmark[i].y,
-                            )
-                            for i in self.left_iris_indices
-                        )
-                        reye_points = tuple(
-                            (
-                                face_landmarks.landmark[i].x,
-                                face_landmarks.landmark[i].y,
-                            )
-                            for i in self.right_iris_indices
-                        )
-                        annotations.append(
-                            Annotation(
-                                bbox=bbox,
-                                landmarks=keypoints,
-                                leye=leye_points,
-                                reye=reye_points,
-                            )
-                        )
+                    for i in self.relevant_indices
+                ]
+                leye_points = tuple(
+                    (
+                        face_landmarks.landmark[i].x * iw,
+                        face_landmarks.landmark[i].y * ih,
+                    )
+                    for i in self.left_iris_indices
+                )
+                reye_points = tuple(
+                    (
+                        face_landmarks.landmark[i].x * iw,
+                        face_landmarks.landmark[i].y * ih,
+                    )
+                    for i in self.right_iris_indices
+                )
+                annotations.append(
+                    Annotation(
+                        bbox=bbox,
+                        landmarks=keypoints,
+                        leye=leye_points,
+                        reye=reye_points,
+                    )
+                )
         return annotations
 
 
