@@ -16,21 +16,27 @@ def map_to_original(crop_x, crop_y, new_bbox):
 
 
 class CroppedTracker:
-    def __init__(self, tracker: cv2.Tracker, pad: int = 100):
+    def __init__(self, tracker: cv2.Tracker, pad: int = 1):
         self.tracker = tracker
         self.pad = pad
         self.last_bbox = None
 
     def init(self, frame, bbox):
         self.last_bbox = bbox
-        cropped, new_bbox, crop_x, crop_y = crop_region(frame, bbox, self.pad)
+        *_, w, _ = self.last_bbox
+
+        cropped, new_bbox, crop_x, crop_y = crop_region(
+            frame, bbox, self.pad * w
+        )
         self.tracker.init(cropped, new_bbox)
         self.crop_x, self.crop_y = crop_x, crop_y  # Store cropping offsets
 
     def update(self, frame):
+        *_, w, _ = self.last_bbox
         cropped, _, crop_x, crop_y = crop_region(
-            frame, self.last_bbox, self.pad
+            frame, self.last_bbox, self.pad * w
         )
+
         success, new_bbox = self.tracker.update(cropped)
         if not success:
             return False, None
