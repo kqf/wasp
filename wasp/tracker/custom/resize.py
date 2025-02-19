@@ -4,6 +4,7 @@ import cv2
 def resize_frame(frame, bbox, max_resolution):
     max_w, max_h = max_resolution
     h, w = frame.shape[:2]
+    print("Resizing", frame.shape)
 
     if w <= max_w and h <= max_h:
         return frame, bbox, 1.0  # No resizing needed
