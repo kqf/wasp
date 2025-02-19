@@ -11,6 +11,7 @@ from wasp.tracker.custom.plot import (  # PlotInternalTracker,
 )
 
 # from wasp.tracker.custom.tm import TemplateMatchingTracker
+from wasp.tracker.custom.resize import ResizedTracker
 from wasp.tracker.filter import KalmanFilter
 from wasp.tracker.segments import load_segments
 
@@ -50,6 +51,7 @@ def main():
                 OverlayTracker,
                 GrayscaleTracker,
                 CroppedTracker,
+                ResizedTracker,
                 cv2.TrackerMIL.create,
             )()
             tracker.init(frame, label.to_tuple())
