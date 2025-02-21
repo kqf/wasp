@@ -25,7 +25,7 @@ def resize_frame(frame, bbox, max_resolution):
 
 
 def restore_bbox(bbox, scale):
-    if abs(scale - 1.0) < 1e-6:
+    if abs(scale - 1.0) < 1e-4:
         return bbox  # No scaling needed
     x, y, w, h = bbox
     return (int(x / scale), int(y / scale), int(w / scale), int(h / scale))
@@ -33,7 +33,9 @@ def restore_bbox(bbox, scale):
 
 class ResizedTracker:
     def __init__(
-        self, tracker: cv2.Tracker, max_resolution: tuple = (640, 480)
+        self,
+        tracker: cv2.Tracker,
+        max_resolution: tuple = (640, 480),
     ):
         self.tracker = tracker
         self.max_resolution = max_resolution
