@@ -31,7 +31,7 @@ def map_to_original(crop_x, crop_y, new_bbox):
 
 
 class CroppedTracker:
-    def __init__(self, tracker: cv2.Tracker, pad: int = 1):
+    def __init__(self, tracker: cv2.Tracker, pad: int = 4):
         self.tracker = tracker
         self.pad = pad
         self.last_bbox = None
