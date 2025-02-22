@@ -153,17 +153,6 @@ def draw_features(image, points):
     return image
 
 
-def visualize_features(image, bounding_box, ellipse=None):
-    # points = extract_features_small(image, bounding_box)
-    points, ellipse = extract_features_with_ellipse(
-        image,
-        bounding_box,
-        ellipse,
-    )
-    draw_ellipse(image, ellipse)
-    return draw_features(image, points), ellipse
-
-
 samples = {
     "588.png": (863, 432, 16, 17),
     "589.png": (858, 430, 16, 17),
