@@ -31,7 +31,6 @@ class Detection:
     class_name: str
     num_matches: int
     matched_locations: list[tuple]
-    matched_keypoints: list[cv2.DMatch]
 
 
 def detect_objects(
@@ -54,7 +53,12 @@ def detect_objects(
         if len(matches) > match_threshold:
             matched_locations = [keypoints[m.queryIdx].pt for m in matches]
             detections.append(
-                Detection(class_name, len(matches), matched_locations, matches)
+                Detection(
+                    class_name,
+                    len(matches),
+                    matched_locations,
+                    # matches,
+                )
             )
 
     return detections
