@@ -167,7 +167,9 @@ class SSDPure(torch.nn.Module):
         )
         load_with_mismatch(
             self,
-            SSDLite320_MobileNet_V3_Large_Weights.COCO_V1.get_state_dict(),
+            SSDLite320_MobileNet_V3_Large_Weights.COCO_V1.get_state_dict(
+                progress=True,
+            ),
         )
 
     def forward(self, images):
