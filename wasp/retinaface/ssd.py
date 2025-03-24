@@ -125,7 +125,9 @@ class RetinaNetPure(torch.nn.Module):
         )
         load_with_mismatch(
             self,
-            RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1.get_state_dict(),
+            RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1.get_state_dict(
+                progress=True
+            ),
         )
 
     def forward(self, images):
