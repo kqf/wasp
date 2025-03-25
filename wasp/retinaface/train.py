@@ -6,7 +6,7 @@ import torch
 from environs import Env
 
 # from pytorch_lightning.callbacks import DeviceStatsMonitor
-from pytorch_lightning.callbacks import ModelPruning, TQDMProgressBar
+from pytorch_lightning.callbacks import TQDMProgressBar
 
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 
@@ -104,20 +104,20 @@ def main(
     )
 
     # Check only when the cuda is available
-    if torch.cuda.is_available():
-        state_dict = torch.load("best.pth")
-        pipeline.model.load_state_dict(state_dict)
+    # if torch.cuda.is_available():
+    #     state_dict = torch.load("best.pth")
+    #     pipeline.model.load_state_dict(state_dict)
 
     Path("./retinaface-results").mkdir(
         exist_ok=True,
         parents=True,
     )
 
-    parameters_to_prune = [
-        (module, "weight")
-        for _, module in pipeline.model.backbone.named_modules()
-        if isinstance(module, torch.nn.Conv2d)
-    ]
+    # parameters_to_prune = [
+    #     (module, "weight")
+    #     for _, module in pipeline.model.backbone.named_modules()
+    #     if isinstance(module, torch.nn.Conv2d)
+    # ]
 
     trainer = pl.Trainer(
         # gpus=4,
@@ -141,15 +141,15 @@ def main(
             TQDMProgressBar(
                 refresh_rate=100,
             ),
-            ModelPruning(
-                pruning_fn="ln_structured",
-                parameters_to_prune=parameters_to_prune,
-                amount=0.5,
-                pruning_norm=4,
-                pruning_dim=1,
-                use_global_unstructured=False,
-                # use_global_unstructured=False,
-            ),
+            # ModelPruning(
+            #     pruning_fn="ln_structured",
+            #     parameters_to_prune=parameters_to_prune,
+            #     amount=0.5,
+            #     pruning_norm=4,
+            #     pruning_dim=1,
+            #     use_global_unstructured=False,
+            #     # use_global_unstructured=False,
+            # ),
             # DeviceStatsMonitor(), ~
             # PyTorchGpuMonitorCallback(delay=0.5, log_per_batch=True),
         ],
