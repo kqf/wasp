@@ -71,43 +71,36 @@ def match2(
     priors: torch.Tensor,  # [n_anchors, 4]
     threshold: float,
 ) -> torch.Tensor:  # returns a tensor of shape [n_anchors, n_obj]
-    # Compute overlaps between each ground truth box and each prior box.
-    overlaps = iou(boxes[:, None], point_form(priors))  # [n_obj, n_anchors]
+    n_anchors = priors.shape[0]
+    n_obj = boxes.shape[0]
 
-    # (Bipartite Matching) For each gt, get the prior with maximum overlap.
-    best_prior_overlap, best_prior_idx = overlaps.max(
-        1, keepdim=True
-    )  # [n_obj, 1] each
-    valid_gt_idx = best_prior_overlap[:, 0] >= 0.2  # [n_obj]
+    # Compute IoU overlaps: [n_obj, n_anchors]
+    overlaps = iou(boxes[:, None], point_form(priors))
 
-    # If no ground truth has any sufficiently good match, return None.
+    # For each ground truth box, find the best matching prior (anchor)
+    best_prior_overlap, best_prior_idx = overlaps.max(dim=1, keepdim=True)
+    valid_gt_idx = best_prior_overlap[:, 0] >= 0.2
+
+    # For each prior (anchor), find the best matching ground truth box
+    best_truth_overlap, best_truth_idx = overlaps.max(dim=0, keepdim=True)
+    best_truth_overlap = best_truth_overlap.squeeze(0)
+    best_truth_idx = best_truth_idx.squeeze(0)
+    best_prior_idx = best_prior_idx.squeeze(1)
+
+    # Even if no good matches, return a zero-filled match matrix
+    matching_table = torch.zeros(
+        (n_anchors, n_obj), dtype=torch.bool, device=boxes.device
+    )
     if valid_gt_idx.sum() == 0:
-        return None
+        return matching_table
 
-    # For each prior (anchor), get the ground truth with maximum overlap.
-    best_truth_overlap, best_truth_idx = overlaps.max(
-        0, keepdim=True
-    )  # shapes: [1, n_anchors]
-    best_truth_overlap = best_truth_overlap.squeeze(0)  # [n_anchors]
-
-    # Squeeze the best_prior_idx to remove the singleton dimension.
-    best_prior_idx = best_prior_idx.squeeze(1)  # [n_obj]
-
-    # Force assignment:
-    # for each valid ground truth, ensure its best prior is assigned.
+    # Force match: assign each valid GT to its best matching prior
     best_truth_overlap.index_fill_(0, best_prior_idx[valid_gt_idx], 2)
-
-    best_truth_idx = best_truth_idx.squeeze(0)  # [n_anchors]
-
-    # Ensure that every ground truth is assigned to its best prior.
     best_truth_idx[best_prior_idx] = torch.arange(
         best_prior_idx.shape[0], device=best_prior_idx.device
     )
 
-    # Create an empty matching table.
-    matching_table = torch.zeros_like(overlaps.T, dtype=torch.bool)
-
-    # For anchors with overlap above the threshold, mark the correspondence.
+    # Mark anchors as positive if IoU exceeds threshold
     valid_anchors = best_truth_overlap >= threshold
     matching_table[valid_anchors, best_truth_idx[valid_anchors]] = 1
 
