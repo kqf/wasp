@@ -63,3 +63,52 @@ def match(
     labels_matched[best_truth_overlap < threshold] = 0
 
     return best_truth_idx, labels_matched
+
+
+def match2(
+    labels: torch.Tensor,  # [n_obj]
+    boxes: torch.Tensor,  # [n_obj, 4]
+    priors: torch.Tensor,  # [n_anchors, 4]
+    threshold: float,
+) -> torch.Tensor:  # returns a tensor of shape [n_anchors, n_obj]
+    # Compute overlaps between each ground truth box and each prior box.
+    overlaps = iou(boxes[:, None], point_form(priors))  # [n_obj, n_anchors]
+
+    # (Bipartite Matching) For each gt, get the prior with maximum overlap.
+    best_prior_overlap, best_prior_idx = overlaps.max(
+        1, keepdim=True
+    )  # [n_obj, 1] each
+    valid_gt_idx = best_prior_overlap[:, 0] >= 0.2  # [n_obj]
+
+    # If no ground truth has any sufficiently good match, return None.
+    if valid_gt_idx.sum() == 0:
+        return None
+
+    # For each prior (anchor), get the ground truth with maximum overlap.
+    best_truth_overlap, best_truth_idx = overlaps.max(
+        0, keepdim=True
+    )  # shapes: [1, n_anchors]
+    best_truth_overlap = best_truth_overlap.squeeze(0)  # [n_anchors]
+
+    # Squeeze the best_prior_idx to remove the singleton dimension.
+    best_prior_idx = best_prior_idx.squeeze(1)  # [n_obj]
+
+    # Force assignment:
+    # for each valid ground truth, ensure its best prior is assigned.
+    best_truth_overlap.index_fill_(0, best_prior_idx[valid_gt_idx], 2)
+
+    best_truth_idx = best_truth_idx.squeeze(0)  # [n_anchors]
+
+    # Ensure that every ground truth is assigned to its best prior.
+    best_truth_idx[best_prior_idx] = torch.arange(
+        best_prior_idx.shape[0], device=best_prior_idx.device
+    )
+
+    # Create an empty matching table.
+    matching_table = torch.zeros_like(overlaps.T, dtype=torch.bool)
+
+    # For anchors with overlap above the threshold, mark the correspondence.
+    valid_anchors = best_truth_overlap >= threshold
+    matching_table[valid_anchors, best_truth_idx[valid_anchors]] = 1
+
+    return matching_table

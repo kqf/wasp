@@ -1,149 +1,155 @@
 from dataclasses import dataclass
 from functools import partial
-from typing import Dict
+from typing import Callable, Dict
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
 from wasp.retinaface.encode import encode
-from wasp.retinaface.encode import encode_landm as encl
-from wasp.retinaface.matching import match
+from wasp.retinaface.matching import match2
 
 T4 = tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
 
-def log_sum_exp(x):
-    x_max = x.data.max()
-    return torch.log(torch.sum(torch.exp(x - x_max), 1, keepdim=True)) + x_max
-
-
-@dataclass
-class LossWeights:
-    localization: float
-    classification: float
-    landmarks: float
-    depths: float
-
-
 def masked_loss(
     loss_function,
-    data: torch.Tensor,
     pred: torch.Tensor,
+    data: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     mask = ~torch.isnan(data)
-
     data_masked = data[mask]
     pred_masked = pred[mask]
-
-    loss = loss_function(
-        data_masked,
-        pred_masked,
-    )
+    loss = loss_function(data_masked, pred_masked)
     if data_masked.numel() == 0:
         loss = torch.nan_to_num(loss, 0)
-
     return loss / max(data_masked.shape[0], 1)
 
 
-def depths_loss(
-    positive: torch.Tensor,
-    dpt_pred: torch.Tensor,
-    dpths_t: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    return masked_loss(
-        partial(F.smooth_l1_loss, reduction="sum"),
-        data=dpths_t[positive],
-        pred=dpt_pred[positive],
-    )
-
-
 def localization_loss(
-    positive: torch.Tensor,
-    boxes_pred: torch.Tensor,
-    boxes_t: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    # Localization Loss (Smooth L1) Shape: [batch, num_priors, 4]
-    return masked_loss(
-        partial(F.smooth_l1_loss, reduction="sum"),
-        data=boxes_t[positive],
-        pred=boxes_pred[positive],
-    )
-
-
-def landmark_loss(
-    positive: torch.Tensor,
-    kypts_pred: torch.Tensor,
-    kypts_t: torch.Tensor,
+    pred: torch.Tensor,
+    data: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     return masked_loss(
         partial(F.smooth_l1_loss, reduction="sum"),
-        data=kypts_t[positive],
-        pred=kypts_pred[positive],
+        pred,
+        data,
     )
 
 
 def confidence_loss(
-    positive: torch.Tensor,
-    label_t: torch.Tensor,  # shape [n_batch, n_anchors]
-    confidence_data: torch.Tensor,  # [n_batch, n_anchors, num_classes]
-    neg: torch.Tensor,
+    pred: torch.Tensor,
+    data: torch.Tensor,
     num_classes: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    combined_mask = positive | neg
-
-    # Use this combined mask to index confidence_data and label_t
-    conf_p = confidence_data[combined_mask]
-    targets_weighted = label_t[combined_mask].view(-1)
-
-    # Compute confidenc loss
+    # Calculate number of positive examples as all non zero labels
+    n_pos = (data > 0).sum()
     loss_c = F.cross_entropy(
-        conf_p.view(-1, num_classes),
-        targets_weighted,
+        pred.reshape(-1, num_classes),
+        data.view(-1),
         reduction="sum",
     )
-
-    # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
-    num_pos = positive.long().sum(1, keepdim=True)
-    n = max(num_pos.data.sum().float(), 1)  # type: ignore
-    # print(f"{conf_p.shape=}, {targets_weighted.shape=}, {n=}")
-    return loss_c / n
+    return loss_c / n_pos
 
 
 def mine_negatives(
-    label,  # [batch, n_anchors]
-    pred,
-    negpos_ratio,
-    positive,  # [batch, n_anchors]
+    label: torch.Tensor,
+    pred: torch.Tensor,
+    negpos_ratio: int,
+    positive: torch.Tensor,
 ):
-    # Compute the classification loss using cross_entropy
-    loss_c = torch.nn.functional.cross_entropy(
-        pred.view(-1, pred.shape[-1]),
-        label.view(-1),
-        reduction="none",
-    )
-    n_batch = label.shape[0]
+    batch_size, num_anchors, _ = positive.shape
+    pos_batch, pos_anchor, pos_obj = torch.where(positive)
+    labels = torch.zeros_like(pred[:, :, 0], dtype=torch.long)
+    labels[pos_batch, pos_anchor] = label[pos_batch, pos_obj].squeeze()
+    loss = F.cross_entropy(
+        pred.view(-1, pred.shape[-1]), labels.view(-1), reduction="none"
+    ).view(batch_size, num_anchors)
+    loss[pos_batch, pos_anchor] = 0
+    _, loss_sorted_idx = loss.sort(dim=1, descending=True)
+    _, rank = loss_sorted_idx.sort(dim=1)
+    num_pos = positive.sum(dim=(1, 2), dtype=torch.long).unsqueeze(1)
+    num_neg = torch.clamp(negpos_ratio * num_pos, max=num_anchors - 1)
+    return rank < num_neg.expand_as(rank)
 
-    # Hard Negative Mining
-    loss_c[positive.view(-1)] = 0  # filter out positive boxes for now
-    loss_c = loss_c.view(n_batch, -1)
-    _, loss_idx = loss_c.sort(1, descending=True)
-    _, idx_rank = loss_idx.sort(1)
-    num_pos = positive.long().sum(1, keepdim=True)
-    num_neg = torch.clamp(negpos_ratio * num_pos, max=positive.shape[1] - 1)
-    return idx_rank < num_neg.expand_as(idx_rank)
+
+@torch.no_grad()
+def stack(tensors, pad_value=0) -> torch.Tensor:
+    max_length = max(tensor.shape[0] for tensor in tensors)
+    return torch.stack(
+        [
+            F.pad(t, (0, 0, 0, max_length - t.shape[0]), value=pad_value)
+            for t in tensors
+        ]
+    )
+
+
+@dataclass
+class WeightedLoss:
+    loss: torch.nn.Module
+    weight: float = 1.0
+    enc_pred: Callable = lambda x, _: x
+    enc_true: Callable = lambda x, _: x
+    needs_negatives: bool = False
+
+    def __call__(self, y_pred, y_true, anchors):
+        y_pred_encoded = self.enc_pred(y_pred, anchors)
+        y_true_encoded = self.enc_true(y_true, anchors)
+        return self.weight * self.loss(y_pred_encoded, y_true_encoded)
+
+
+def match_combined(
+    classes,
+    boxes,
+    priors,
+    confidences,
+    negpos_ratio,
+    threshold,
+):
+    positives = torch.stack(
+        [match2(c, b, priors, threshold) for c, b in zip(classes, boxes)]
+    )
+    negatives = mine_negatives(classes, confidences, negpos_ratio, positives)
+    return positives, negatives
+
+
+def select(y_pred, y_true, anchors, use_negatives, positives, negatives):
+    b, a, o = torch.where(positives)
+    if not use_negatives:
+        return y_pred[b, a], y_true[b, o], anchors[a]
+
+    # TODO: Fix this logic
+    conf_pos = y_pred[b, a]
+    targets_pos = y_true[b, o].view(-1)
+    b, a = torch.where(negatives)
+    conf_neg = y_pred[b, a]
+    targets_neg = torch.zeros_like(conf_neg[:, 0], dtype=torch.long)
+    conf_all = torch.cat([conf_pos, conf_neg], dim=0)
+    targets_all = torch.cat([targets_pos, targets_neg], dim=0).long()
+    return conf_all, targets_all, anchors[a]
+
+
+def default_loss(num_classes, variances) -> Dict[str, WeightedLoss]:
+    return {
+        "classes": WeightedLoss(
+            partial(confidence_loss, num_classes=num_classes),
+            2,
+            needs_negatives=True,
+        ),
+        "boxes": WeightedLoss(
+            localization_loss,
+            1,
+            enc_true=partial(encode, variances=variances),
+            needs_negatives=False,
+        ),
+    }
 
 
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
         priors: torch.Tensor,
-        weights: LossWeights = LossWeights(
-            localization=2,
-            classification=1,
-            landmarks=0,
-            depths=0,
-        ),
+        sublosses: Dict[str, WeightedLoss] = None,
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
         neg_pos: int = 7,
@@ -153,110 +159,49 @@ class MultiBoxLoss(nn.Module):
         self.threshold = overlap_thresh
         self.negpos_ratio = neg_pos
         self.variance = [0.1, 0.2]
-        self.priors = priors
-        self.weights = weights
-
-    def process(self, predictions: T4, targets: torch.Tensor) -> T4:
-        """Multibox Loss.
-
-        Args:
-            predictions: A tuple containing locations predictions, confidence,
-            and prior boxes from SSD net.
-                conf shape: torch.size(batch_size, num_priors, num_classes)
-                loc shape: torch.size(batch_size, num_priors, 4)
-                priors shape: torch.size(num_priors, 4)
-
-            targets: Ground truth boxes and labels_gt for a batch,
-                shape: [batch_size, num_objs, 5] (last box_index is the label).
-        """
-        boxes_pred, conf_pred, kpts_pred, dpth_pred = predictions
-
-        device = targets[0]["boxes"].device
-
-        priors = self.priors.to(device)
-
-        n_batch = boxes_pred.shape[0]
-        num_priors = priors.shape[0]
-
-        # match priors (default boxes) and ground truth boxes
-        label_t = torch.zeros(n_batch, num_priors).to(device).long()
-        boxes_t = torch.zeros(n_batch, num_priors, 4).to(device)
-        kypts_t = torch.zeros(n_batch, num_priors, 10).to(device)
-        dpths_t = torch.zeros(n_batch, num_priors, 2).to(device)
-
-        for i in range(n_batch):
-            box_gt = targets[i]["boxes"]
-            landmarks_gt = targets[i]["keypoints"]
-            labels_gt = targets[i]["labels"]
-            depths_gt = targets[i]["depths"]
-
-            # matched gt index
-            matched, labels = match(
-                labels_gt.view(-1),
-                box_gt,
-                priors.data,
-                self.threshold,
-            )
-
-            if matched is None:
-                label_t[i] = 0
-                boxes_t[i] = 0
-                kypts_t[i] = 0
-                dpths_t[i] = 0
-                continue
-
-            label_t[i] = labels.clip(0, 2)  # type: ignore
-            boxes_t[i] = encode(box_gt[matched], priors, self.variance)
-            kypts_t[i] = encl(landmarks_gt[matched], priors, self.variance)
-            dpths_t[i] = depths_gt[matched]
-
-        positives = label_t != torch.zeros_like(label_t)
-        # positive = torch.where(positives)
-        # label = label_t.detach().clone()
-        # label[positive] = 1
-
-        loss_landm = landmark_loss(positives, kpts_pred, kypts_t)
-        loss_dpth = depths_loss(positives, dpth_pred, dpths_t)
-        loss_l = localization_loss(positives, boxes_pred, boxes_t)
-
-        negatives = mine_negatives(
-            label=label_t,
-            pred=conf_pred,
-            negpos_ratio=self.negpos_ratio,
-            positive=positives,
-        )
-
-        loss_c = confidence_loss(
-            positives,
-            label_t,
-            conf_pred,
-            negatives,
-            self.num_classes,
-        )
-
-        return loss_l, loss_c, loss_landm, loss_dpth
+        self.sublosses = sublosses or default_loss(num_classes, self.variance)
+        self.register_buffer("priors", priors)
 
     def forward(
         self,
         predictions: T4,
         targets: torch.Tensor,
     ) -> Dict[str, torch.Tensor]:
-        localization, classification, landmarks, depths = self.process(
-            predictions,
-            targets,
-        )
+        boxes_pred, conf_pred, *_ = predictions
 
-        total = (
-            self.weights.localization * localization
-            + self.weights.classification * classification
-            + self.weights.landmarks * landmarks
-            + self.weights.depths * depths
-        )
+        classes = stack([t["labels"] for t in targets]).long()
+        boxes = stack([t["boxes"] for t in targets])
 
-        return {
-            "loss": total,
-            "boxes": self.weights.localization * localization,
-            "classes": self.weights.classification * classification,
-            "landmarks": self.weights.landmarks * landmarks,
-            "depths": self.weights.depths * depths,
+        y_pred = {
+            "classes": conf_pred,
+            "boxes": boxes_pred,
         }
+
+        y = {
+            "classes": classes,
+            "boxes": boxes,
+        }
+
+        positives, negatives = match_combined(
+            classes,
+            boxes,
+            self.priors,
+            confidences=conf_pred,
+            negpos_ratio=self.negpos_ratio,
+            threshold=self.threshold,
+        )
+
+        losses = {}
+        for name, subloss in self.sublosses.items():
+            y_pred_, y_true_, anchor_ = select(
+                y_pred[name],
+                y[name],
+                self.priors,
+                use_negatives=subloss.needs_negatives,
+                positives=positives,
+                negatives=negatives,
+            )
+            losses[name] = subloss(y_pred_, y_true_, anchor_)
+
+        losses["loss"] = torch.stack(tuple(losses.values())).sum()
+        return losses
