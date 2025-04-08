@@ -12,35 +12,38 @@ from torch.utils.data import DataLoader
 from torchvision.ops import nms
 
 import wasp.retinaface.augmentations as augs
-from wasp.retinaface.data import Batch, FaceDetectionDataset, detection_collate
+from wasp.retinaface.data import (
+    Batch,
+    DetectionTask,
+    FaceDetectionDataset,
+    detection_collate,
+)
 from wasp.retinaface.encode import decode
 from wasp.retinaface.preprocess import normalize
 
 
 def prepare_outputs(
-    images,
-    y_pred,
-    y_true,
-    anchors,
+    images: torch.Tensor,
+    y_pred: DetectionTask,
+    y_true: DetectionTask,
+    anchors: torch.Tensor,
 ) -> list[tuple[np.ndarray, np.ndarray]]:
     image_w = images.shape[2]
     image_h = images.shape[3]
 
-    location, confidence, *_ = y_pred
-
-    confidence = F.softmax(confidence, dim=-1)
+    confidence = F.softmax(y_pred.classes, dim=-1)
     scale = torch.from_numpy(
         np.tile(
             [image_h, image_w],
             2,
         )
-    ).to(location.device)
+    ).to(y_pred.boxes.device)
 
     total = []
     batch = zip(y_true.classes, y_true.boxes)
     for batch_id, (y_true_label, y_true_boxes) in enumerate(batch):
         boxes_pred = decode(
-            location.data[batch_id],
+            y_pred.boxes[batch_id],
             anchors.to(images.device),
             [0.1, 0.2],
         )

@@ -12,7 +12,7 @@ from pytorch_lightning.callbacks import TQDMProgressBar
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 
 # from wasp.retinaface.closs import DetectionLoss
-from wasp.retinaface.data import DEFAULT_MAPPING
+from wasp.retinaface.data import DEFAULT_MAPPING, DetectionTask
 from wasp.retinaface.logger import build_mlflow
 from wasp.retinaface.loss import MultiBoxLoss
 
@@ -51,6 +51,15 @@ def download_pretrained_state_dict(run_id):
     return torch.load(f"./{local}/checkpoints/best.pth")
 
 
+class DedetectionModel(torch.nn.Module):
+    def __init__(self, model: torch.nn.Module):
+        super().__init__()
+        self.model = model
+
+    def forward(self, images: torch.Tensor) -> DetectionTask:
+        return DetectionTask(*self.model(images))
+
+
 def main(
     train_labels: str = None,
     valid_labels: str = None,
@@ -74,7 +83,7 @@ def main(
     # model = build_model()
     # model = SSDPure(resolution, n_classes=2)
     num_classes = max(mapping.values()) + 1
-    model = RetinaNetPure(resolution, n_classes=num_classes)
+    model = DedetectionModel(RetinaNetPure(resolution, n_classes=num_classes))
 
     priors = priorbox(
         min_sizes=[[16, 32], [64, 128], [256, 512]],
