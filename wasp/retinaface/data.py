@@ -42,9 +42,9 @@ AbsoluteXYXY = tuple[int, int, int, int]
 @dataclass_json
 @dataclass
 class Annotation:
-    label: str
     bbox: AbsoluteXYXY
     landmarks: list
+    label: str = "person"
 
 
 @dataclass_json
