@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from functools import partial
 from typing import Callable
 
@@ -165,21 +165,14 @@ class MultiBoxLoss(nn.Module):
 
     def forward(
         self,
-        predictions: T4,
+        y_pred: DetectionTask,
         y_true: DetectionTask,
     ) -> dict[str, torch.Tensor]:
-        boxes_pred, conf_pred, *_ = predictions
-
-        y_pred = {
-            "classes": conf_pred,
-            "boxes": boxes_pred,
-        }
-
         positives, negatives = match_combined(
             y_true.classes,
             y_true.boxes,
             self.priors,
-            confidences=conf_pred,
+            confidences=y_pred.classes,
             negpos_ratio=self.negpos_ratio,
             threshold=self.threshold,
         )
@@ -187,8 +180,8 @@ class MultiBoxLoss(nn.Module):
         losses = {}
         for name, subloss in self.sublosses.items():
             y_pred_, y_true_, anchor_ = select(
-                y_pred[name],
-                asdict(y_true)[name],
+                y_pred.__dict__[name],
+                y_true.__dict__[name],
                 self.priors,
                 use_negatives=subloss.needs_negatives,
                 positives=positives,
