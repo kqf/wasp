@@ -262,6 +262,8 @@ def stack(tensors, pad_value=0) -> torch.Tensor:
 class DetectionTask:
     boxes: torch.Tensor
     classes: torch.Tensor
+    keypoints: torch.Tensor
+    depths: torch.Tensor
 
 
 @dataclass

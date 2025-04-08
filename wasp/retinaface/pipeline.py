@@ -245,7 +245,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             images=images,
             y_pred=y_pred,
             y_true=batch.annotation,
-            anchor=self.prior_box,
+            anchors=self.prior_box,
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
