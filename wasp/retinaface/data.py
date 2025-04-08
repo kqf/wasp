@@ -136,6 +136,8 @@ DEFAULT_MAPPING = {
 class LearningAnnotation:
     boxes: np.ndarray
     classes: np.ndarray
+    keypoints: np.ndarray
+    depths: np.ndarray
 
 
 @dataclass
