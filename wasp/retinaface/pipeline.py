@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -12,60 +12,72 @@ from torch.utils.data import DataLoader
 from torchvision.ops import nms
 
 import wasp.retinaface.augmentations as augs
-from wasp.retinaface.data import FaceDetectionDataset, detection_collate
+from wasp.retinaface.data import Batch, FaceDetectionDataset, detection_collate
 from wasp.retinaface.encode import decode
 from wasp.retinaface.preprocess import normalize
 
 
 def prepare_outputs(
     images,
-    out,
-    targets,
-    prior_box,
+    y_pred,
+    y_true,
+    anchors,
 ) -> list[tuple[np.ndarray, np.ndarray]]:
-    image_height = images.shape[2]
-    image_width = images.shape[3]
+    image_w = images.shape[2]
+    image_h = images.shape[3]
 
-    location, confidence, *_ = out
+    location, confidence, *_ = y_pred
 
     confidence = F.softmax(confidence, dim=-1)
-    scale = torch.from_numpy(np.tile([image_width, image_height], 2)).to(
-        location.device
-    )
+    scale = torch.from_numpy(
+        np.tile(
+            [image_h, image_w],
+            2,
+        )
+    ).to(location.device)
 
     total = []
-    for batch_id, target in enumerate(targets):
-        boxes = decode(
+    batch = zip(y_true.classes, y_true.boxes)
+    for batch_id, (y_true_label, y_true_boxes) in enumerate(batch):
+        boxes_pred = decode(
             location.data[batch_id],
-            prior_box.to(images.device),
+            anchors.to(images.device),
             [0.1, 0.2],
         )
-        scores = confidence[batch_id][:, 1]
+        # NB: it's desired to start class_ids from 0,
+        # 0 is for background it's not included
+        scores = confidence[batch_id][:, 1:]
 
-        valid_index = torch.where(scores > 0.1)[0]
+        valid_index = torch.where((scores > 0.1).any(-1))[0]
         # NMS doesn't accept fp16 inputs
-        boxes = boxes[valid_index].float()
+        boxes_pred = boxes_pred[valid_index].float()
         scores = scores[valid_index].float()
+        probs_pred, label_pred = scores.max(dim=-1)
 
-        boxes *= scale
+        boxes_pred *= scale
 
         # do NMS
-        keep = nms(boxes, scores, 0.4)
-        boxes = boxes[keep, :].cpu().numpy()
-        scores = scores[keep].cpu().numpy()
-        candidates = np.concatenate(
-            (boxes, scores.reshape(-1, 1), scores.reshape(-1, 1)),
+        keep = nms(boxes_pred, probs_pred, 0.4)
+        boxes_pred = boxes_pred[keep, :].cpu().numpy()
+        probs_pred = probs_pred[keep].cpu().numpy()
+        label_pred = label_pred[keep].cpu().numpy()
+        pred = np.concatenate(
+            (
+                boxes_pred,
+                label_pred.reshape(-1, 1),
+                probs_pred.reshape(-1, 1),
+            ),
             axis=1,
         )
-        candidates[:, -2] = 0
 
-        boxes_gt = target["boxes"].cpu().numpy()
-        labels_gt = target["labels"].cpu().numpy()
-        gts = np.zeros((boxes_gt.shape[0], 7), dtype=np.float32)
-        gts[:, :4] = boxes_gt[:, :4] * scale[None, :].cpu().numpy()
-        gts[:, 4] = np.where(labels_gt[:, -1] > 0, 0, 1)
-        total.append((candidates, gts))
-
+        boxes_true = y_true_boxes.cpu().numpy()
+        label_true = y_true_label.cpu().numpy()
+        true = np.zeros((boxes_true.shape[0], 7), dtype=np.float32)
+        true[:, :4] = boxes_true[:, :4] * scale[None, :].cpu().numpy()
+        # While calculating mAP, always start with 0
+        # We don't calculate the metrics for background class
+        true[:, 4] = label_true[:, -1] - 1
+        total.append((pred, true))
     return total
 
 
@@ -81,6 +93,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         build_optimizer,
         build_scheduler,
         loss,
+        mapping: dict[str, int],
         prepare_outputs=prepare_outputs,
     ) -> None:
         super().__init__()
@@ -96,9 +109,10 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.metric_fn = MetricBuilder.build_evaluation_metric(
             "map_2d",
             async_mode=False,
-            num_classes=1,
+            num_classes=loss.num_classes - 1,
         )
         self.prepare_outputs = prepare_outputs
+        self.mapping = mapping
 
     def forward(
         self, batch: torch.Tensor
@@ -112,6 +126,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                 transform=augs.valid(self.resolution),
                 preproc=normalize,
                 rotate90=False,
+                mapping=self.mapping,
             ),
             batch_size=4,
             num_workers=12,
@@ -128,6 +143,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
                 transform=augs.valid(self.resolution),
                 preproc=normalize,
                 rotate90=False,
+                mapping=self.mapping,
             ),
             batch_size=4,
             num_workers=12,
@@ -159,18 +175,18 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
     def training_step(
         self,
-        batch: Dict[str, torch.Tensor],
+        batch: Batch,
         batch_idx: int,
     ):  # type: ignore
-        images = batch["image"]
-        targets = batch["annotation"]
+        images = batch.image
+        y_true = batch.annotation
         # Don't provide images
         # targets[0]["images"] = images
 
-        out = self.forward(images)
+        y_pred = self.forward(images)
         losses = self.loss(
-            out,
-            targets,
+            y_pred,
+            y_true,
         )
 
         for name, loss in losses.items():
@@ -200,17 +216,17 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
     def validation_step(
         self,
-        batch: Dict[str, torch.Tensor],
+        batch: Batch,
         batch_idx: int,
     ):  # type: ignore
-        images = batch["image"]
-        targets = batch["annotation"]
-        targets[0]["images"] = images
+        images = batch.image
+        y_true = batch.annotation
+        # y_true[0]["images"] = images
 
-        out = self.forward(images)
+        y_pred = self.forward(images)
         losses = self.loss(
-            out,
-            targets,
+            y_pred,
+            y_true,
         )
 
         for name, loss in losses.items():
@@ -227,9 +243,9 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
 
         outputs = self.prepare_outputs(
             images=images,
-            out=out,
-            targets=batch["annotation"],
-            prior_box=self.prior_box,
+            y_pred=y_pred,
+            y_true=batch.annotation,
+            anchors=self.prior_box,
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

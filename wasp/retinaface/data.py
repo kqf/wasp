@@ -1,13 +1,14 @@
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import albumentations as albu
 import cv2
 import numpy as np
 import torch
 from dacite import Config, from_dict
+from dataclasses_json import dataclass_json
 from environs import Env
 from torch.utils import data
 
@@ -38,13 +39,15 @@ def load_rgb(image_path: Path | str) -> np.array:
 AbsoluteXYXY = tuple[int, int, int, int]
 
 
+@dataclass_json
 @dataclass
 class Annotation:
     bbox: AbsoluteXYXY
     landmarks: list
-    depths: tuple = ()
+    label: str = "person"
 
 
+@dataclass_json
 @dataclass
 class Sample:
     file_name: str
@@ -83,8 +86,13 @@ def trimm_boxes(
     return x_min, y_min, x_max, y_max
 
 
-def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
-    num_annotations = 4 + 10 + 1 + 2
+def to_annotations(
+    sample: Sample,
+    image_w: int,
+    image_h: int,
+    mapping: dict[str, int],
+) -> np.ndarray:
+    num_annotations = 4 + 10 + 1
     annotations = np.zeros((0, num_annotations))
 
     for label in sample.annotations:
@@ -92,8 +100,8 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
 
         annotation[0, :4] = trimm_boxes(
             label.bbox,
-            image_width=image_width,
-            image_height=image_height,
+            image_width=image_w,
+            image_height=image_h,
         )
 
         if label.landmarks:
@@ -103,9 +111,8 @@ def to_annotations(sample: Sample, image_width, image_height) -> np.ndarray:
         else:
             annotation[0, 4:14] = np.nan
 
-        annotation[0, 15:17] = label.depths or np.nan
         # Important use either nan or 0
-        annotation[0, 14] = 0 if annotation[0, 4] < 0 else 1
+        annotation[0, 14] = mapping.get(label.label, 0)
         annotations = np.append(annotations, annotation, axis=0)
 
     return annotations
@@ -115,9 +122,29 @@ def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
     return {
         "boxes": annotations[:, :4],
         "keypoints": annotations[:, 4:14],
-        "labels": annotations[:, [14]],
+        "classes": annotations[:, [14]].astype(np.int64),
         "depths": annotations[:, 15:],
     }
+
+
+DEFAULT_MAPPING = {
+    "person": 1,
+}
+
+
+@dataclass
+class LearningAnnotation:
+    boxes: np.ndarray
+    classes: np.ndarray
+    keypoints: np.ndarray
+    depths: np.ndarray
+
+
+@dataclass
+class LearningSample:
+    image: np.ndarray
+    file: str
+    annotation: LearningAnnotation
 
 
 class FaceDetectionDataset(data.Dataset):
@@ -125,11 +152,12 @@ class FaceDetectionDataset(data.Dataset):
         self,
         label_path: Path | str,
         transform: albu.Compose,
+        mapping: Optional[dict[str, int]] = None,
         preproc: Callable = preprocess,
         rotate90: bool = False,
     ) -> None:
+        self.mapping = mapping or DEFAULT_MAPPING
         self.preproc = preproc
-        # self.image_path = Path(image_path)
         self.transform = transform
         self.rotate90 = rotate90
         self.labels = read_dataset(
@@ -139,12 +167,17 @@ class FaceDetectionDataset(data.Dataset):
     def __len__(self) -> int:
         return len(self.labels)
 
-    def __getitem__(self, index: int) -> Dict[str, Any]:
+    def __getitem__(self, index: int) -> LearningSample:
         sample = self.labels[index]
         image = load_rgb(to_local(sample.file_name, LOCAL_STORAGE_LOCATION))
 
         image_height, image_width = image.shape[:2]
-        annotations = to_annotations(sample, image_width, image_height)
+        annotations = to_annotations(
+            sample,
+            image_width,
+            image_height,
+            self.mapping,
+        )
 
         if self.rotate90:
             image, annotations = random_rotate_90(
@@ -159,11 +192,13 @@ class FaceDetectionDataset(data.Dataset):
             category_ids=np.ones(len(annotations)),
         )["image"]
 
-        return {
-            "image": to_tensor(image),
-            "annotation": to_dicts(annotations.astype(np.float32)),
-            "file_name": sample.file_name,
-        }
+        return LearningSample(
+            image=to_tensor(image),
+            annotation=LearningAnnotation(
+                **to_dicts(annotations.astype(np.float32))
+            ),
+            file=sample.file_name,
+        )
 
 
 def random_rotate_90(
@@ -211,39 +246,40 @@ def random_rotate_90(
     return image, annotations
 
 
-def detection_collate(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Custom collate fn for dealing with batches of images
-    that have a different number of boxes.
+def stack(tensors, pad_value=0) -> torch.Tensor:
+    max_length = max(tensor.shape[0] for tensor in tensors)
+    return torch.stack(
+        [
+            torch.nn.functional.pad(
+                t, (0, 0, 0, max_length - t.shape[0]), value=pad_value
+            )
+            for t in tensors
+        ]
+    )
 
-    Arguments:
-        batch: (tuple) A tuple of tensor images and lists of annotations
 
-    Return:
-        A tuple containing:
-            1) (tensor) batch of images stacked on their 0 dim
-            2) (list of tensors) annotations for a given
-            image are stacked on 0 dim
-    """
-    annotation = []
-    images = []
-    file_names = []
+@dataclass
+class DetectionTask:
+    boxes: torch.Tensor
+    classes: torch.Tensor
+    keypoints: torch.Tensor
+    depths: torch.Tensor
 
-    for sample in batch:
-        images.append(sample["image"])
-        annotations = {
-            "boxes": torch.from_numpy(sample["annotation"]["boxes"]).float(),
-            "keypoints": torch.from_numpy(
-                sample["annotation"]["keypoints"]
-            ).float(),  # noqa
-            "labels": torch.from_numpy(sample["annotation"]["labels"]).float(),
-            "depths": torch.from_numpy(sample["annotation"]["depths"]).float(),
-        }
-        # print(annotations["labels"].min(), annotations["labels"].max())
-        annotation.append(annotations)
-        file_names.append(sample["file_name"])
 
-    return {
-        "image": torch.stack(images),
-        "annotation": annotation,
-        "file_name": file_names,
+@dataclass
+class Batch:
+    image: torch.Tensor
+    annotation: torch.Tensor
+    file_names: list[str]
+
+
+def detection_collate(batch: List[LearningSample]) -> Batch:
+    images = torch.stack([sample.image for sample in batch])
+    annotations = {
+        key: stack(
+            [torch.tensor(asdict(sample.annotation)[key]) for sample in batch]
+        )
+        for key in asdict(batch[0].annotation).keys()
     }
+    file_names = [sample.file for sample in batch]
+    return Batch(images, DetectionTask(**annotations), file_names)

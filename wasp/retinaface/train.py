@@ -1,5 +1,6 @@
 from functools import partial
 from pathlib import Path
+from typing import Optional
 
 import pytorch_lightning as pl
 import torch
@@ -11,6 +12,7 @@ from pytorch_lightning.callbacks import TQDMProgressBar
 from wasp.retinaface.checkpoint import BestModelCheckpoint
 
 # from wasp.retinaface.closs import DetectionLoss
+from wasp.retinaface.data import DEFAULT_MAPPING
 from wasp.retinaface.logger import build_mlflow
 from wasp.retinaface.loss import MultiBoxLoss
 
@@ -55,8 +57,10 @@ def main(
     resolution: tuple[int, int] = (640, 640),
     epochs: int = 20,
     precision: int = 16,
+    mapping: Optional[dict[str, int]] = None,
 ) -> None:
     pl.trainer.seed_everything(137)
+    mapping = mapping or DEFAULT_MAPPING
     # model = RetinaFace(
     #     name="Resnet50",
     #     pretrained=True,
@@ -69,7 +73,8 @@ def main(
     # )
     # model = build_model()
     # model = SSDPure(resolution, n_classes=2)
-    model = RetinaNetPure(resolution, n_classes=2)
+    num_classes = max(mapping.values()) + 1
+    model = RetinaNetPure(resolution, n_classes=num_classes)
 
     priors = priorbox(
         min_sizes=[[16, 32], [64, 128], [256, 512]],
@@ -97,7 +102,8 @@ def main(
             T_mult=4,
         ),
         # 64, n_pos=8
-        loss=MultiBoxLoss(priors=priors),
+        loss=MultiBoxLoss(priors=priors, num_classes=num_classes),
+        mapping=mapping,
         # 48, n_pos=8
         # loss=DetectionLoss(anchors=priors),
         # prepare_outputs=model.prepare_outputs,

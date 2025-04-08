@@ -1,11 +1,12 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from functools import partial
-from typing import Callable, Dict
+from typing import Callable
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
+from wasp.retinaface.data import DetectionTask
 from wasp.retinaface.encode import encode
 from wasp.retinaface.matching import match2
 
@@ -129,7 +130,7 @@ def select(y_pred, y_true, anchors, use_negatives, positives, negatives):
     return conf_all, targets_all, anchors[a]
 
 
-def default_loss(num_classes, variances) -> Dict[str, WeightedLoss]:
+def default_loss(num_classes, variances) -> dict[str, WeightedLoss]:
     return {
         "classes": WeightedLoss(
             partial(confidence_loss, num_classes=num_classes),
@@ -149,7 +150,7 @@ class MultiBoxLoss(nn.Module):
     def __init__(
         self,
         priors: torch.Tensor,
-        sublosses: Dict[str, WeightedLoss] = None,
+        sublosses: dict[str, WeightedLoss] = None,
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
         neg_pos: int = 7,
@@ -165,26 +166,18 @@ class MultiBoxLoss(nn.Module):
     def forward(
         self,
         predictions: T4,
-        targets: torch.Tensor,
-    ) -> Dict[str, torch.Tensor]:
+        y_true: DetectionTask,
+    ) -> dict[str, torch.Tensor]:
         boxes_pred, conf_pred, *_ = predictions
-
-        classes = stack([t["labels"] for t in targets]).long()
-        boxes = stack([t["boxes"] for t in targets])
 
         y_pred = {
             "classes": conf_pred,
             "boxes": boxes_pred,
         }
 
-        y = {
-            "classes": classes,
-            "boxes": boxes,
-        }
-
         positives, negatives = match_combined(
-            classes,
-            boxes,
+            y_true.classes,
+            y_true.boxes,
             self.priors,
             confidences=conf_pred,
             negpos_ratio=self.negpos_ratio,
@@ -195,7 +188,7 @@ class MultiBoxLoss(nn.Module):
         for name, subloss in self.sublosses.items():
             y_pred_, y_true_, anchor_ = select(
                 y_pred[name],
-                y[name],
+                asdict(y_true)[name],
                 self.priors,
                 use_negatives=subloss.needs_negatives,
                 positives=positives,
