@@ -10,6 +10,7 @@ import torch
 from dacite import Config, from_dict
 from dataclasses_json import dataclass_json
 from environs import Env
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils import data
 
 from wasp.retinaface.preprocess import preprocess
@@ -246,18 +247,6 @@ def random_rotate_90(
     return image, annotations
 
 
-def stack(tensors, pad_value=0) -> torch.Tensor:
-    max_length = max(tensor.shape[0] for tensor in tensors)
-    return torch.stack(
-        [
-            torch.nn.functional.pad(
-                t, (0, 0, 0, max_length - t.shape[0]), value=pad_value
-            )
-            for t in tensors
-        ]
-    )
-
-
 @dataclass
 class DetectionTask:
     boxes: torch.Tensor
@@ -276,8 +265,10 @@ class Batch:
 def detection_collate(batch: List[LearningSample]) -> Batch:
     images = torch.stack([sample.image for sample in batch])
     annotations = {
-        key: stack(
-            [torch.tensor(asdict(sample.annotation)[key]) for sample in batch]
+        key: pad_sequence(
+            [torch.tensor(asdict(sample.annotation)[key]) for sample in batch],
+            batch_first=True,
+            padding_value=0,
         )
         for key in asdict(batch[0].annotation).keys()
     }
