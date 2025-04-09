@@ -247,10 +247,6 @@ def random_rotate_90(
     return image, annotations
 
 
-def stack(tensors, pad_value=0) -> torch.Tensor:
-    return pad_sequence(tensors, batch_first=True, padding_value=pad_value)
-
-
 @dataclass
 class DetectionTask:
     boxes: torch.Tensor
