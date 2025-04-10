@@ -108,7 +108,7 @@ def to_annotations(
         landmarks.append(lm[0])
 
         label_id = mapping.get(label.label, 0)
-        label_ids.append(label_id)
+        label_ids.append([label_id])
         depths.append([-1, -1])
 
     return LearningAnnotation(

@@ -11,7 +11,6 @@ from wasp.retinaface.data import FaceDetectionDataset, detection_collate
 
 # from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.model import RetinaFace
-from wasp.retinaface.preprocess import compose, normalize, preprocess
 from wasp.retinaface.priors import priorbox
 
 
@@ -42,7 +41,6 @@ def main():
     )
 
     loss_fn = DetectionLoss(anchors=priors)
-    preprocessing = partial(preprocess, img_dim=resolution[0])
 
     # Initialize optimizer and scheduler
     optimizer = partial(
@@ -61,8 +59,6 @@ def main():
     train_dataset = FaceDetectionDataset(
         label_path=train_labels,
         transform=augs.train(resolution),
-        preproc=compose(normalize, preprocessing),
-        rotate90=False,
     )
 
     train_loader = DataLoader(

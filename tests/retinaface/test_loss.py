@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wasp.retinaface.data import to_dicts
+from wasp.retinaface.data import LearningAnnotation
 from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.priors import priorbox
 
@@ -41,12 +41,12 @@ def targets():
     x = torch.zeros((1, 17))
     x[0, :4] = torch.Tensor([0.0020, 0.6445, 0.1230, 0.9980])
     x[0, -2] = 1.0
-    return [to_dicts(x)]
+    return LearningAnnotation(boxes=x, classes=x, landmarks=x, depths=x)
 
 
 @pytest.mark.skip
 def test_loss(loss, predictions, targets):
-    total, boxes, classes, landmarks, depths = loss.full_forward(
+    total, boxes, classes, landmarks, depths = loss.forward(
         predictions, targets
     )
     assert total == 0
