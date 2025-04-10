@@ -1,7 +1,7 @@
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import albumentations as albu
 import cv2
@@ -12,8 +12,6 @@ from dataclasses_json import dataclass_json
 from environs import Env
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils import data
-
-from wasp.retinaface.preprocess import preprocess
 
 env = Env()
 env.read_env()
@@ -72,62 +70,6 @@ def read_dataset(path: Path | str) -> list[Sample]:
     return [to_sample(x) for x in df]
 
 
-def trimm_boxes(
-    bbox: AbsoluteXYXY,
-    image_width: int,
-    image_height: int,
-) -> AbsoluteXYXY:
-    x_min, y_min, x_max, y_max = bbox
-
-    x_min = np.clip(x_min, 0, image_width - 1)
-    y_min = np.clip(y_min, 0, image_height - 1)
-    x_max = np.clip(x_max, x_min + 1, image_width - 1)
-    y_max = np.clip(y_max, y_min, image_height - 1)
-
-    return x_min, y_min, x_max, y_max
-
-
-def to_annotations(
-    sample: Sample,
-    image_w: int,
-    image_h: int,
-    mapping: dict[str, int],
-) -> np.ndarray:
-    num_annotations = 4 + 10 + 1
-    annotations = np.zeros((0, num_annotations))
-
-    for label in sample.annotations:
-        annotation = np.empty((1, num_annotations))
-
-        annotation[0, :4] = trimm_boxes(
-            label.bbox,
-            image_width=image_w,
-            image_height=image_h,
-        )
-
-        if label.landmarks:
-            landmarks = np.array(label.landmarks)
-            # landmarks
-            annotation[0, 4:14] = landmarks.reshape(-1, 10)
-        else:
-            annotation[0, 4:14] = np.nan
-
-        # Important use either nan or 0
-        annotation[0, 14] = mapping.get(label.label, 0)
-        annotations = np.append(annotations, annotation, axis=0)
-
-    return annotations
-
-
-def to_dicts(annotations: np.ndarray) -> dict[str, np.ndarray]:
-    return {
-        "boxes": annotations[:, :4],
-        "keypoints": annotations[:, 4:14],
-        "classes": annotations[:, [14]].astype(np.int64),
-        "depths": annotations[:, 15:],
-    }
-
-
 DEFAULT_MAPPING = {
     "person": 1,
 }
@@ -148,19 +90,62 @@ class LearningSample:
     annotation: LearningAnnotation
 
 
+def to_annotations(
+    sample: Sample,
+    mapping: dict[str, int],
+) -> LearningAnnotation:
+    bboxes = []
+    landmarks = []
+    label_ids = []
+    depths = []
+
+    for label in sample.annotations:
+        bboxes.append(label.bbox)
+
+        lm = np.full((1, 10), np.nan)
+        if label.landmarks:
+            lm = np.array(label.landmarks).reshape(-1, 10)
+        landmarks.append(lm[0])
+
+        label_id = mapping.get(label.label, 0)
+        label_ids.append(label_id)
+        depths.append([-1, -1])
+
+    return LearningAnnotation(
+        boxes=np.array(bboxes),
+        keypoints=np.array(landmarks),
+        classes=np.array(label_ids),
+        depths=np.array(depths),
+    )
+
+
+def norm(boxes, w, h):
+    boxes[:, 0::2] = boxes[:, 0::2] / w
+    boxes[:, 1::2] = boxes[:, 1::2] / h
+    return boxes
+
+
+def clip(
+    bbox: np.ndarray,
+    w: int,
+    h: int,
+) -> np.ndarray:
+    x_min = np.clip(bbox[:, 0], 0, w - 1)
+    y_min = np.clip(bbox[:, 1], 0, h - 1)
+    x_max = np.clip(bbox[:, 2], x_min + 1, w - 1)
+    y_max = np.clip(bbox[:, 3], y_min, h - 1)
+    return np.stack([x_min, y_min, x_max, y_max], axis=1)
+
+
 class FaceDetectionDataset(data.Dataset):
     def __init__(
         self,
         label_path: Path | str,
         transform: albu.Compose,
         mapping: Optional[dict[str, int]] = None,
-        preproc: Callable = preprocess,
-        rotate90: bool = False,
     ) -> None:
         self.mapping = mapping or DEFAULT_MAPPING
-        self.preproc = preproc
         self.transform = transform
-        self.rotate90 = rotate90
         self.labels = read_dataset(
             to_local(label_path, LOCAL_STORAGE_LOCATION),
         )
@@ -170,34 +155,22 @@ class FaceDetectionDataset(data.Dataset):
 
     def __getitem__(self, index: int) -> LearningSample:
         sample = self.labels[index]
+        annotation = to_annotations(sample, self.mapping)
+
         image = load_rgb(to_local(sample.file_name, LOCAL_STORAGE_LOCATION))
+        h, w = image.shape[:2]
 
-        image_height, image_width = image.shape[:2]
-        annotations = to_annotations(
-            sample,
-            image_width,
-            image_height,
-            self.mapping,
-        )
-
-        if self.rotate90:
-            image, annotations = random_rotate_90(
-                image,
-                annotations.astype(int),
-            )
-
-        image, annotations = self.preproc(image, annotations)
+        annotation.boxes = norm(clip(annotation.boxes, w=w, h=h), w=w, h=h)
+        annotation.keypoints = norm(annotation.keypoints, w=w, h=h)
 
         image = self.transform(
             image=image,
-            category_ids=np.ones(len(annotations)),
+            category_ids=np.ones(len(annotation.boxes)),
         )["image"]
 
         return LearningSample(
             image=to_tensor(image),
-            annotation=LearningAnnotation(
-                **to_dicts(annotations.astype(np.float32))
-            ),
+            annotation=annotation,
             file=sample.file_name,
         )
 

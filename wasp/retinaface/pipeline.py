@@ -19,7 +19,6 @@ from wasp.retinaface.data import (
     detection_collate,
 )
 from wasp.retinaface.encode import decode
-from wasp.retinaface.preprocess import normalize
 
 
 def prepare_outputs(
@@ -127,8 +126,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             FaceDetectionDataset(
                 label_path=self.train_labels,
                 transform=augs.valid(self.resolution),
-                preproc=normalize,
-                rotate90=False,
                 mapping=self.mapping,
             ),
             batch_size=4,
@@ -144,8 +141,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
             FaceDetectionDataset(
                 label_path=self.valid_labels,
                 transform=augs.valid(self.resolution),
-                preproc=normalize,
-                rotate90=False,
                 mapping=self.mapping,
             ),
             batch_size=4,
