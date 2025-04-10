@@ -1,7 +1,7 @@
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import albumentations as albu
 import cv2
@@ -12,8 +12,6 @@ from dataclasses_json import dataclass_json
 from environs import Env
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils import data
-
-from wasp.retinaface.preprocess import preprocess
 
 env = Env()
 env.read_env()
@@ -99,6 +97,7 @@ def to_annotations(
     bboxes = []
     landmarks = []
     label_ids = []
+    depths = []
 
     for label in sample.annotations:
         bboxes.append(label.bbox)
@@ -110,11 +109,13 @@ def to_annotations(
 
         label_id = mapping.get(label.label, 0)
         label_ids.append(label_id)
+        depths.append([-1, -1])
 
     return LearningAnnotation(
-        bboxes=np.array(bboxes),
-        landmarks=np.array(landmarks),
+        boxes=np.array(bboxes),
+        keypoints=np.array(landmarks),
         classes=np.array(label_ids),
+        depths=np.array(depths),
     )
 
 
@@ -142,13 +143,9 @@ class FaceDetectionDataset(data.Dataset):
         label_path: Path | str,
         transform: albu.Compose,
         mapping: Optional[dict[str, int]] = None,
-        preproc: Callable = preprocess,
-        rotate90: bool = False,
     ) -> None:
         self.mapping = mapping or DEFAULT_MAPPING
-        self.preproc = preproc
         self.transform = transform
-        self.rotate90 = rotate90
         self.labels = read_dataset(
             to_local(label_path, LOCAL_STORAGE_LOCATION),
         )
