@@ -17,7 +17,6 @@ from torchvision.models.detection.ssdlite import (
 
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import FaceDetectionDataset, detection_collate
-from wasp.retinaface.preprocess import compose, normalize, preprocess
 
 
 class SSDPureHead(torch.nn.Module):
@@ -210,12 +209,10 @@ def build_dataloader(resolution):
     env = Env()
     env.read_env()
     train_labels = env.str("TRAIN_LABEL_PATH")
-    preprocessing = partial(preprocess, img_dim=resolution[0])
     # Data loaders
     train_dataset = FaceDetectionDataset(
         label_path=train_labels,
         transform=augs.train(resolution),
-        preproc=compose(normalize, preprocessing),
         rotate90=False,
     )
 
