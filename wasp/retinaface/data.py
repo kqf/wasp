@@ -1,7 +1,7 @@
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any, Generic, List, Optional, TypeVar
 
 import albumentations as albu
 import cv2
@@ -17,11 +17,12 @@ env = Env()
 env.read_env()
 
 
-def to_local(filename: Path | str, local: str = "") -> str:
-    return str(filename).replace(env.str("PRIVATE_STORAGE_LOCATION"), local)
-
-
+CLOUD_STORAGE_LOCATION = env.str("PRIVATE_STORAGE_LOCATION")
 LOCAL_STORAGE_LOCATION = env.str("LOCAL_STORAGE_LOCATION")
+
+
+def to_local(filename: Path | str, local: str = "") -> str:
+    return str(filename).replace(CLOUD_STORAGE_LOCATION, local)
 
 
 def to_tensor(image: np.ndarray) -> torch.Tensor:
@@ -75,25 +76,37 @@ DEFAULT_MAPPING = {
 }
 
 
-@dataclass
-class LearningAnnotation:
-    boxes: np.ndarray
-    classes: np.ndarray
-    keypoints: np.ndarray
-    depths: np.ndarray
+T = TypeVar("T", np.ndarray, torch.Tensor)
 
 
 @dataclass
-class LearningSample:
-    image: np.ndarray
+class DetectionTargets(Generic[T]):
+    boxes: T
+    classes: T
+    keypoints: T
+    depths: T
+
+
+# A single element in the batch
+@dataclass
+class BatchElement(Generic[T]):
     file: str
-    annotation: LearningAnnotation
+    image: torch.Tensor
+    annotation: DetectionTargets[T]
+
+
+# Stacked BatchElements along batch dimension
+@dataclass
+class Batch(Generic[T]):
+    files: list[str]
+    image: torch.Tensor
+    annotation: DetectionTargets[T]
 
 
 def to_annotations(
     sample: Sample,
     mapping: dict[str, int],
-) -> LearningAnnotation:
+) -> DetectionTargets[np.ndarray]:
     bboxes = []
     landmarks = []
     label_ids = []
@@ -111,7 +124,7 @@ def to_annotations(
         label_ids.append([label_id])
         depths.append([-1, -1])
 
-    return LearningAnnotation(
+    return DetectionTargets(
         boxes=np.array(bboxes),
         keypoints=np.array(landmarks),
         classes=np.array(label_ids),
@@ -154,7 +167,7 @@ class FaceDetectionDataset(data.Dataset):
     def __len__(self) -> int:
         return len(self.labels)
 
-    def __getitem__(self, index: int) -> LearningSample:
+    def __getitem__(self, index: int) -> BatchElement[torch.Tensor]:
         sample = self.labels[index]
         annotation = to_annotations(sample, self.mapping)
 
@@ -169,75 +182,16 @@ class FaceDetectionDataset(data.Dataset):
             category_ids=np.ones(len(annotation.boxes)),
         )["image"]
 
-        return LearningSample(
+        return BatchElement(
+            file=sample.file_name,
             image=to_tensor(image),
             annotation=annotation,
-            file=sample.file_name,
         )
 
 
-def random_rotate_90(
-    image: np.ndarray, annotations: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
-    image_height, image_width = image.shape[:2]
-
-    boxes = annotations[:, :4]
-    keypoints = annotations[:, 4:-1].reshape(-1, 2)
-    labels = annotations[:, -1:]
-
-    invalid_index = keypoints.sum(axis=1) == -2
-
-    keypoints[:, 0] = np.clip(keypoints[:, 0], 0, image_width - 1)
-    keypoints[:, 1] = np.clip(keypoints[:, 1], 0, image_height - 1)
-
-    keypoints[invalid_index] = 0
-
-    category_ids = list(range(boxes.shape[0]))
-
-    transform = albu.Compose(
-        [albu.RandomRotate90(p=1)],
-        keypoint_params=albu.KeypointParams(format="xy"),
-        bbox_params=albu.BboxParams(
-            format="pascal_voc",
-            label_fields=["category_ids"],
-        ),
-    )
-    transformed = transform(
-        image=image,
-        keypoints=keypoints.tolist(),
-        bboxes=boxes.tolist(),
-        category_ids=category_ids,
-    )
-
-    keypoints = np.array(transformed["keypoints"])
-    keypoints[invalid_index] = -1
-
-    keypoints = keypoints.reshape(-1, 10)
-    boxes = np.array(transformed["bboxes"])
-    image = transformed["image"]
-
-    annotations = np.hstack([boxes, keypoints, labels])
-
-    return image, annotations
-
-
-@dataclass
-class DetectionTask:
-    boxes: torch.Tensor
-    classes: torch.Tensor
-    keypoints: torch.Tensor
-    depths: torch.Tensor
-
-
-@dataclass
-class Batch:
-    image: torch.Tensor
-    annotation: torch.Tensor
-    file_names: list[str]
-
-
-def detection_collate(batch: List[LearningSample]) -> Batch:
+def detection_collate(batch: List[BatchElement]) -> Batch:
     images = torch.stack([sample.image for sample in batch])
+    # TODO: Remove asdict usage as it's deep copies the data
     annotations = {
         key: pad_sequence(
             [torch.tensor(asdict(sample.annotation)[key]) for sample in batch],
@@ -246,5 +200,5 @@ def detection_collate(batch: List[LearningSample]) -> Batch:
         )
         for key in asdict(batch[0].annotation).keys()
     }
-    file_names = [sample.file for sample in batch]
-    return Batch(images, DetectionTask(**annotations), file_names)
+    files = [sample.file for sample in batch]
+    return Batch(files, images, DetectionTargets(**annotations))
