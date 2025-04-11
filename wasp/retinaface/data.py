@@ -191,6 +191,7 @@ class FaceDetectionDataset(data.Dataset):
 
 def detection_collate(batch: List[BatchElement]) -> Batch:
     images = torch.stack([sample.image for sample in batch])
+    # TODO: Remove asdict usage as it's deep copies the data
     annotations = {
         key: pad_sequence(
             [torch.tensor(asdict(sample.annotation)[key]) for sample in batch],
