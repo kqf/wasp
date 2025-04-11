@@ -90,7 +90,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         valid_labels: str,
         model: torch.nn.Module,
         resolution: tuple[int, int],
-        preprocessing,
         priorbox,
         build_optimizer,
         build_scheduler,
@@ -105,7 +104,6 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.resolution = resolution
         self.prior_box = priorbox
         self.loss = loss
-        self.preproc = preprocessing
         self.build_optimizer = build_optimizer
         self.build_scheduler = build_scheduler
         self.metric_fn = MetricBuilder.build_evaluation_metric(

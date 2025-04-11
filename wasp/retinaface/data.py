@@ -120,6 +120,7 @@ def to_annotations(
 
 
 def norm(boxes, w, h):
+    boxes = boxes.astype(np.float32)
     boxes[:, 0::2] = boxes[:, 0::2] / w
     boxes[:, 1::2] = boxes[:, 1::2] / h
     return boxes

@@ -18,7 +18,6 @@ from wasp.retinaface.loss import MultiBoxLoss
 
 # from wasp.retinaface.monitor import PyTorchGpuMonitorCallback
 from wasp.retinaface.pipeline import RetinaFacePipeline
-from wasp.retinaface.preprocess import preprocess
 
 # from wasp.retinaface.priors import priorbox
 from wasp.retinaface.priors import priorbox
@@ -97,7 +96,6 @@ def main(
         valid_labels=valid_labels or env.str("VALID_LABEL_PATH"),
         model=model,
         resolution=resolution,
-        preprocessing=partial(preprocess, img_dim=resolution[0]),
         priorbox=priors,
         build_optimizer=partial(
             torch.optim.AdamW,
