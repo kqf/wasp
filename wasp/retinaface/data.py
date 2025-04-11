@@ -87,11 +87,20 @@ class DetectionTargets(Generic[T]):
     depths: T
 
 
+# A single element in the batch
 @dataclass
-class Batch(Generic[T]):
+class BatchElement(Generic[T]):
+    file: str
     image: torch.Tensor
     annotation: DetectionTargets[T]
+
+
+# Stacked BatchElements along batch dimension
+@dataclass
+class Batch(Generic[T]):
     files: list[str]
+    image: torch.Tensor
+    annotation: DetectionTargets[T]
 
 
 def to_annotations(
@@ -158,7 +167,7 @@ class FaceDetectionDataset(data.Dataset):
     def __len__(self) -> int:
         return len(self.labels)
 
-    def __getitem__(self, index: int) -> Batch[torch.Tensor]:
+    def __getitem__(self, index: int) -> BatchElement[torch.Tensor]:
         sample = self.labels[index]
         annotation = to_annotations(sample, self.mapping)
 
@@ -173,14 +182,14 @@ class FaceDetectionDataset(data.Dataset):
             category_ids=np.ones(len(annotation.boxes)),
         )["image"]
 
-        return Batch(
+        return BatchElement(
+            file=sample.file_name,
             image=to_tensor(image),
             annotation=annotation,
-            files=[sample.file_name],
         )
 
 
-def detection_collate(batch: List[Batch[torch.tensor]]) -> Batch[torch.Tensor]:
+def detection_collate(batch: List[BatchElement]) -> Batch:
     images = torch.stack([sample.image for sample in batch])
     annotations = {
         key: pad_sequence(
@@ -190,5 +199,5 @@ def detection_collate(batch: List[Batch[torch.tensor]]) -> Batch[torch.Tensor]:
         )
         for key in asdict(batch[0].annotation).keys()
     }
-    files = [sample.files[0] for sample in batch]
-    return Batch(images, DetectionTargets(**annotations), files)
+    files = [sample.file for sample in batch]
+    return Batch(files, images, DetectionTargets(**annotations))
