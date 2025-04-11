@@ -81,10 +81,10 @@ T = TypeVar("T", np.ndarray, torch.Tensor)
 
 @dataclass
 class DetectionTask(Generic[T]):
-    boxes: torch.Tensor
-    classes: torch.Tensor
-    keypoints: torch.Tensor
-    depths: torch.Tensor
+    boxes: T
+    classes: T
+    keypoints: T
+    depths: T
 
 
 @dataclass
