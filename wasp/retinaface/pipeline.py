@@ -114,9 +114,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.prepare_outputs = prepare_outputs
         self.mapping = mapping
 
-    def forward(
-        self, batch: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # type: ignore
+    def forward(self, batch: torch.Tensor) -> DetectionTask:
         return self.model(batch)
 
     def train_dataloader(self) -> DataLoader:
