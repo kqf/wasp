@@ -14,7 +14,7 @@ from torchvision.ops import nms
 import wasp.retinaface.augmentations as augs
 from wasp.retinaface.data import (
     Batch,
-    DetectionTask,
+    DetectionTargets,
     FaceDetectionDataset,
     detection_collate,
 )
@@ -23,8 +23,8 @@ from wasp.retinaface.encode import decode
 
 def prepare_outputs(
     images: torch.Tensor,
-    y_pred: DetectionTask,
-    y_true: DetectionTask,
+    y_pred: DetectionTargets,
+    y_true: DetectionTargets,
     anchors: torch.Tensor,
 ) -> list[tuple[np.ndarray, np.ndarray]]:
     image_w = images.shape[2]
@@ -114,7 +114,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         self.prepare_outputs = prepare_outputs
         self.mapping = mapping
 
-    def forward(self, batch: torch.Tensor) -> DetectionTask:
+    def forward(self, batch: torch.Tensor) -> DetectionTargets:
         return self.model(batch)
 
     def train_dataloader(self) -> DataLoader:

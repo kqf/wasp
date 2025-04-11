@@ -80,7 +80,7 @@ T = TypeVar("T", np.ndarray, torch.Tensor)
 
 
 @dataclass
-class DetectionTask(Generic[T]):
+class DetectionTargets(Generic[T]):
     boxes: T
     classes: T
     keypoints: T
@@ -90,14 +90,14 @@ class DetectionTask(Generic[T]):
 @dataclass
 class Batch(Generic[T]):
     image: torch.Tensor
-    annotation: DetectionTask[T]
+    annotation: DetectionTargets[T]
     files: list[str]
 
 
 def to_annotations(
     sample: Sample,
     mapping: dict[str, int],
-) -> DetectionTask[np.ndarray]:
+) -> DetectionTargets[np.ndarray]:
     bboxes = []
     landmarks = []
     label_ids = []
@@ -115,7 +115,7 @@ def to_annotations(
         label_ids.append([label_id])
         depths.append([-1, -1])
 
-    return DetectionTask(
+    return DetectionTargets(
         boxes=np.array(bboxes),
         keypoints=np.array(landmarks),
         classes=np.array(label_ids),
@@ -180,7 +180,7 @@ class FaceDetectionDataset(data.Dataset):
         )
 
 
-def detection_collate(batch: List[Batch[torch.tensor]]) -> Batch:
+def detection_collate(batch: List[Batch[torch.tensor]]) -> Batch[torch.Tensor]:
     images = torch.stack([sample.image for sample in batch])
     annotations = {
         key: pad_sequence(
@@ -191,4 +191,4 @@ def detection_collate(batch: List[Batch[torch.tensor]]) -> Batch:
         for key in asdict(batch[0].annotation).keys()
     }
     files = [sample.files[0] for sample in batch]
-    return Batch(images, DetectionTask(**annotations), files)
+    return Batch(images, DetectionTargets(**annotations), files)

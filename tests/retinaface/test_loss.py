@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wasp.retinaface.data import DetectionTask
+from wasp.retinaface.data import DetectionTargets
 from wasp.retinaface.loss import MultiBoxLoss
 from wasp.retinaface.priors import priorbox
 
@@ -41,7 +41,7 @@ def targets():
     x = torch.zeros((1, 17))
     x[0, :4] = torch.Tensor([0.0020, 0.6445, 0.1230, 0.9980])
     x[0, -2] = 1.0
-    return DetectionTask(boxes=x, classes=x, landmarks=x, depths=x)
+    return DetectionTargets(boxes=x, classes=x, landmarks=x, depths=x)
 
 
 @pytest.mark.skip

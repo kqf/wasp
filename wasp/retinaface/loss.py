@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from wasp.retinaface.data import DetectionTask
+from wasp.retinaface.data import DetectionTargets
 from wasp.retinaface.encode import encode
 from wasp.retinaface.matching import match2
 
@@ -165,8 +165,8 @@ class MultiBoxLoss(nn.Module):
 
     def forward(
         self,
-        y_pred: DetectionTask,
-        y_true: DetectionTask,
+        y_pred: DetectionTargets,
+        y_true: DetectionTargets,
     ) -> dict[str, torch.Tensor]:
         positives, negatives = match_combined(
             y_true.classes,
