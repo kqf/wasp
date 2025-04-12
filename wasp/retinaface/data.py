@@ -76,9 +76,6 @@ DEFAULT_MAPPING = {
 }
 
 
-T = TypeVar("T", np.ndarray, torch.Tensor)
-
-
 @dataclass
 class WeightedLoss:
     loss: torch.nn.Module
