@@ -10,8 +10,6 @@ from wasp.retinaface.data import DetectionTargets, WeightedLoss
 from wasp.retinaface.encode import encode
 from wasp.retinaface.matching import match2
 
-T4 = tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
-
 
 def masked_loss(
     loss_function,
