@@ -1,16 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import fields
 from functools import partial
-from typing import Callable
+from typing import Optional
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
-from wasp.retinaface.data import DetectionTargets
+from wasp.retinaface.data import DetectionTargets, WeightedLoss
 from wasp.retinaface.encode import encode
 from wasp.retinaface.matching import match2
-
-T4 = tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
 
 def masked_loss(
@@ -74,31 +72,6 @@ def mine_negatives(
     return rank < num_neg.expand_as(rank)
 
 
-@torch.no_grad()
-def stack(tensors, pad_value=0) -> torch.Tensor:
-    max_length = max(tensor.shape[0] for tensor in tensors)
-    return torch.stack(
-        [
-            F.pad(t, (0, 0, 0, max_length - t.shape[0]), value=pad_value)
-            for t in tensors
-        ]
-    )
-
-
-@dataclass
-class WeightedLoss:
-    loss: torch.nn.Module
-    weight: float = 1.0
-    enc_pred: Callable = lambda x, _: x
-    enc_true: Callable = lambda x, _: x
-    needs_negatives: bool = False
-
-    def __call__(self, y_pred, y_true, anchors):
-        y_pred_encoded = self.enc_pred(y_pred, anchors)
-        y_true_encoded = self.enc_true(y_true, anchors)
-        return self.weight * self.loss(y_pred_encoded, y_true_encoded)
-
-
 def match_combined(
     classes,
     boxes,
@@ -130,27 +103,32 @@ def select(y_pred, y_true, anchors, use_negatives, positives, negatives):
     return conf_all, targets_all, anchors[a]
 
 
-def default_loss(num_classes, variances) -> dict[str, WeightedLoss]:
-    return {
-        "classes": WeightedLoss(
+def default_loss(
+    num_classes,
+    variances,
+) -> DetectionTargets[Optional[WeightedLoss]]:
+    return DetectionTargets(
+        classes=WeightedLoss(
             partial(confidence_loss, num_classes=num_classes),
-            2,
+            weight=2,
             needs_negatives=True,
         ),
-        "boxes": WeightedLoss(
+        boxes=WeightedLoss(
             localization_loss,
-            1,
+            weight=1,
             enc_true=partial(encode, variances=variances),
             needs_negatives=False,
         ),
-    }
+        keypoints=None,
+        depths=None,
+    )
 
 
 class MultiBoxLoss(nn.Module):
     def __init__(
         self,
         priors: torch.Tensor,
-        sublosses: dict[str, WeightedLoss] = None,
+        sublosses: DetectionTargets[Optional[WeightedLoss]] = None,
         num_classes: int = 2,
         overlap_thresh: float = 0.35,
         neg_pos: int = 7,
@@ -178,10 +156,15 @@ class MultiBoxLoss(nn.Module):
         )
 
         losses = {}
-        for name, subloss in self.sublosses.items():
+        for field in fields(self.sublosses):
+            name = field.name
+            subloss: Optional[WeightedLoss] = getattr(self.sublosses, name)
+            if subloss is None:
+                continue
+
             y_pred_, y_true_, anchor_ = select(
-                y_pred.__dict__[name],
-                y_true.__dict__[name],
+                getattr(y_pred, name),
+                getattr(y_true, name),
                 self.priors,
                 use_negatives=subloss.needs_negatives,
                 positives=positives,
