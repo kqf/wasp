@@ -74,17 +74,6 @@ def mine_negatives(
     return rank < num_neg.expand_as(rank)
 
 
-@torch.no_grad()
-def stack(tensors, pad_value=0) -> torch.Tensor:
-    max_length = max(tensor.shape[0] for tensor in tensors)
-    return torch.stack(
-        [
-            F.pad(t, (0, 0, 0, max_length - t.shape[0]), value=pad_value)
-            for t in tensors
-        ]
-    )
-
-
 def match_combined(
     classes,
     boxes,
