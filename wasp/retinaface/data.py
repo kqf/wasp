@@ -1,5 +1,5 @@
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any, Callable, Generic, List, Optional, TypeVar
 
@@ -74,9 +74,6 @@ def read_dataset(path: Path | str) -> list[Sample]:
 DEFAULT_MAPPING = {
     "person": 1,
 }
-
-
-T = TypeVar("T", np.ndarray, torch.Tensor)
 
 
 @dataclass
@@ -213,14 +210,13 @@ class FaceDetectionDataset(data.Dataset):
 
 def detection_collate(batch: List[BatchElement]) -> Batch:
     images = torch.stack([sample.image for sample in batch])
-    # TODO: Remove asdict usage as it's deep copies the data
     annotations = {
-        key: pad_sequence(
-            [torch.tensor(asdict(sample.annotation)[key]) for sample in batch],
+        field.name: pad_sequence(
+            [torch.tensor(getattr(e.annotation, field.name)) for e in batch],
             batch_first=True,
             padding_value=0,
         )
-        for key in asdict(batch[0].annotation).keys()
+        for field in fields(batch[0].annotation)
     }
     files = [sample.file for sample in batch]
     return Batch(files, images, DetectionTargets(**annotations))
