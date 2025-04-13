@@ -28,7 +28,7 @@ def iou(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
     return inter / union
 
 
-def match(
+def match_boxes(
     boxes: torch.Tensor,  # [n_obj, 4]
     priors: torch.Tensor,  # [n_anchors, 4]
     overlap_threshold: float,
@@ -89,7 +89,7 @@ def mine_negatives(
     return rank < num_neg.expand_as(rank)
 
 
-def match_combined(
+def match(
     classes: torch.Tensor,  # [batch_size, n_anchors, n_classes]
     boxes: torch.Tensor,  # [batch_size, n_obj, 4]
     priors: torch.Tensor,  # [n_anchors, 4]
@@ -97,6 +97,6 @@ def match_combined(
     negpos_ratio: int,
     overalp: float,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    positives = torch.stack([match(b, priors, overalp) for b in boxes])
+    positives = torch.stack([match_boxes(b, priors, overalp) for b in boxes])
     negatives = mine_negatives(classes, confidences, negpos_ratio, positives)
     return positives, negatives

@@ -8,7 +8,7 @@ from torch import nn
 
 from wasp.retinaface.data import DetectionTargets, WeightedLoss
 from wasp.retinaface.encode import encode
-from wasp.retinaface.matching import match_combined
+from wasp.retinaface.matching import match
 
 
 def masked_loss(
@@ -110,7 +110,7 @@ class MultiBoxLoss(nn.Module):
         y_pred: DetectionTargets,
         y_true: DetectionTargets,
     ) -> dict[str, torch.Tensor]:
-        positives, negatives = match_combined(
+        positives, negatives = match(
             y_true.classes,
             y_true.boxes,
             self.priors,
