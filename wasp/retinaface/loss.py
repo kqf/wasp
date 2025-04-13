@@ -51,40 +51,6 @@ def confidence_loss(
     return loss_c / n_pos
 
 
-def mine_negatives(
-    label: torch.Tensor,
-    pred: torch.Tensor,
-    negpos_ratio: int,
-    positive: torch.Tensor,
-):
-    batch_size, num_anchors, _ = positive.shape
-    pos_batch, pos_anchor, pos_obj = torch.where(positive)
-    labels = torch.zeros_like(pred[:, :, 0], dtype=torch.long)
-    labels[pos_batch, pos_anchor] = label[pos_batch, pos_obj].squeeze()
-    loss = F.cross_entropy(
-        pred.view(-1, pred.shape[-1]), labels.view(-1), reduction="none"
-    ).view(batch_size, num_anchors)
-    loss[pos_batch, pos_anchor] = 0
-    _, loss_sorted_idx = loss.sort(dim=1, descending=True)
-    _, rank = loss_sorted_idx.sort(dim=1)
-    num_pos = positive.sum(dim=(1, 2), dtype=torch.long).unsqueeze(1)
-    num_neg = torch.clamp(negpos_ratio * num_pos, max=num_anchors - 1)
-    return rank < num_neg.expand_as(rank)
-
-
-def match_combined(
-    classes,
-    boxes,
-    priors,
-    confidences,
-    negpos_ratio,
-    overalp,
-):
-    positives = torch.stack([match(b, priors, overalp) for b in boxes])
-    negatives = mine_negatives(classes, confidences, negpos_ratio, positives)
-    return positives, negatives
-
-
 def select(y_pred, y_true, anchors, use_negatives, positives, negatives):
     b, a, o = torch.where(positives)
     if not use_negatives:
@@ -144,7 +110,7 @@ class MultiBoxLoss(nn.Module):
         y_pred: DetectionTargets,
         y_true: DetectionTargets,
     ) -> dict[str, torch.Tensor]:
-        positives, negatives = match_combined(
+        positives, negatives = match(
             y_true.classes,
             y_true.boxes,
             self.priors,
