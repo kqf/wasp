@@ -28,10 +28,9 @@ def iou(box_a: torch.Tensor, box_b: torch.Tensor) -> torch.Tensor:
 
 
 def match(
-    labels: torch.Tensor,  # [n_obj]
     boxes: torch.Tensor,  # [n_obj, 4]
     priors: torch.Tensor,  # [n_anchors, 4]
-    threshold: float,
+    overlap_threshold: float,
 ) -> torch.Tensor:  # returns a tensor of shape [n_anchors, n_obj]
     n_anchors = priors.shape[0]
     n_obj = boxes.shape[0]
@@ -63,7 +62,6 @@ def match(
     )
 
     # Mark anchors as positive if IoU exceeds threshold
-    valid_anchors = best_truth_overlap >= threshold
+    valid_anchors = best_truth_overlap >= overlap_threshold
     matching_table[valid_anchors, best_truth_idx[valid_anchors]] = 1
-
     return matching_table

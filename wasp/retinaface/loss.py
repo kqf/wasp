@@ -78,11 +78,9 @@ def match_combined(
     priors,
     confidences,
     negpos_ratio,
-    threshold,
+    overalp,
 ):
-    positives = torch.stack(
-        [match(c, b, priors, threshold) for c, b in zip(classes, boxes)]
-    )
+    positives = torch.stack([match(b, priors, overalp) for b in boxes])
     negatives = mine_negatives(classes, confidences, negpos_ratio, positives)
     return positives, negatives
 
@@ -130,12 +128,12 @@ class MultiBoxLoss(nn.Module):
         priors: torch.Tensor,
         sublosses: DetectionTargets[Optional[WeightedLoss]] = None,
         num_classes: int = 2,
-        overlap_thresh: float = 0.35,
+        matching_overlap: float = 0.35,
         neg_pos: int = 7,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
-        self.threshold = overlap_thresh
+        self.matching_overlap = matching_overlap
         self.negpos_ratio = neg_pos
         self.variance = [0.1, 0.2]
         self.sublosses = sublosses or default_loss(num_classes, self.variance)
@@ -152,7 +150,7 @@ class MultiBoxLoss(nn.Module):
             self.priors,
             confidences=y_pred.classes,
             negpos_ratio=self.negpos_ratio,
-            threshold=self.threshold,
+            overalp=self.matching_overlap,
         )
 
         losses = {}
