@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 from wasp.retinaface.encode import point_form
 
@@ -65,3 +66,37 @@ def match(
     valid_anchors = best_truth_overlap >= overlap_threshold
     matching_table[valid_anchors, best_truth_idx[valid_anchors]] = 1
     return matching_table
+
+
+def mine_negatives(
+    label: torch.Tensor,
+    pred: torch.Tensor,
+    negpos_ratio: int,
+    positive: torch.Tensor,
+) -> torch.Tensor:
+    batch_size, num_anchors, _ = positive.shape
+    pos_batch, pos_anchor, pos_obj = torch.where(positive)
+    labels = torch.zeros_like(pred[:, :, 0], dtype=torch.long)
+    labels[pos_batch, pos_anchor] = label[pos_batch, pos_obj].squeeze()
+    loss = F.cross_entropy(
+        pred.view(-1, pred.shape[-1]), labels.view(-1), reduction="none"
+    ).view(batch_size, num_anchors)
+    loss[pos_batch, pos_anchor] = 0
+    _, loss_sorted_idx = loss.sort(dim=1, descending=True)
+    _, rank = loss_sorted_idx.sort(dim=1)
+    num_pos = positive.sum(dim=(1, 2), dtype=torch.long).unsqueeze(1)
+    num_neg = torch.clamp(negpos_ratio * num_pos, max=num_anchors - 1)
+    return rank < num_neg.expand_as(rank)
+
+
+def match_combined(
+    classes: torch.Tensor,  # [batch_size, n_anchors, n_classes]
+    boxes: torch.Tensor,  # [batch_size, n_obj, 4]
+    priors: torch.Tensor,  # [n_anchors, 4]
+    confidences: torch.Tensor,  # [batch_size, n_anchors, n_classes]
+    negpos_ratio: int,
+    overalp: float,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    positives = torch.stack([match(b, priors, overalp) for b in boxes])
+    negatives = mine_negatives(classes, confidences, negpos_ratio, positives)
+    return positives, negatives
