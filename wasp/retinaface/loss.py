@@ -8,7 +8,7 @@ from torch import nn
 
 from wasp.retinaface.data import DetectionTargets, WeightedLoss
 from wasp.retinaface.encode import encode
-from wasp.retinaface.matching import match2
+from wasp.retinaface.matching import match
 
 
 def masked_loss(
@@ -81,7 +81,7 @@ def match_combined(
     threshold,
 ):
     positives = torch.stack(
-        [match2(c, b, priors, threshold) for c, b in zip(classes, boxes)]
+        [match(c, b, priors, threshold) for c, b in zip(classes, boxes)]
     )
     negatives = mine_negatives(classes, confidences, negpos_ratio, positives)
     return positives, negatives
