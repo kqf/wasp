@@ -40,23 +40,41 @@ def to_labels(
 def build_geometric_augs() -> alb.Compose:
     return alb.Compose(
         [
+            # Horizontal flip
             alb.HorizontalFlip(p=0.5),
-            alb.ShiftScaleRotate(
-                shift_limit=0.05,
-                scale_limit=0.1,
-                rotate_limit=15,
-                border_mode=cv2.BORDER_REFLECT_101,
-                p=0.7,
+            # Random crop that keeps at least part of the bounding boxes safe
+            alb.CropAndPad(
+                px=(-50, 50),  # crop or pad up to 50px on each side
+                sample_independently=True,
+                pad_mode=cv2.BORDER_REFLECT_101,
+                pad_cval=0,
+                p=0.5,
             ),
+            # Zoom in/out (scaling without changing image size)
+            alb.Affine(
+                scale=(0.8, 1.2),  # zoom out to zoom in
+                fit_output=False,  # keep original canvas size
+                mode=cv2.BORDER_REFLECT_101,
+                p=0.5,
+            ),
+            # Random rotation in-place (no image scaling)
+            alb.Affine(
+                rotate=(-15, 15),
+                scale=1.0,  # no scale
+                fit_output=False,
+                mode=cv2.BORDER_REFLECT_101,
+                p=0.5,
+            ),
+            # Slight color/contrast adjustment
             alb.RandomBrightnessContrast(p=0.2),
         ],
         bbox_params=alb.BboxParams(
-            format="pascal_voc",  # absolute pixel format
+            format="pascal_voc",
             label_fields=["category_ids"],
             min_visibility=0.3,
         ),
         keypoint_params=alb.KeypointParams(
-            format="xy",  # For individual (x, y) keypoints
+            format="xy",
             remove_invisible=False,
         ),
     )
@@ -73,6 +91,7 @@ def apply(
         keypoints=annotations.keypoints.reshape(-1, 2).tolist(),
         category_ids=[int(cls[0]) for cls in annotations.classes],
     )
+
     new_annotations = DetectionTargets(
         boxes=np.array(transformed["bboxes"], dtype=np.float32),
         keypoints=np.array(transformed["keypoints"], dtype=np.float32).reshape(
