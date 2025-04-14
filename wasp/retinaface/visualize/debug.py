@@ -67,17 +67,19 @@ def apply(
     image: np.ndarray,
     annotations: DetectionTargets[np.ndarray],
 ) -> tuple[np.ndarray, DetectionTargets[np.ndarray]]:
-    print(annotations.keypoints.shape)
     transformed = transform(
         image=image,
-        bboxes=annotations.boxes,
-        keypoints=annotations.keypoints,
+        bboxes=annotations.boxes.reshape(-1, 4).tolist(),
+        keypoints=annotations.keypoints.reshape(-1, 2).tolist(),
         category_ids=[int(cls[0]) for cls in annotations.classes],
     )
+    print(transformed["keypoints"], transformed["image"].shape)
 
     new_annotations = DetectionTargets(
         boxes=np.array(transformed["bboxes"], dtype=np.float32),
-        keypoints=np.array(transformed["keypoints"], dtype=np.float32),
+        keypoints=np.array(transformed["keypoints"], dtype=np.float32).reshape(
+            len(transformed["bboxes"]), -1, 2
+        ),
         classes=annotations.classes,
         depths=annotations.depths,
     )
