@@ -10,6 +10,7 @@ from wasp.retinaface.data import (
     Annotation,
     DetectionTargets,
     Sample,
+    apply,
     load_rgb,
     read_dataset,
     to_annotations,
@@ -17,14 +18,26 @@ from wasp.retinaface.data import (
 from wasp.retinaface.visualize.plot import plot, to_local
 
 
+def un_norm(boxes, w, h):
+    boxes = boxes.astype(np.float32)
+    boxes[..., 0::2] = boxes[..., 0::2] * w
+    boxes[..., 1::2] = boxes[..., 1::2] * h
+    return boxes
+
+
 def to_labels(
+    image: np.ndarray,
     detection_targets: DetectionTargets[np.ndarray],
     mapping: dict[int, str],
 ) -> list[Annotation]:
     annotations = []
-    for i in range(len(detection_targets.boxes)):
-        bbox = tuple(detection_targets.boxes[i].tolist())
-        keypoints = detection_targets.keypoints[i].reshape(-1, 2).tolist()
+    h, w = image.shape[:2]
+    boxes = un_norm(detection_targets.boxes, w, h)
+    keypoints = un_norm(detection_targets.keypoints, w, h)
+
+    for i in range(len(boxes)):
+        bbox = tuple(boxes[i].tolist())
+        keypoints = keypoints[i].reshape(-1, 2).tolist()
         label_id = int(detection_targets.classes[i][0])
         label = mapping.get(label_id, "unknown")
         annotations.append(
@@ -80,30 +93,6 @@ def build_geometric_augs() -> alb.Compose:
     )
 
 
-def apply(
-    transform: alb.Compose,
-    image: np.ndarray,
-    annotations: DetectionTargets[np.ndarray],
-) -> tuple[np.ndarray, DetectionTargets[np.ndarray]]:
-    transformed = transform(
-        image=image,
-        bboxes=annotations.boxes.reshape(-1, 4).tolist(),
-        keypoints=annotations.keypoints.reshape(-1, 2).tolist(),
-        category_ids=[int(cls[0]) for cls in annotations.classes],
-    )
-
-    new_annotations = DetectionTargets(
-        boxes=np.array(transformed["bboxes"], dtype=np.float32),
-        keypoints=np.array(transformed["keypoints"], dtype=np.float32).reshape(
-            len(transformed["bboxes"]), -1, 2
-        ),
-        classes=annotations.classes,
-        depths=annotations.depths,
-    )
-
-    return transformed["image"], new_annotations
-
-
 @click.command()
 @click.option(
     "--dataset",
@@ -125,7 +114,11 @@ def main(dataset):
         # image_h, image_w = image.shape[:2]
         annotations = to_annotations(sample, mapping=DEFAULT_MAPPING)
         image, annotations = apply(build_geometric_augs(), image, annotations)
-        processed_annotations = to_labels(annotations, mapping=DEFAULT_MAPPING)
+        processed_annotations = to_labels(
+            image,
+            annotations,
+            mapping=DEFAULT_MAPPING,
+        )
         original = plot(image, processed_annotations)
         cv2.imshow("image", original)
         cv2.waitKey(0)
