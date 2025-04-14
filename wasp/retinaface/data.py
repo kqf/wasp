@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Callable, Generic, List, Optional, TypeVar
 
 import albumentations as albu
+import albumentations as alb
 import cv2
 import numpy as np
 import torch
@@ -151,10 +152,42 @@ def to_annotations(
     )
 
 
+def apply(
+    transform: alb.Compose,
+    image: np.ndarray,
+    annotations: DetectionTargets[np.ndarray],
+) -> tuple[np.ndarray, DetectionTargets[np.ndarray]]:
+    transformed = transform(
+        image=image,
+        bboxes=annotations.boxes.reshape(-1, 4).tolist(),
+        keypoints=annotations.keypoints.reshape(-1, 2).tolist(),
+        category_ids=[int(cls[0]) for cls in annotations.classes],
+    )
+
+    new_annotations = DetectionTargets(
+        boxes=np.array(transformed["bboxes"], dtype=np.float32),
+        keypoints=np.array(transformed["keypoints"], dtype=np.float32),
+        classes=annotations.classes,
+        depths=annotations.depths,
+    )
+
+    h, w = transformed["image"].shape[:2]
+    new_annotations.boxes = norm(
+        clip(new_annotations.boxes, w=w, h=h), w=w, h=h
+    )
+    new_annotations.keypoints = norm(
+        new_annotations.keypoints.reshape(len(new_annotations.boxes), -1, 2),
+        w=w,
+        h=h,
+    )
+
+    return transformed["image"], new_annotations
+
+
 def norm(boxes, w, h):
     boxes = boxes.astype(np.float32)
-    boxes[:, 0::2] = boxes[:, 0::2] / w
-    boxes[:, 1::2] = boxes[:, 1::2] / h
+    boxes[..., 0::2] = boxes[..., 0::2] / w
+    boxes[..., 1::2] = boxes[..., 1::2] / h
     return boxes
 
 
@@ -189,22 +222,14 @@ class FaceDetectionDataset(data.Dataset):
     def __getitem__(self, index: int) -> BatchElement[torch.Tensor]:
         sample = self.labels[index]
         annotation = to_annotations(sample, self.mapping)
-
         image = load_rgb(to_local(sample.file_name, LOCAL_STORAGE_LOCATION))
-        h, w = image.shape[:2]
 
-        annotation.boxes = norm(clip(annotation.boxes, w=w, h=h), w=w, h=h)
-        annotation.keypoints = norm(annotation.keypoints, w=w, h=h)
-
-        image = self.transform(
-            image=image,
-            category_ids=np.ones(len(annotation.boxes)),
-        )["image"]
+        image_t, annotation_t = apply(self.transform, image, annotation)
 
         return BatchElement(
             file=sample.file_name,
-            image=to_tensor(image),
-            annotation=annotation,
+            image=to_tensor(image_t),
+            annotation=annotation_t,
         )
 
 
