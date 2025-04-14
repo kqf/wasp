@@ -73,8 +73,6 @@ def apply(
         keypoints=annotations.keypoints.reshape(-1, 2).tolist(),
         category_ids=[int(cls[0]) for cls in annotations.classes],
     )
-    print(transformed["keypoints"], transformed["image"].shape)
-
     new_annotations = DetectionTargets(
         boxes=np.array(transformed["bboxes"], dtype=np.float32),
         keypoints=np.array(transformed["keypoints"], dtype=np.float32).reshape(
