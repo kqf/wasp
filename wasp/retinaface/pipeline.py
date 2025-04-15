@@ -121,7 +121,7 @@ class RetinaFacePipeline(pl.LightningModule):  # pylint: disable=R0901
         return DataLoader(
             FaceDetectionDataset(
                 label_path=self.train_labels,
-                transform=augs.valid(self.resolution),
+                transform=augs.train(self.resolution),
                 mapping=self.mapping,
             ),
             batch_size=4,

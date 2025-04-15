@@ -157,6 +157,8 @@ def apply(
     image: np.ndarray,
     annotations: DetectionTargets[np.ndarray],
 ) -> tuple[np.ndarray, DetectionTargets[np.ndarray]]:
+    # TODO: Fix for the annotation errors
+    annotations.boxes = clip(annotations.boxes, image.shape[1], image.shape[0])
     transformed = transform(
         image=image,
         bboxes=annotations.boxes.reshape(-1, 4).tolist(),
@@ -172,9 +174,7 @@ def apply(
     )
 
     h, w = transformed["image"].shape[:2]
-    new_annotations.boxes = norm(
-        clip(new_annotations.boxes, w=w, h=h), w=w, h=h
-    )
+    new_annotations.boxes = norm(new_annotations.boxes, w=w, h=h)
     new_annotations.keypoints = norm(
         new_annotations.keypoints.reshape(len(new_annotations.boxes), -1, 2),
         w=w,

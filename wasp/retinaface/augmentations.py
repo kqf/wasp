@@ -1,5 +1,6 @@
 from typing import Tuple
 
+import albumentations as alb
 import numpy as np
 from albumentations import (
     BboxParams,
@@ -16,8 +17,15 @@ from albumentations import (
 
 def train(resolution: tuple[int, int]) -> Compose:
     return Compose(
-        bbox_params=None,
-        keypoint_params=None,
+        bbox_params=alb.BboxParams(
+            format="pascal_voc",
+            label_fields=["category_ids"],
+            min_visibility=0.3,
+        ),
+        keypoint_params=alb.KeypointParams(
+            format="xy",
+            remove_invisible=False,
+        ),
         p=1,
         transforms=[
             RandomBrightnessContrast(
@@ -42,8 +50,15 @@ def train(resolution: tuple[int, int]) -> Compose:
 
 def valid(resolution: tuple[int, int]) -> Compose:
     return Compose(
-        bbox_params=None,
-        keypoint_params=None,
+        bbox_params=alb.BboxParams(
+            format="pascal_voc",
+            label_fields=["category_ids"],
+            min_visibility=0.3,
+        ),
+        keypoint_params=alb.KeypointParams(
+            format="xy",
+            remove_invisible=False,
+        ),
         p=1,
         transforms=[
             Resize(*resolution),
@@ -60,8 +75,15 @@ def valid(resolution: tuple[int, int]) -> Compose:
 
 def test(resolution: tuple[int, int]) -> Compose:
     return Compose(
-        bbox_params=None,
-        keypoint_params=None,
+        bbox_params=alb.BboxParams(
+            format="pascal_voc",
+            label_fields=["category_ids"],
+            min_visibility=0.3,
+        ),
+        keypoint_params=alb.KeypointParams(
+            format="xy",
+            remove_invisible=False,
+        ),
         p=1,
         transforms=[
             Resize(*resolution),
@@ -76,6 +98,7 @@ def test(resolution: tuple[int, int]) -> Compose:
     )
 
 
+# TODO: Remove me
 def random_rotate_90(
     image: np.ndarray,
     annotations: np.ndarray,
