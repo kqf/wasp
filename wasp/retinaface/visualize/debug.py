@@ -4,6 +4,7 @@ import albumentations as alb
 import click
 import cv2
 import numpy as np
+from albumentations.pytorch import ToTensorV2
 
 from wasp.retinaface.data import (
     DEFAULT_MAPPING,
@@ -80,6 +81,7 @@ def build_geometric_augs() -> alb.Compose:
             ),
             # Slight color/contrast adjustment
             alb.RandomBrightnessContrast(p=0.2),
+            ToTensorV2(),
         ],
         bbox_params=alb.BboxParams(
             format="pascal_voc",
@@ -114,6 +116,7 @@ def main(dataset):
         # image_h, image_w = image.shape[:2]
         annotations = to_annotations(sample, mapping=DEFAULT_MAPPING)
         image, annotations = apply(build_geometric_augs(), image, annotations)
+        image = np.moveaxis(image.cpu().numpy(), 0, -1)
         processed_annotations = to_labels(
             image,
             annotations,
