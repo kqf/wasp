@@ -7,6 +7,7 @@ from albumentations import (
     RandomGamma,
     Resize,
 )
+from albumentations.pytorch import ToTensorV2
 
 
 def train(resolution: tuple[int, int]) -> Compose:
@@ -38,6 +39,7 @@ def train(resolution: tuple[int, int]) -> Compose:
                 p=1,
                 std=[0.229, 0.224, 0.225],
             ),
+            ToTensorV2(),
         ],
     )
 
@@ -63,6 +65,7 @@ def valid(resolution: tuple[int, int]) -> Compose:
                 p=1,
                 std=[0.229, 0.224, 0.225],
             ),
+            ToTensorV2(),
         ],
     )
 
@@ -88,5 +91,6 @@ def test(resolution: tuple[int, int]) -> Compose:
                 p=1,
                 std=[0.229, 0.224, 0.225],
             ),
+            ToTensorV2(),
         ],
     )
