@@ -173,7 +173,7 @@ def apply(
         depths=annotations.depths,
     )
 
-    h, w = transformed["image"].shape[:2]
+    h, w = transformed["image"].shape[1:3]
     new_annotations.boxes = norm(new_annotations.boxes, w=w, h=h)
     new_annotations.keypoints = norm(
         new_annotations.keypoints.reshape(len(new_annotations.boxes), -1, 2),
@@ -228,7 +228,7 @@ class FaceDetectionDataset(data.Dataset):
 
         return BatchElement(
             file=sample.file_name,
-            image=to_tensor(image_t),
+            image=image_t,
             annotation=annotation_t,
         )
 
