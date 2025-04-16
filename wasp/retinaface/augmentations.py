@@ -1,16 +1,10 @@
-from typing import Tuple
-
 import albumentations as alb
-import numpy as np
 from albumentations import (
-    BboxParams,
     Compose,
     HueSaturationValue,
-    KeypointParams,
     Normalize,
     RandomBrightnessContrast,
     RandomGamma,
-    RandomRotate90,
     Resize,
 )
 
@@ -96,49 +90,3 @@ def test(resolution: tuple[int, int]) -> Compose:
             ),
         ],
     )
-
-
-# TODO: Remove me
-def random_rotate_90(
-    image: np.ndarray,
-    annotations: np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray]:
-    image_height, image_width = image.shape[:2]
-
-    boxes = annotations[:, :4]
-    keypoints = annotations[:, 4:-1].reshape(-1, 2)
-    labels = annotations[:, -1:]
-
-    invalid_index = keypoints.sum(axis=1) == -2
-
-    keypoints[:, 0] = np.clip(keypoints[:, 0], 0, image_width - 1)
-    keypoints[:, 1] = np.clip(keypoints[:, 1], 0, image_height - 1)
-
-    keypoints[invalid_index] = 0
-
-    category_ids = list(range(boxes.shape[0]))
-
-    transform = Compose(
-        [RandomRotate90(p=1)],
-        keypoint_params=KeypointParams(format="xy"),
-        bbox_params=BboxParams(
-            format="pascal_voc",
-            label_fields=["category_ids"],
-        ),
-    )
-    transformed = transform(
-        image=image,
-        keypoints=keypoints.tolist(),
-        bboxes=boxes.tolist(),
-        category_ids=category_ids,
-    )
-
-    keypoints = np.array(transformed["keypoints"])
-    keypoints[invalid_index] = -1
-
-    keypoints = keypoints.reshape(-1, 10)
-    boxes = np.array(transformed["bboxes"])
-    image = transformed["image"]
-
-    annotations = np.hstack([boxes, keypoints, labels])
-    return image, annotations
