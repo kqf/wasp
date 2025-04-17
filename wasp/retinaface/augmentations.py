@@ -61,8 +61,8 @@ def valid(resolution: tuple[int, int]) -> Compose:
 
 def test(resolution: tuple[int, int]) -> Compose:
     return Compose(
-        bbox_params=default_params.bbox_params,
-        keypoint_params=default_params.keypoint_params,
+        # bbox_params=default_params.bbox_params,
+        # keypoint_params=default_params.keypoint_params,
         p=1,
         transforms=[
             Resize(*resolution),
