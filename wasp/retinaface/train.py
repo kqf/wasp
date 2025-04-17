@@ -51,12 +51,13 @@ def download_pretrained_state_dict(run_id):
 
 
 class DedetectionModel(torch.nn.Module):
-    def __init__(self, model: torch.nn.Module):
+    def __init__(self, model: torch.nn.Module, priors: torch.Tensor):
         super().__init__()
         self.model = model
+        self.register_buffer("priors", priors)
 
     def forward(self, images: torch.Tensor) -> DetectionTargets:
-        return DetectionTargets(*self.model(images))
+        return DetectionTargets(*self.model(images.float()))
 
 
 def main(
@@ -82,13 +83,14 @@ def main(
     # model = build_model()
     # model = SSDPure(resolution, n_classes=2)
     num_classes = max(mapping.values()) + 1
-    model = DedetectionModel(RetinaNetPure(resolution, n_classes=num_classes))
-
-    priors = priorbox(
-        min_sizes=[[16, 32], [64, 128], [256, 512]],
-        steps=[8, 16, 32],
-        clip=False,
-        image_size=resolution,
+    model = DedetectionModel(
+        RetinaNetPure(resolution, n_classes=num_classes),
+        priorbox(
+            min_sizes=[[16, 32], [64, 128], [256, 512]],
+            steps=[8, 16, 32],
+            clip=False,
+            image_size=resolution,
+        ),
     )
 
     pipeline = RetinaFacePipeline(
@@ -96,7 +98,7 @@ def main(
         valid_labels=valid_labels or env.str("VALID_LABEL_PATH"),
         model=model,
         resolution=resolution,
-        priorbox=priors,
+        priorbox=model.priors,
         build_optimizer=partial(
             torch.optim.AdamW,
             lr=0.0002,
@@ -109,7 +111,7 @@ def main(
             T_mult=4,
         ),
         # 64, n_pos=8
-        loss=MultiBoxLoss(priors=priors, num_classes=num_classes),
+        loss=MultiBoxLoss(priors=model.priors, num_classes=num_classes),
         mapping=mapping,
         # 48, n_pos=8
         # loss=DetectionLoss(anchors=priors),
