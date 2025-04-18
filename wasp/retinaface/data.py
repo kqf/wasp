@@ -46,6 +46,7 @@ class Annotation:
     bbox: AbsoluteXYXY
     landmarks: list
     label: str = "person"
+    score: float = float("nan")
 
 
 @dataclass_json
