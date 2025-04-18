@@ -63,8 +63,9 @@ def pred_to_labels(
                 annotations=[
                     Annotation(
                         bbox=box,
-                        landmarks=[],
                         label=label,
+                        score=score,
+                        landmarks=[],
                     )
                 ],
             )
