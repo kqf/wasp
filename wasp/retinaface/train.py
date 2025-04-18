@@ -55,6 +55,7 @@ class DedetectionModel(torch.nn.Module):
         super().__init__()
         self.model = model
         self.register_buffer("priors", priors)
+        self.priors: torch.Tensor = priors
 
     def forward(self, images: torch.Tensor) -> DetectionTargets:
         return DetectionTargets(*self.model(images.float()))
