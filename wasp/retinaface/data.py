@@ -158,8 +158,8 @@ def apply(
     image: np.ndarray,
     annotations: DetectionTargets[np.ndarray],
 ) -> tuple[np.ndarray, DetectionTargets[np.ndarray]]:
-    # TODO: Fix for the annotation errors
     annotations.boxes = clip(annotations.boxes, image.shape[1], image.shape[0])
+    print("wxh", image.shape[1], image.shape[0])
     transformed = transform(
         image=image,
         bboxes=annotations.boxes.reshape(-1, 4).tolist(),
