@@ -1,6 +1,6 @@
 from dataclasses import fields
 from functools import partial
-from typing import Optional
+from typing import Generic, Optional, Protocol, TypeVar
 
 import torch
 import torch.nn.functional as F
@@ -9,6 +9,17 @@ from torch import nn
 from wasp.retinaface.data import DetectionTargets, WeightedLoss
 from wasp.retinaface.encode import encode
 from wasp.retinaface.matching import match
+
+T = TypeVar("T")
+
+
+class HasBoxesAndClasses(Protocol, Generic[T]):
+    boxes: T
+    classes: T
+
+    @classmethod
+    def is_dataclass(cls) -> bool:
+        ...
 
 
 def masked_loss(
@@ -92,7 +103,7 @@ class MultiBoxLoss(nn.Module):
     def __init__(
         self,
         priors: torch.Tensor,
-        sublosses: DetectionTargets[Optional[WeightedLoss]] = None,
+        sublosses: HasBoxesAndClasses[Optional[WeightedLoss]] = None,
         num_classes: int = 2,
         matching_overlap: float = 0.35,
         neg_pos: int = 7,
@@ -107,8 +118,8 @@ class MultiBoxLoss(nn.Module):
 
     def forward(
         self,
-        y_pred: DetectionTargets,
-        y_true: DetectionTargets,
+        y_pred: HasBoxesAndClasses[torch.Tensor],
+        y_true: HasBoxesAndClasses[torch.Tensor],
     ) -> dict[str, torch.Tensor]:
         positives, negatives = match(
             y_true.classes,
