@@ -16,7 +16,7 @@ class AugmentationParams:
     bbox_params: alb.BboxParams = alb.BboxParams(
         format="pascal_voc",
         label_fields=["category_ids"],
-        min_visibility=1.0,
+        min_visibility=0.3,
     )
     keypoint_params = alb.KeypointParams(
         format="xy",

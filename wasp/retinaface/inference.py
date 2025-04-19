@@ -1,4 +1,5 @@
 import pathlib
+from typing import Callable, TypeVar
 
 import click
 import cv2
@@ -21,15 +22,46 @@ from wasp.retinaface.train import DedetectionModel
 from wasp.retinaface.visualize.plot import plot, to_local
 
 
+def batch_to_sample(
+    boxes: np.ndarray,
+    classes: np.ndarray,
+    keypoints: np.ndarray,
+    depths: np.ndarray,
+) -> Sample:
+    score, label = classes.argmax(axis=-1)
+    predictions = zip(
+        boxes.tolist(),
+        label.reshape(-1, 1).tolist(),
+        score.reshape(-1, 1).tolist(),
+    )
+
+    return Sample(
+        file_name="inference",
+        annotations=[
+            Annotation(
+                bbox=box,
+                label=label,
+                score=score,
+                landmarks=[],
+            )
+            for box, label, score in predictions
+        ],
+    )
+
+
+T = TypeVar("T")
+
+
 def pred_to_labels(
     y_pred: DetectionTargets,
     anchors: torch.Tensor,
+    convert: Callable[[np.ndarray, np.ndarray, np.ndarray, np.ndarray], T],
     variances: tuple[float, float] = (0.1, 0.2),
     nms_threshold: float = 0.4,
     confidence_threshold: float = 0.1,
-) -> list[Sample]:
+) -> list[T]:
     confidence = torch.nn.functional.softmax(y_pred.classes, dim=-1)
-    total: list[Sample] = []
+    total: list[T] = []
     for batch_id, y_pred_boxes in enumerate(y_pred.boxes):
         boxes_pred = decode(
             y_pred_boxes,
@@ -50,26 +82,15 @@ def pred_to_labels(
         # do NMS
         keep = nms(boxes_pred, probs_pred, nms_threshold)
         boxes_pred = boxes_pred[keep, :].cpu().detach().numpy()
-        probs_pred = probs_pred[keep].cpu().detach().numpy()
+        probs_pred = scores[keep].cpu().detach().numpy()
         label_pred = label_pred[keep].cpu().detach().numpy()
-        predictions = zip(
-            boxes_pred.tolist(),
-            label_pred.reshape(-1, 1).tolist(),
-            probs_pred.reshape(-1, 1).tolist(),
-        )
-        total.extend(
-            Sample(
-                file_name="inference",
-                annotations=[
-                    Annotation(
-                        bbox=box,
-                        label=label,
-                        score=score,
-                        landmarks=[],
-                    )
-                ],
+        total.append(
+            convert(
+                boxes_pred,
+                probs_pred,
+                np.ndarray([]),
+                np.ndarray([]),
             )
-            for box, label, score in predictions
         )
     return total
 
@@ -84,7 +105,7 @@ def infer(
     image = transform(image=image)["image"]
     # There is only one image in the batch
     y_pred = model(image.unsqueeze(0))
-    samples = pred_to_labels(y_pred, model.priors)
+    samples = pred_to_labels(y_pred, model.priors, batch_to_sample)
     annotations = samples[0].annotations
 
     # Convert to original image size
@@ -94,6 +115,58 @@ def infer(
         )
 
     return annotations
+
+
+def true_to_labels(y_true: DetectionTargets) -> list[DetectionTargets]:
+    return [
+        DetectionTargets(
+            boxes=y_true.boxes[batch_id],
+            classes=y_true.classes[batch_id],
+            keypoints=y_true.keypoints[batch_id],
+            depths=y_true.depths[batch_id],
+        )
+        for batch_id in range(len(y_true.boxes))
+    ]
+
+
+def pred_to_evaluation(pred: DetectionTargets[np.ndarray]) -> np.ndarray:
+    score, label = pred.classes.max(dim=-1)
+    return np.concatenate(
+        (
+            pred.boxes.reshape(-1, 4),
+            label.reshape(-1, 1),
+            score.reshape(-1, 1),
+        ),
+        axis=1,
+    )
+
+
+def true_to_evaluation(true: DetectionTargets[torch.Tensor]) -> np.ndarray:
+    boxes_true = true.boxes.cpu().numpy()
+    label_true = true.classes.cpu().numpy()
+    output = np.zeros((boxes_true.shape[0], 7), dtype=np.float32)
+    output[:, :4] = boxes_true[:, :4]
+    output[:, 4] = label_true[:, -1] - 1
+    return output
+
+
+def prepare_outputs(
+    y_pred: DetectionTargets,
+    y_true: DetectionTargets,
+    anchors: torch.Tensor,
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    true = true_to_labels(y_true)
+    pred = pred_to_labels(
+        y_pred,
+        anchors,
+        convert=DetectionTargets[np.ndarray],
+    )
+    total: list[tuple[np.ndarray, np.ndarray]] = []
+    total.extend(
+        (pred_to_evaluation(boxes_pred), true_to_evaluation(boxes_true))
+        for boxes_pred, boxes_true in zip(pred, true)
+    )
+    return total
 
 
 @click.command()
