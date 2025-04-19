@@ -67,10 +67,23 @@ def to_sample(entry: dict[str, Any]) -> Sample:
     )
 
 
+def clean_sample(sample: Sample) -> Sample:
+    # Keep only annotations with valid bounding boxes
+    cleaned = [
+        annotation
+        for annotation in sample.annotations
+        if annotation.bbox[0] < annotation.bbox[2]
+        and annotation.bbox[1] < annotation.bbox[3]
+    ]
+    sample.annotations = cleaned
+    return sample
+
+
 def read_dataset(path: Path | str) -> list[Sample]:
     with open(path) as f:
         df = json.load(f)
-    return [to_sample(x) for x in df]
+    samples = [clean_sample(to_sample(x)) for x in df]
+    return [s for s in samples if s.annotations]
 
 
 DEFAULT_MAPPING = {
@@ -159,7 +172,6 @@ def apply(
     annotations: DetectionTargets[np.ndarray],
 ) -> tuple[np.ndarray, DetectionTargets[np.ndarray]]:
     annotations.boxes = clip(annotations.boxes, image.shape[1], image.shape[0])
-    print("wxh", image.shape[1], image.shape[0])
     transformed = transform(
         image=image,
         bboxes=annotations.boxes.reshape(-1, 4).tolist(),

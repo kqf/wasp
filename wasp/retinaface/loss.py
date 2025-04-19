@@ -10,7 +10,6 @@ from wasp.retinaface.data import DetectionTargets, WeightedLoss
 from wasp.retinaface.encode import encode
 from wasp.retinaface.matching import match
 
-# Create a generic type variable for T
 T = TypeVar("T")
 
 
