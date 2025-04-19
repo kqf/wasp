@@ -1,4 +1,4 @@
-from dataclasses import fields, is_dataclass
+from dataclasses import fields
 from functools import partial
 from typing import Generic, Optional, Protocol, TypeVar
 
@@ -20,7 +20,7 @@ class HasBoxesAndClasses(Protocol, Generic[T]):
 
     @classmethod
     def is_dataclass(cls) -> bool:
-        return is_dataclass(cls)
+        ...
 
 
 def masked_loss(
@@ -119,8 +119,8 @@ class MultiBoxLoss(nn.Module):
 
     def forward(
         self,
-        y_pred: HasBoxesAndClasses,
-        y_true: HasBoxesAndClasses,
+        y_pred: HasBoxesAndClasses[torch.Tensor],
+        y_true: HasBoxesAndClasses[torch.Tensor],
     ) -> dict[str, torch.Tensor]:
         positives, negatives = match(
             y_true.classes,
