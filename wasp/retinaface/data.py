@@ -213,7 +213,11 @@ def clip(
     y_min = np.clip(bbox[:, 1], 0, h - 1)
     x_max = np.clip(bbox[:, 2], x_min + 1, w - 1)
     y_max = np.clip(bbox[:, 3], y_min, h - 1)
-    return np.stack([x_min, y_min, x_max, y_max], axis=1)
+    x = np.stack([x_min, y_min, x_max, y_max], axis=1)
+    print(f"Original bbox: {bbox}")
+    print(f"Clipped bbox: {x}")
+    print(f"Image size: WxH: {w}x{h}")
+    return x
 
 
 class FaceDetectionDataset(data.Dataset):
