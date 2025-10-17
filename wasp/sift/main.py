@@ -11,14 +11,13 @@ def dump_database(output: str, descriptors) -> None:
 
 def build_features(impath: str) -> list[np.ndarray]:
     path = Path(impath)
-    sift = cv2.SIFT_create(contrastThreshold=0.04)
+    sift = cv2.SIFT_create(contrastThreshold=0.06)
 
     db = []
-    for file in path.glob("*.jpg"):
+    for file in path.glob("*.png"):
         image = cv2.imread(str(file), cv2.IMREAD_GRAYSCALE)
-        mask = np.load(file.with_suffix(".npy"))
-        if "4.jpg" in str(file):
-            continue
+        # mask = np.load(file.with_suffix(".npy")).astype(np.uint8)
+        mask = np.ones_like(image).astype(np.uint8)
         _, descriptors = sift.detectAndCompute(image, mask)
         if descriptors is not None:
             db.append(descriptors)
@@ -36,10 +35,10 @@ class Detection:
 def detect_objects(
     input_image: np.ndarray,
     stacked_databases: dict[str, np.ndarray],
-    match_threshold: int = 30,
+    match_threshold: int = 1,
 ) -> list[Detection]:
 
-    sift = cv2.SIFT_create(contrastThreshold=0.04)
+    sift = cv2.SIFT_create(contrastThreshold=0.06)
     matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 
     keypoints, descriptors = sift.detectAndCompute(input_image, None)
@@ -89,19 +88,20 @@ def visualize_detections(
 
 def main():
     stacked_databases = {
-        "A": build_features("./datasets/a/"),
+        # "A": build_features("./datasets/a/"),
         # "B": build_features("./B"),
         # "C": build_features("./C"),
+        "R": build_features("./datasets/r/"),
     }
 
     for name, base in stacked_databases.items():
         dump_database(f"database-{name}.npy", base)
 
     # Prepare the output folder
-    outpath = Path("datasets/test/v1-SIFT-masks")
+    outpath = Path("datasets/test/v2-SIFT-masks")
     outpath.mkdir(parents=True, exist_ok=True)
 
-    for file in Path("datasets/test").glob("*.jpg"):
+    for file in Path("datasets/test-new").glob("*.png"):
         image = cv2.imread(str(file), cv2.IMREAD_GRAYSCALE)
         detections = detect_objects(image, stacked_databases)
         # Visualize and save
