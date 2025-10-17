@@ -33,3 +33,4 @@ datasets/distances/
 !requirements.txt
 *.png
 *.pt
+*.npz
