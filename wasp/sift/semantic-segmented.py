@@ -269,6 +269,11 @@ def non_maximum_averaging(
     return merged
 
 
+# This needs to be installed:
+# pip install git+https://github.com/facebookresearch/segment-anything.git
+# Then see the github to download the models
+
+
 def main():
     # Build the databases (just like your SIFT version)
     stacked_databases = {
