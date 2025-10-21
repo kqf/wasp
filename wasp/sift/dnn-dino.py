@@ -2,8 +2,8 @@ from pathlib import Path
 
 import cv2
 import torch
-from groundingdino.util.inference import load_model, predict
-from groundingdino.util.vl_utils import annotate
+from groundingdino.util.inference import load_model, predict  # type: ignore
+from groundingdino.util.vl_utils import annotate  # type: ignore
 
 
 def main():
