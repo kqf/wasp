@@ -34,3 +34,4 @@ datasets/distances/
 *.png
 *.pt
 *.npz
+weights/
