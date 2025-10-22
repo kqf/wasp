@@ -69,7 +69,7 @@ def main():
             img = cv2.imread(file)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-            results = model.predict(source=img)
+            results = model.predict(source=img, conf=0.05, max_det=100)
             predictions = to_predictions(results)
             plot(img, predictions)
 
