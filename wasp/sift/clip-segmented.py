@@ -31,7 +31,10 @@ def segment(image: np.ndarray) -> List[Proposal]:
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
     sam.to(device="cuda" if torch.cuda.is_available() else "cpu")
 
-    mask_generator = SamAutomaticMaskGenerator(sam)
+    mask_generator = SamAutomaticMaskGenerator(
+        sam,
+        points_per_side=64,
+    )
 
     # Generate masks
     masks = mask_generator.generate(image)
@@ -129,7 +132,7 @@ def detect_objects(
     input_image: np.ndarray,
     stacked_databases: dict[str, np.ndarray],
     model_name: str = "ViT-B/32",
-    similarity_threshold: float = 0.3,
+    similarity_threshold: float = 0.25,
     show_patches: bool = False,
 ) -> list[Detection]:
     device = "cuda" if torch.cuda.is_available() else "cpu"
