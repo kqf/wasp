@@ -23,6 +23,56 @@ def grabcut(image, roi):
     result = np.where((mask==2)|(mask==0), 0, 1).astype('uint8')
     return (result * 255).astype(np.uint8)
 
+def watershed(image, roi, pad=40, fg_shrink_ratio=0.35, border=5):
+    x, y, w, h = roi
+
+    # 1. Tighter crop = closer background wall = less room to expand
+    x1 = max(0, x - pad)
+    y1 = max(0, y - pad)
+    x2 = min(image.shape[1], x + w + pad)
+    y2 = min(image.shape[0], y + h + pad)
+    crop = image[y1:y2, x1:x2].copy()
+    ch, cw = crop.shape[:2]
+
+    # 2. Pre-blur to soften weak gradients (prevents bleeding through noise)
+    blurred = cv2.GaussianBlur(crop, (5, 5), 0)
+
+    # 3. Boost gradients — watershed stops more aggressively at edges
+    gray = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
+    gradient = cv2.morphologyEx(gray, cv2.MORPH_GRADIENT, np.ones((3,3), np.uint8))
+    boosted = cv2.cvtColor(gradient, cv2.COLOR_GRAY2BGR)
+
+    markers = np.zeros((ch, cw), np.int32)
+
+    markers[0:border, :] = 1
+    markers[-border:, :] = 1
+    markers[:, 0:border] = 1
+    markers[:, -border:] = 1
+
+    # 4. Larger fg_shrink = smaller seed = more conservative expansion
+    fx1, fy1 = pad, pad
+    fx2, fy2 = pad + w, pad + h
+    fg_shrink = max(2, int(min(w, h) * fg_shrink_ratio))
+    markers[
+        fy1 + fg_shrink : fy2 - fg_shrink,
+        fx1 + fg_shrink : fx2 - fg_shrink
+    ] = 2
+
+    # 5. Run on gradient image instead of raw — stops at edges not color
+    cv2.watershed(boosted, markers)
+
+    seg = np.where(markers == 2, 1, 0).astype(np.uint8)
+
+    # 6. Morphological erosion — shrink result slightly
+    kernel = np.ones((3, 3), np.uint8)
+    seg = cv2.erode(seg, kernel, iterations=1)
+
+    full_mask = np.zeros(image.shape[:2], np.uint8)
+    full_mask[y1:y2, x1:x2] = seg
+
+    return full_mask * 255
+
+
 
 def evaluate(name, segment):
     image = cv2.imread("sample.png")
@@ -36,6 +86,7 @@ def evaluate(name, segment):
 
 METHODS = {
     "grabcut": grabcut,
+    "watershed": watershed,
 }
 
 def main():
