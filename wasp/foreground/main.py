@@ -24,18 +24,26 @@ def grabcut(image, roi):
     return (result * 255).astype(np.uint8)
 
 
-def main():
+def evaluate(name, segment):
     image = cv2.imread("sample.png")
-    # roi = cv2.selectROI("ROI", image, fromCenter=False, showCrosshair=True)
-    # cv2.destroyWindow("ROI")
-    # print(roi)
     roi = 776, 786, 100, 100
-    with timer("grabcut"):
-        result = grabcut(image, roi)
+
+    with timer(f"Evaluating {name}"):
+        result = segment(image, roi)
 
     cv2.imshow("foreground", result)
     cv2.waitKey()
 
+METHODS = {
+    "grabcut": grabcut,
+}
+
+def main():
+    # roi = cv2.selectROI("ROI", image, fromCenter=False, showCrosshair=True)
+    # cv2.destroyWindow("ROI")
+    # print(roi)
+    for name, method in METHODS.items():
+        evaluate(name, method)
 
 if __name__ == "__main__":
     main()
