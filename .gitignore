@@ -35,3 +35,4 @@ datasets/distances/
 *.pt
 *.npz
 weights/
+.sourcery.yaml
