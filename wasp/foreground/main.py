@@ -121,6 +121,37 @@ def floodfill_segment(image, roi, pad=40, tolerance=7):
     return full_mask
 
 
+import cv2
+import numpy as np
+
+
+def waterflow_mbd(image, roi=None):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    costs = np.full(gray.shape, np.inf)
+    costs[0, :], costs[-1, :], costs[:, 0], costs[:, -1] = 0, 0, 0, 0
+
+    for _ in range(2):
+        for y in range(1, gray.shape[0] - 1):
+            for x in range(1, gray.shape[1] - 1):
+                # Update cost based on neighbors + intensity barrier
+                val = gray[y, x]
+                costs[y, x] = min(
+                    costs[y, x],
+                    costs[y - 1, x] + abs(int(val) - int(gray[y - 1, x])),
+                    costs[y, x - 1] + abs(int(val) - int(gray[y, x - 1])),
+                )
+        for y in range(gray.shape[0] - 2, 0, -1):
+            for x in range(gray.shape[1] - 2, 0, -1):
+                val = gray[y, x]
+                costs[y, x] = min(
+                    costs[y, x],
+                    costs[y + 1, x] + abs(int(val) - int(gray[y + 1, x])),
+                    costs[y, x + 1] + abs(int(val) - int(gray[y, x + 1])),
+                )
+
+    costs = cv2.normalize(costs, None, 0, 255, cv2.NORM_MINMAX)
+    return costs.astype(np.uint8)
+
 
 METHODS = {
     # "grabcut": grabcut,
