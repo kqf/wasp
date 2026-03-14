@@ -72,7 +72,62 @@ def watershed(image, roi, pad=40, fg_shrink_ratio=0.35, border=5):
 
     return full_mask * 255
 
+def threshold_segment(image, roi, pad=40, border=5):
+    x, y, w, h = roi
+    x1 = max(0, x - pad)
+    y1 = max(0, y - pad)
+    x2 = min(image.shape[1], x + w + pad)
+    y2 = min(image.shape[0], y + h + pad)
+    crop = image[y1:y2, x1:x2].copy()
 
+    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+
+    # Otsu automatically picks the best threshold value
+    _, seg = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    full_mask = np.zeros(image.shape[:2], np.uint8)
+    full_mask[y1:y2, x1:x2] = ~seg
+    return full_mask
+
+def floodfill_segment(image, roi, pad=40, tolerance=7):
+    x, y, w, h = roi
+
+    x1 = max(0, x - pad)
+    y1 = max(0, y - pad)
+    x2 = min(image.shape[1], x + w + pad)
+    y2 = min(image.shape[0], y + h + pad)
+    crop = image[y1:y2, x1:x2].copy()
+    ch, cw = crop.shape[:2]
+
+    # Seed from center of ROI
+    seed = (pad + w // 2, pad + h // 2)  # (x, y) for floodFill
+
+    # Mask must be 2px larger on each side for floodFill
+    ff_mask = np.zeros((ch + 2, cw + 2), np.uint8)
+
+    cv2.floodFill(
+        crop, ff_mask, seed,
+        newVal=(255, 255, 255),
+        loDiff=(tolerance,) * 3,
+        upDiff=(tolerance,) * 3,
+        flags=cv2.FLOODFILL_MASK_ONLY | (255 << 8)  # write 255 into mask
+    )
+
+    # Trim the 1px border padding floodFill requires
+    seg = ff_mask[1:-1, 1:-1]
+
+    full_mask = np.zeros(image.shape[:2], np.uint8)
+    full_mask[y1:y2, x1:x2] = seg
+
+    return full_mask
+
+
+
+METHODS = {
+    # "grabcut": grabcut,
+    # "watershed": watershed,
+    # "threshold": threshold_segment,
+    "floodfill": floodfill_segment,
+}
 
 def evaluate(name, segment):
     image = cv2.imread("sample.png")
@@ -84,10 +139,6 @@ def evaluate(name, segment):
     cv2.imshow("foreground", result)
     cv2.waitKey()
 
-METHODS = {
-    "grabcut": grabcut,
-    "watershed": watershed,
-}
 
 def main():
     # roi = cv2.selectROI("ROI", image, fromCenter=False, showCrosshair=True)
