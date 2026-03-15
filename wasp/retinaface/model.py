@@ -188,16 +188,11 @@ class RetinaFace(nn.Module):
             dim=1,
         )
         ldm_regressions = torch.cat(
-            [
-                self.keypoints[i](feature)
-                for i, feature in enumerate(features)
-            ],  # noqa
+            [self.keypoints[i](feature) for i, feature in enumerate(features)],  # noqa
             dim=1,
         )
         depths = torch.cat(
-            [
-                self.depths[i](feature) for i, feature in enumerate(features)
-            ],  # noqa
+            [self.depths[i](feature) for i, feature in enumerate(features)],  # noqa
             dim=1,
         )
 

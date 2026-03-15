@@ -1,4 +1,5 @@
 import math
+
 import cv2
 import numpy as np
 
@@ -85,8 +86,9 @@ def exponential_smoothing(a, x, x_prev):
 
 
 class OneEuroFilter:
-    def __init__(self, t0, x0, dx0=0.0, min_cutoff=1.0, beta=0.0,
-                 d_cutoff=1.0):
+    def __init__(
+        self, t0, x0, dx0=0.0, min_cutoff=1.0, beta=0.0, d_cutoff=1.0
+    ):
         # The parameters.
         self.min_cutoff = float(min_cutoff)
         self.beta = float(beta)
@@ -95,8 +97,6 @@ class OneEuroFilter:
         self.x_prev = float(x0)
         self.dx_prev = float(dx0)
         self.t_prev = float(t0)
-
-
 
     def __call__(self, t, x):
         t_e = t - self.t_prev

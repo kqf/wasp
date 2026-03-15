@@ -18,8 +18,7 @@ class HasBoxesAndClasses(Protocol, Generic[T]):
     classes: T
 
     @classmethod
-    def is_dataclass(cls) -> bool:
-        ...
+    def is_dataclass(cls) -> bool: ...
 
 
 def masked_loss(

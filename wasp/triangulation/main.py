@@ -133,9 +133,9 @@ def draw_overlay(
         y_offset = h_img - patch_h - 10
         x_offset = w_img - patch_w - 10
 
-        image[
-            y_offset : y_offset + patch_h, x_offset : x_offset + patch_w
-        ] = enlarged_patch
+        image[y_offset : y_offset + patch_h, x_offset : x_offset + patch_w] = (
+            enlarged_patch
+        )
 
     return image
 

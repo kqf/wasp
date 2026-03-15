@@ -4,8 +4,10 @@ import torch
 import tqdm
 from environs import Env
 from torch.utils.data import DataLoader
-from torchvision.models.detection import SSDLite320_MobileNet_V3_Large_Weights
-from torchvision.models.detection import _utils as det_utils
+from torchvision.models.detection import (
+    SSDLite320_MobileNet_V3_Large_Weights,
+    _utils as det_utils,
+)
 from torchvision.models.detection.backbone_utils import _resnet_fpn_extractor
 from torchvision.models.detection.ssdlite import (
     MobileNet_V3_Large_Weights,
