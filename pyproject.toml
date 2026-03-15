@@ -1,22 +1,36 @@
-[tool.black]
+[tool.ruff]
 line-length = 79
+target-version = "py310"
 
-[tool.isort]
-profile = "black"
-line_length = 79
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+extend-select = [
+    "E", # pycodestyle
+    "F", # pyflakes
+    "I", # isort
+    # "UP",  # pyupgrade
+    # "B",   # bugbear
+    # "C90", # mccabe
+    # "D",  # pydocstyle
+    # "ERA",  # eradicate
+]
+ignore = [
+    "E203",
+    # "W503",
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
 
 [tool.mypy]
 python_version = "3.10"
 strict = false
 ignore_missing_imports = true
-
-
-[tool.flake8]
-max-line-length = 79
-ignore = [
-    "E203", # Whitespace before ':'
-    "W503", # Line break before binary operator
-]
 
 [build-system]
 requires = ["setuptools", "wheel"]
