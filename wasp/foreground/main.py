@@ -1,7 +1,8 @@
-import cv2
-import numpy as np
 import time
 from contextlib import contextmanager
+
+import cv2
+import numpy as np
 
 
 @contextmanager
@@ -15,13 +16,14 @@ def timer(name):
 
 
 def grabcut(image, roi):
-    bgdModel = np.zeros((1,65), np.float64)
-    fgdModel = np.zeros((1,65), np.float64)
+    bgdModel = np.zeros((1, 65), np.float64)
+    fgdModel = np.zeros((1, 65), np.float64)
     mask = np.zeros(image.shape[:2], np.uint8)
     cv2.grabCut(image, mask, roi, bgdModel, fgdModel, 1, cv2.GC_INIT_WITH_RECT)
     print("mask", mask.sum(), mask.std())
-    result = np.where((mask==2)|(mask==0), 0, 1).astype('uint8')
+    result = np.where((mask == 2) | (mask == 0), 0, 1).astype("uint8")
     return (result * 255).astype(np.uint8)
+
 
 def watershed(image, roi, pad=40, fg_shrink_ratio=0.35, border=5):
     x, y, w, h = roi
@@ -39,7 +41,9 @@ def watershed(image, roi, pad=40, fg_shrink_ratio=0.35, border=5):
 
     # 3. Boost gradients — watershed stops more aggressively at edges
     gray = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
-    gradient = cv2.morphologyEx(gray, cv2.MORPH_GRADIENT, np.ones((3,3), np.uint8))
+    gradient = cv2.morphologyEx(
+        gray, cv2.MORPH_GRADIENT, np.ones((3, 3), np.uint8)
+    )
     boosted = cv2.cvtColor(gradient, cv2.COLOR_GRAY2BGR)
 
     markers = np.zeros((ch, cw), np.int32)
@@ -54,8 +58,7 @@ def watershed(image, roi, pad=40, fg_shrink_ratio=0.35, border=5):
     fx2, fy2 = pad + w, pad + h
     fg_shrink = max(2, int(min(w, h) * fg_shrink_ratio))
     markers[
-        fy1 + fg_shrink : fy2 - fg_shrink,
-        fx1 + fg_shrink : fx2 - fg_shrink
+        fy1 + fg_shrink : fy2 - fg_shrink, fx1 + fg_shrink : fx2 - fg_shrink
     ] = 2
 
     # 5. Run on gradient image instead of raw — stops at edges not color
@@ -72,6 +75,7 @@ def watershed(image, roi, pad=40, fg_shrink_ratio=0.35, border=5):
 
     return full_mask * 255
 
+
 def threshold_segment(image, roi, pad=40, border=5):
     x, y, w, h = roi
     x1 = max(0, x - pad)
@@ -87,6 +91,7 @@ def threshold_segment(image, roi, pad=40, border=5):
     full_mask = np.zeros(image.shape[:2], np.uint8)
     full_mask[y1:y2, x1:x2] = ~seg
     return full_mask
+
 
 def floodfill_segment(image, roi, pad=40, tolerance=7):
     x, y, w, h = roi
@@ -105,11 +110,13 @@ def floodfill_segment(image, roi, pad=40, tolerance=7):
     ff_mask = np.zeros((ch + 2, cw + 2), np.uint8)
 
     cv2.floodFill(
-        crop, ff_mask, seed,
+        crop,
+        ff_mask,
+        seed,
         newVal=(255, 255, 255),
         loDiff=(tolerance,) * 3,
         upDiff=(tolerance,) * 3,
-        flags=cv2.FLOODFILL_MASK_ONLY | (255 << 8)  # write 255 into mask
+        flags=cv2.FLOODFILL_MASK_ONLY | (255 << 8),  # write 255 into mask
     )
 
     # Trim the 1px border padding floodFill requires
@@ -119,10 +126,6 @@ def floodfill_segment(image, roi, pad=40, tolerance=7):
     full_mask[y1:y2, x1:x2] = seg
 
     return full_mask
-
-
-import cv2
-import numpy as np
 
 
 def waterflow_mbd(image, roi=None):
@@ -160,6 +163,7 @@ METHODS = {
     "floodfill": floodfill_segment,
 }
 
+
 def evaluate(name, segment):
     image = cv2.imread("sample.png")
     roi = 776, 786, 100, 100
@@ -177,6 +181,7 @@ def main():
     # print(roi)
     for name, method in METHODS.items():
         evaluate(name, method)
+
 
 if __name__ == "__main__":
     main()

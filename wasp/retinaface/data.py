@@ -3,8 +3,8 @@ from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any, Callable, Generic, List, Optional, TypeVar
 
-import albumentations as albu
 import albumentations as alb
+import albumentations as albu
 import cv2
 import numpy as np
 import torch

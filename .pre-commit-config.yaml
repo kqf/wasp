@@ -9,19 +9,14 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
     hooks:
-      - id: isort
-        name: isort (python)
-        args: ["--settings-path", "pyproject.toml"]
+      - id: ruff
+        args: ["--config=pyproject.toml", "--fix"]
 
-
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-        args: ["--config", "pyproject.toml"]
+      - id: ruff-format
+        args: ["--config=pyproject.toml"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.921
@@ -29,11 +24,3 @@ repos:
       - id: mypy
         additional_dependencies: ["types-PyYAML"]
         args: ["--config-file", "pyproject.toml"]
-
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
-        # args: ["--config", "pyproject.toml"]
-        args: ["--max-line-length=79"]

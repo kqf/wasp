@@ -37,7 +37,6 @@ def detect_objects(
     stacked_databases: dict[str, np.ndarray],
     match_threshold: int = 1,
 ) -> list[Detection]:
-
     sift = cv2.SIFT_create(contrastThreshold=0.06)
     matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 

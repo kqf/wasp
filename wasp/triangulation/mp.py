@@ -8,8 +8,9 @@ import numpy as np
 
 def draw_landmarks(image, landmarks):
     for landmark in landmarks:
-        x, y = int(landmark[0] * image.shape[1]), int(
-            landmark[1] * image.shape[0]
+        x, y = (
+            int(landmark[0] * image.shape[1]),
+            int(landmark[1] * image.shape[0]),
         )
         cv2.circle(
             image, (x, y), 2, (255, 0, 0), -1
