@@ -80,6 +80,31 @@ def plot_results(pred, gt):
     plt.show()
 
 
+def power_spectrum(signal):
+    signal = signal - np.mean(signal)
+    fft = np.fft.rfft(signal)
+    power = np.abs(fft) ** 2
+    freq = np.fft.rfftfreq(len(signal), d=1)
+    return freq, power
+
+
+def plot_psd(pred, gt):
+    freq_pred, power_pred = power_spectrum(pred)
+    freq_gt, power_gt = power_spectrum(gt)
+
+    plt.figure()
+
+    plt.semilogy(freq_pred, power_pred, label="tracker")
+    plt.semilogy(freq_gt, power_gt, label="ground truth")
+
+    plt.xlabel("frequency (cycles/frame)")
+    plt.ylabel("power")
+    plt.title("Power Spectral Density")
+
+    plt.legend()
+    plt.show()
+
+
 def main():
     segment = load_segments("wasp/tracker/segments.json")["sky"]
     frames = video_dataset(
@@ -146,6 +171,8 @@ def main():
     print("Lag X (frames):", lag_x)
     print("Lag Y (frames):", lag_y)
     plot_results(pred, gt)
+    plot_psd(pred[:, 0], gt[:, 0])
+    plot_psd(pred[:, 1], gt[:, 1])
 
 
 if __name__ == "__main__":
