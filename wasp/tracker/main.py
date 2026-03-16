@@ -1,6 +1,6 @@
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from toolz import compose
 
 from wasp.timer import Timer
@@ -52,7 +52,6 @@ def compute_lag(pred, gt):
 
 
 def plot_results(pred, gt):
-
     vx = velocity(pred[:, 0])
     vy = velocity(pred[:, 1])
 
@@ -97,9 +96,7 @@ def main():
     metrics = Metrics()
 
     for i, (frame, label) in enumerate(frames):
-
         if tracker is None:
-
             kfilter = KalmanFilter(label.to_tuple())
 
             tracker = compose(
