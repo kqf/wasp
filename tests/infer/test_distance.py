@@ -4,7 +4,6 @@ import pytest
 from wasp.infer.distance import distance2bbox, distance2kps
 
 
-@pytest.mark.skip
 @pytest.fixture
 def sample(max_shape):
     points = np.array([[50, 50], [100, 100], [200, 150]])
