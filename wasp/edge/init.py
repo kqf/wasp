@@ -16,12 +16,17 @@ def to_blob(image):
     return F.to_tensor(image)
 
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters())
+
+
 def main():
     image = cv2.imread("image.jpg")
     crop = center_crop(image, 120)
     tensor = to_blob(crop)
     model = retinanet_mobilenet_v3_large_fpn_v2(weights="DEFAULT")
     model.eval()
+    print(f"Total parameters: {count_parameters(model)}")
     with torch.no_grad():
         outputs = model([tensor])
     print(outputs)
